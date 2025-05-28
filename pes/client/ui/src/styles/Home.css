@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@media (min-width: 576px),
+(min-width: 768px),
+(min-width: 992px),
+(min-width: 1200px),
+(min-width: 1400px),
+(max-width: 575.98px),
+(max-width: 767.98px),
+(max-width: 991.98px),
+(max-width: 1199.98px) {
+    .container, .container-fluid, .row, [class*="col-"] {
+        width: 100% !important;
+        max-width: none !important;
+        flex: none !important;
+    }
+}
+
+
+.main{
+    overflow-y: scroll;
+    max-height: 100vh;
+    max-width: 100vw;
+}
+
+.container{
+    background: darkgreen;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.header{
+    background: white;
+    height: 10vh;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.header img{
+    margin-left: 1vw;
+}
+
+.header .dropdown-area{
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+}
+
+.header .dropdown-area button{
+    border: none;
+    padding: 15px;
+    font-size: 0.8rem;
+    font-weight: inherit;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.02rem;
+    font-family: 'Patrick Hand', sans-serif;
+    fill: white;
+    color: black;
+    background-color: transparent;
+}
+
+.header .btn{
+    border-radius: 30px;
+    padding: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.09rem;
+    font-family: 'Patrick Hand', sans-serif;
+    fill: white;
+    color: white;
+    background-image: linear-gradient(140deg, #E4820E 0%, #F1B723 100%);
+    background-color: transparent;
+    justify-content: space-between;
+    margin-right: 1vw;
+}
+.action-buttons button{
+    display: flex;
+    gap: 3vw;
+    align-items: center;
+}
+
+.carousel{
+    background: lightsalmon;
+    height: 60vh;
+}
+
+.carousel img{
+    width: 100%;
+    height: 60vh !important;
+}
+
+.footer{
+    background: lightblue;
+    height: 60vh;
+}
