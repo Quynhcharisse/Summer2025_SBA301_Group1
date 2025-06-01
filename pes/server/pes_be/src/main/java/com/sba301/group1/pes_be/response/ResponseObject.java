@@ -1,4 +1,4 @@
-package com.sba301.group1.pes_be.requests;
+package com.sba301.group1.pes_be.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

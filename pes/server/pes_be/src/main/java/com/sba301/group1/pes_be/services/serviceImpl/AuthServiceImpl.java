@@ -4,7 +4,7 @@ import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.requests.LoginRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.utils.CookieUtil;

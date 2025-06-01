@@ -1,6 +1,6 @@
 import {createBrowserRouter, Navigate, RouterProvider} from "react-router-dom";
 import LoginPage from "./page/LoginPage.jsx";
-import {Home} from "./page/Home.jsx";
+import {HomePage} from "./page/HomePage.jsx";
 import {SnackbarProvider} from "notistack";
 import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -16,7 +16,7 @@ const router = createBrowserRouter([
     },
     {
         path: "/home",
-        element: <Home/>
+        element: <HomePage/>
     },
     {
         path: '*',
