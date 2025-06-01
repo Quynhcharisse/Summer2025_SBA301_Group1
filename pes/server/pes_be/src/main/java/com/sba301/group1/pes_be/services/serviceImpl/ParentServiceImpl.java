@@ -104,7 +104,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        String error = FormByParentValidation.canceledValidate();
+        String error = FormByParentValidation.canceledValidate(id, acc, admissionFormRepo);
 
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
