@@ -16,6 +16,7 @@ import {Visibility, VisibilityOff} from "@mui/icons-material";
 import {enqueueSnackbar} from "notistack";
 import {login, logout} from "../services/AuthService.jsx";
 
+
 const providers = [
     {
         id: 'credentials',
@@ -138,11 +139,17 @@ function CustomButton() {
         <Button
             type="submit"
             variant="contained"
-            color="secondary"
             size="medium"
             disableElevation
             fullWidth
-            sx={{my: 2}}
+            sx={{
+                my: 2,
+                backgroundColor: '#2c3e50',
+                color: '#fff',
+                '&:hover': {
+                    backgroundColor: '#1a252f',
+                }
+            }}
         >
             Log In
         </Button>

@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.services;
 
 import com.sba301.group1.pes_be.requests.LoginRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
