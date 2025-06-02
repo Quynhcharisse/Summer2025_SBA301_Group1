@@ -1,0 +1,38 @@
+.container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+p {
+    margin: 0 !important;
+}
+
+.css-rwkbif-MuiPaper-root-MuiAppBar-root {
+    background-color: rgb(250, 198, 211) !important;
+}
+
+.css-23htwk {
+    background-image: url("https://w.ladicdn.com/s1850x1450/58f591b10ff356f91cf25737/artboard-1_12x-20230104041808-zl0hs.png")
+}
+
+.css-ku8xer,
+.css-1kojr6p {
+    background-image: url("https://w.ladicdn.com/s1850x1450/58f591b10ff356f91cf25737/artboard-1_12x-20230104041808-zl0hs.png")
+}
+
+/* phần bảng nội dung dưới */
+.css-14f5o8w-MuiTableContainer-root {
+
+}
+
+/* tieu de */
+.css-1xtozoh-MuiTableRow-root {
+
+}
+
+.css-mpaqru-MuiTypography-root {
+    margin-top: 3vh !important;
+    color: rgb(10, 124, 251) !important;
+    font-weight: bold !important;
+}

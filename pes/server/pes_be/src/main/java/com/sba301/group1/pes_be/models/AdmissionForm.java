@@ -50,9 +50,6 @@ public class AdmissionForm {
     @Column(name = "`submitted_date`")
     LocalDate submittedDate;
 
-    @Column(name = "`modified_date`")
-    LocalDate modifiedDate;
-
     String note;
 
     @Column(name = "`student_name`")
@@ -72,6 +69,8 @@ public class AdmissionForm {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`parent_id`")
     Parent parent;
+
+    String status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`admission_term_id`")
