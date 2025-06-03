@@ -4,7 +4,7 @@ import {enqueueSnackbar} from "notistack";
 import Cookies from 'js-cookie'
 import {refreshToken} from "../services/JWTService.jsx";
 
-const ProtectRouter = ({children, allowedRoles}) => {
+const ProtectRoute = ({children, allowedRoles}) => {
     const navigate = useNavigate()
     const accessToken = Cookies.get('access');
     const checkToken = Cookies.get('check');
@@ -30,4 +30,4 @@ const ProtectRouter = ({children, allowedRoles}) => {
         }
     })
 }
-export default ProtectRouter
+export default ProtectRoute

@@ -3,12 +3,20 @@ import {
     Box,
     Button,
     Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    FormControl,
     FormControlLabel,
     FormLabel,
     IconButton,
+    InputLabel,
+    MenuItem,
     Paper,
     Radio,
     RadioGroup,
+    Select,
     Stack,
     Table,
     TableBody,
@@ -26,8 +34,9 @@ import {Add, Close, CloudUpload, Info} from '@mui/icons-material';
 import {DatePicker} from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import axios from "axios";
-import {getForms} from "../../services/ParentService.jsx";
+import {cancelAdmission, getChildren, getForms, submittedAdmission} from "../../services/ParentService.jsx";
 import '../../styles/Parent/Form.css'
+import {enqueueSnackbar} from "notistack";
 
 function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
     const [page, setPage] = useState(0);
@@ -44,9 +53,9 @@ function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
 
     const handleDetailClick = (form) => {
         setSelectedFormFunc(form);
-        openDetailModalFunc();
+        // Use a callback or ensure openDetailModalFunc runs after setSelectedFormFunc
+        setTimeout(() => openDetailModalFunc(), 0);
     }
-
     return (
         <Paper sx={{
             width: '100%',
@@ -65,111 +74,120 @@ function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
                             <TableCell align={"center"}>Child name</TableCell>
                             <TableCell align={"center"}>Date of birth</TableCell>
                             <TableCell align={"center"}>Submitted date</TableCell>
-                            <TableCell align={"center"}>Modified date</TableCell>
                             <TableCell align={"center"}>Status</TableCell>
                             <TableCell align={"center"}>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {
-                            forms
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((form, index) => {
-                                    return (
-                                        <TableRow key={index}>
-                                            <TableCell align={"center"}>{index + 1}</TableCell>
-                                            <TableCell align={"center"}>{form.childName}</TableCell>
-                                            <TableCell align={"center"}>{form.dateOfBirth}</TableCell>
-                                            <TableCell align={"center"}>{form.submittedDate}</TableCell>
-                                            <TableCell align={"center"}>{form.modifiedDate}</TableCell>
-                                            <TableCell align={"center"}>{form.status}</TableCell>
-                                            <TableCell align={"center"}>
-                                                <IconButton color="primary" onClick={() => handleDetailClick(form)}>
-                                                    <Info/>
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    )
-                                })
+                            Array.isArray(forms) && forms.length > 0
+                                ? forms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((form, index) => {
+                                        return (
+                                            <TableRow key={index}>
+                                                <TableCell align={"center"}>{index + 1}</TableCell>
+                                                <TableCell align={"center"}>{form.childName}</TableCell>
+                                                <TableCell align={"center"}>{form.dateOfBirth}</TableCell>
+                                                <TableCell align={"center"}>{form.submittedDate}</TableCell>
+                                                <TableCell align={"center"}>{form.status}</TableCell>
+                                                <TableCell align={"center"}>
+                                                    <IconButton color="primary" onClick={() => handleDetailClick(form)}>
+                                                        <Info/>
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })
+                                : (
+                                    <TableRow>
+                                        <TableCell align="center" colSpan={6}>No data available</TableCell>
+                                    </TableRow>
+                                )
                         }
                     </TableBody>
                 </Table>
             </TableContainer>
             <TablePagination
-                rowsPerPageOptions={[5, 10, 15]}
                 component="div"
-                count={forms.length}
-                rowsPerPage={rowsPerPage}
+                rowsPerPageOptions={[5, 10, 15]}
+                count={forms?.length} // fix crash nếu forms null/undefined
                 page={page}
                 onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
         </Paper>
     )
 }
 
-function RenderForm({handleCloseFunc, isModalOpened}) {
 
+function RenderForm({handleCloseFunc, isModalOpened, children, fetchForms}) {
+
+    //nơi lưu file thô mà người dùng upload từ <input type="file" />
     const [uploadedFile, setUploadedFile] = useState({
-        profile: {
-            img: null,
-            url: ""
-        },
-        houseAddress: {
-            img: null,
-            url: ""
-        },
-        birth: {
-            img: null,
-            url: ""
-        },
-        commit: {
-            img: null,
-            url: ""
-        },
+        profile: '',
+        houseAddress: '',
+        birth: '',
+        commit: ''
     });
 
-    function handleUploadFile(file, index) {
-        switch (index) {
+    //nơi lưu URL trả về từ Cloudinary sau khi upload thành công
+    const [imageLink, setImageLink] = useState({
+        profileLink: '',
+        houseAddressLink: '',
+        birthLink: '',
+        commitLink: ''
+    });
+
+    const [selectedChildId, setSelectedChildId] = useState(children[0].id);
+    const [input, setInput] = useState({
+        address: '',
+        note: ''
+    });
+
+    //dua vao id, lưu đúng loại file vào uploadedFile
+    function handleUploadFile(file, id) {
+        switch (id) {
             case 1:
-                setUploadedFile({...uploadedFile, profile: {img: file, url: ""}});
+                setUploadedFile({...uploadedFile, profile: file});
                 break;
             case 2:
-                setUploadedFile({...uploadedFile, houseAddress: {img: file, url: ""}});
+                setUploadedFile({...uploadedFile, houseAddress: file});
                 break;
             case 3:
-                setUploadedFile({...uploadedFile, birth: {img: file, url: ""}});
+                setUploadedFile({...uploadedFile, birth: file});
                 break;
             default:
-                setUploadedFile({...uploadedFile, commit: {img: file, url: ""}});
+                setUploadedFile({...uploadedFile, commit: file});
                 break;
         }
     }
 
 
-    function handleSaveDraft() {
-        handleCloseFunc()
-    }
-
     const handleUploadImage = async () => {
 
+        if (!uploadedFile.profile || !uploadedFile.birth || !uploadedFile.houseAddress || !uploadedFile.commit) {
+            enqueueSnackbar("Please upload all required documents.", {variant: "warning"});
+            return null;
+        }
+
         const profileData = new FormData();
-        profileData.append("file", uploadedFile.profile.img);
+        profileData.append("file", uploadedFile.profile);
         profileData.append("upload_preset", "pes_swd");
         profileData.append("api_key", "837117616828593");
 
         const houseAddressData = new FormData();
-        houseAddressData.append("file", uploadedFile.houseAddress.img);
+        houseAddressData.append("file", uploadedFile.houseAddress);
         houseAddressData.append("upload_preset", "pes_swd");
         houseAddressData.append("api_key", "837117616828593");
 
         const birthData = new FormData();
-        birthData.append("file", uploadedFile.birth.img);
+        birthData.append("file", uploadedFile.birth);
         birthData.append("upload_preset", "pes_swd");
         birthData.append("api_key", "837117616828593");
 
         const commitData = new FormData();
-        commitData.append("file", uploadedFile.commit.img);
+        commitData.append("file", uploadedFile.commit);
         commitData.append("upload_preset", "pes_swd");
         commitData.append("api_key", "837117616828593");
 
@@ -204,68 +222,53 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
             }
         );
 
-        if (profileResponse && profileResponse.status === 200) {
-            console.log(profileResponse.data.url);
-            setUploadedFile(
-                (uploadedFile) => (
-                    {
-                        ...uploadedFile, profile: {
-                            ...uploadedFile.profile,
-                            url: profileResponse.data.url
-                        }
-                    }
-                ))
+        const profileCondition = profileResponse && profileResponse.status === 200
+        const houseAddressCondition = houseAddressResponse && houseAddressResponse.status === 200
+        const birthCondition = birthResponse && birthResponse.status === 200
+        const commitCondition = commitResponse && commitResponse.status === 200
+
+
+        if (profileCondition && houseAddressCondition && birthCondition && commitCondition) {
+            const result = {
+                profileLink: profileResponse.data.url,
+                houseAddressLink: houseAddressResponse.data.url,
+                birthLink: birthResponse.data.url,
+                commitLink: commitResponse.data.url
+            };
+            setImageLink(result)
+            return result
         }
-
-        if (houseAddressResponse && houseAddressResponse.status === 200) {
-            setUploadedFile((uploadedFile) => (
-                {
-                    ...uploadedFile, houseAddress: {
-                        ...uploadedFile.houseAddress,
-                        url: houseAddressResponse.data.url
-                    }
-                }
-            ))
-        }
-
-
-        if (birthResponse && birthResponse.status === 200) {
-            setUploadedFile((uploadedFile) => ({
-                ...uploadedFile, birth: {
-                    ...uploadedFile.birth,
-                    url: birthResponse.data.url
-                }
-            }))
-        }
-
-        if (commitResponse && commitResponse.status === 200) {
-            setUploadedFile((uploadedFile) => ({
-                ...uploadedFile, commit: {
-                    ...uploadedFile.commit,
-                    url: commitResponse.data.url
-                }
-            }))
-        }
-
-        return profileResponse && profileResponse.status === 200
-            && houseAddressResponse && houseAddressResponse.status === 200
-            && birthResponse && birthResponse.status === 200
-            && commitResponse && commitResponse.status === 200
-
-
+        return null
     }
 
     async function handleSubmit() {
-        const response = await handleUploadImage();
-        if (response) {
-            console.log('Uploaded file:  ', uploadedFile);
-            console.log('Upload successfully');
-        } else {
-            console.log('Upload failed');
+        const uploadResult = await handleUploadImage();
+        if (!uploadResult) {
+            return;
         }
-        handleCloseFunc()
-    }
 
+        const selectedChild = children.find(child => child.id === selectedChildId);
+        const response = await submittedAdmission(
+            selectedChild.name,
+            selectedChild.gender,
+            selectedChild.dateOfBirth,
+            selectedChild.placeOfBirth,
+            input.address,
+            uploadResult.profileLink,
+            uploadResult.birthLink,
+            uploadResult.houseAddressLink,
+            uploadResult.commitLink,
+            input.note
+        );
+
+        if (response && response.success) {
+            enqueueSnackbar(response.message, {variant: "success"});
+            await fetchForms()
+            handleCloseFunc();
+        } else {
+            enqueueSnackbar("Submission failed", {variant: "error"});
+        }
+    }
 
     return (
         <Dialog
@@ -297,35 +300,80 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                     Form Information
                 </Typography>
 
-                <Stack container spacing={3}>
-                    <Stack item xs={12}>
-                        <TextField fullWidth label={'Child name *'}/>
-                    </Stack>
+                {selectedChildId !== null && Array.isArray(children) && children.length > 0 && (
+                    <Stack spacing={3}>
+                        <Stack>
+                            <FormControl fullWidth>
+                                <InputLabel>Child name</InputLabel>
+                                <Select
+                                    value={selectedChildId}
+                                    label="Child name *"
+                                    onChange={(e) => setSelectedChildId(e.target.value)}
+                                    variant={"outlined"}
+                                >
+                                    {children.map((child, index) => (
+                                        <MenuItem key={index} value={child.id}>{child.name}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
 
-                    <Stack item xs={12}>
-                        <FormLabel id="demo-controlled-radio-buttons-group">Gender</FormLabel>
-                        <RadioGroup
-                            aria-labelledby="demo-controlled-radio-buttons-group"
-                            name="controlled-radio-buttons-group"
-                        >
-                            <FormControlLabel value="female" control={<Radio/>} label="Female"/>
-                            <FormControlLabel value="male" control={<Radio/>} label="Male"/>
-                        </RadioGroup>
-                    </Stack>
+                        </Stack>
 
-                    <Stack item xs={12}>
-                        <DatePicker label={'Date of birth *'}/>
-                    </Stack>
+                        <Stack>
+                            <FormControl>
+                                <FormLabel>Gender</FormLabel>
+                                <RadioGroup
+                                    row
+                                    value={children.find(child => child.id === selectedChildId)?.gender || ''}
 
-                    <Stack item xs={12}>
-                        <TextField fullWidth label={'Place of birth *'}/>
-                    </Stack>
+                                >
+                                    <FormControlLabel value="female" control={<Radio/>} label="Female"
+                                                      sx={{color: 'black'}} disabled/>
+                                    <FormControlLabel value="male" control={<Radio/>} label="Male"
+                                                      sx={{color: 'black'}} disabled/>
+                                </RadioGroup>
+                            </FormControl>
+                        </Stack>
 
-                    <Stack item xs={12}>
-                        <TextField fullWidth label={'Household registration address *'}
-                                   name="householdRegistrationAddress"/>
+                        <Stack>
+                            <DatePicker
+                                label="Date of birth"
+                                disabled
+                                defaultValue={dayjs(children.find(child => child.id === selectedChildId) ? children.find(child => child.id === selectedChildId).dateOfBirth : null)}
+                                slotProps={{textField: {fullWidth: true}}}
+                            />
+                        </Stack>
+
+                        <Stack>
+                            <TextField
+                                fullWidth
+                                label="Place of birth"
+                                disabled
+                                defaultValue={children.find(child => child.id === selectedChildId)?.placeOfBirth || ''}
+                                name="placeOfBirth"
+                            />
+                        </Stack>
+
+                        <Stack>
+                            <TextField
+                                fullWidth
+                                label="Household registration address *"
+                                value={input.address}
+                                onChange={(e) => setInput({...input, address: e.target.value})}
+                                name="householdRegistrationAddress"
+                            />
+                        </Stack>
+
+                        <Stack>
+                            <TextField fullWidth
+                                       label={'Note'}
+                                       aria-readonly
+                                       value={input.note}
+                                       onChange={(e) => setInput({...input, note: e.target.value})}
+                            />
+                        </Stack>
                     </Stack>
-                </Stack>
+                )}
 
                 <Typography
                     variant='subtitle1'
@@ -334,10 +382,10 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                     UPLOAD DOCUMENTS
                 </Typography>
 
-                <Stack container spacing={3}>
-                    <Stack item xs={12}>
+                <Stack spacing={3}>
+                    <Stack>
                         <Typography variant='body1' sx={{mb: 1}}>Profile Image: <span
-                            className={'text-primary'}>{uploadedFile.profile.img ? uploadedFile.profile.img.name : ""}</span></Typography>
+                            className={'text-primary'}>{uploadedFile.profile ? uploadedFile.profile.name : ""}</span></Typography>
                         <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
                                 startIcon={<CloudUpload/>}>
@@ -347,9 +395,9 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                         </Button>
                     </Stack>
 
-                    <Stack item xs={12}>
+                    <Stack>
                         <Typography variant='body1' sx={{mb: 1}}>Household Registration: <span
-                            className={'text-primary'}>{uploadedFile.houseAddress.img ? uploadedFile.houseAddress.img.name : ""}</span></Typography>
+                            className={'text-primary'}>{uploadedFile.houseAddress ? uploadedFile.houseAddress.name : ""}</span></Typography>
                         <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
                                 startIcon={<CloudUpload/>}>
@@ -359,9 +407,9 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                         </Button>
                     </Stack>
 
-                    <Stack item xs={12}>
+                    <Stack>
                         <Typography variant='body1' sx={{mb: 1}}>Birth Certificate: <span
-                            className={'text-primary'}>{uploadedFile.birth.img ? uploadedFile.birth.img.name : ""}</span></Typography>
+                            className={'text-primary'}>{uploadedFile.birth ? uploadedFile.birth.name : ""}</span></Typography>
                         <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
                                 startIcon={<CloudUpload/>}>
@@ -371,9 +419,9 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                         </Button>
                     </Stack>
 
-                    <Stack item xs={12}>
+                    <Stack>
                         <Typography variant='body1' sx={{mb: 1}}>Commitment: <span
-                            className={'text-primary'}>{uploadedFile.commit.img ? uploadedFile.commit.img.name : ""}</span></Typography>
+                            className={'text-primary'}>{uploadedFile.commit ? uploadedFile.commit.name : ""}</span></Typography>
                         <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
                                 startIcon={<CloudUpload/>}>
@@ -382,15 +430,20 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
                                    onChange={(e) => handleUploadFile(e.target.files[0], 4)}/>
                         </Button>
                     </Stack>
-                    <Stack item xs={12}
-                           sx={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: '1rem'}}>
-                        <Button sx={{width: '10%', marginTop: '2vh', height: '5vh'}} variant="contained" color='primary'
-                                onClick={handleSaveDraft}>
-                            Save Draft
-                        </Button>
-
+                    <Stack
+                        sx={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: '1rem'}}>
                         <Button sx={{width: '10%', marginTop: '2vh', height: '5vh'}} variant="contained" color='success'
-                                onClick={handleSubmit}>
+                                onClick={() => handleSubmit(
+                                    children.find(child => child.id === selectedChildId)?.name,
+                                    children.find(child => child.id === selectedChildId)?.gender,
+                                    children.find(child => child.id === selectedChildId)?.dateOfBirth,
+                                    children.find(child => child.id === selectedChildId)?.placeOfBirth,
+                                    imageLink.profileLink,
+                                    imageLink.birthLink,
+                                    imageLink.houseAddressLink,
+                                    imageLink.commitLink,
+                                )}
+                        >
                             Submit
                         </Button>
                     </Stack>
@@ -401,6 +454,27 @@ function RenderForm({handleCloseFunc, isModalOpened}) {
 }
 
 function RenderDetail({handleCloseFunc, isModalOpened, formData}) {
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    //handle cancel form
+    async function HandleCancelForm() {
+        setIsCancelling(true);
+        try {
+            const response = await cancelAdmission(formData.id);
+            if (response?.success) {
+                enqueueSnackbar("Form cancelled successfully", { variant: "success" });
+                setIsConfirmOpen(false);
+                handleCloseFunc();
+            } else {
+                enqueueSnackbar(response?.message || "Failed to cancel admission form", { variant: "error" });
+            }
+        } catch (error) {
+            console.error("Cancel error:", error);
+            enqueueSnackbar("Error occurred while cancelling form", { variant: "error" });
+        }
+        setIsCancelling(false);
+    }
 
     function handleClosed() {
         handleCloseFunc()
@@ -436,14 +510,14 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData}) {
                     Form Information
                 </Typography>
 
-                <Stack container spacing={3}>
+                <Stack spacing={3}>
                     <Stack>
-                        <TextField fullWidth label={'Child name *'} aria-readonly value={formData.childName}/>
+                        <TextField fullWidth label={'Child name *'} aria-readonly value={formData.childName || ''}/>
                     </Stack>
 
                     <Stack>
                         <FormLabel>Gender</FormLabel>
-                        <RadioGroup value={formData.childGender} aria-readonly>
+                        <RadioGroup value={formData.childGender || ''} aria-readonly>
                             <FormControlLabel value="female" control={<Radio/>} label="Female"/>
                             <FormControlLabel value="male" control={<Radio/>} label="Male"/>
                         </RadioGroup>
@@ -451,34 +525,35 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData}) {
 
                     <Stack>
                         <DatePicker label={'Date of birth *'} readOnly
-                                    defaultValue={dayjs(formData.dateOfBirth.toString())}/>
+                                    defaultValue={formData.dateOfBirth ? dayjs(formData.dateOfBirth.toString()) : null}/>
                     </Stack>
 
                     <Stack>
-                        <TextField fullWidth label={'Place of birth *'} aria-readonly value={formData.placeOfBirth}/>
+                        <TextField fullWidth label={'Place of birth *'} aria-readonly
+                                   value={formData.placeOfBirth || ''}/>
                     </Stack>
 
                     <Stack>
                         <TextField fullWidth label={'Household registration address *'} aria-readonly
-                                   value={formData.householdRegistrationAddress}/>
+                                   value={formData.householdRegistrationAddress || ''}/>
                     </Stack>
 
                     <Stack>
-                        <TextField fullWidth label={'Note'} aria-readonly value={formData.note}/>
+                        <TextField fullWidth label={'Note'} aria-readonly value={formData.note || ''}/>
                     </Stack>
                     <Stack>
-                        <TextField fullWidth label={'Cancel reason'} disabled value={formData.cancelReason}/>
+                        <TextField fullWidth label={'Cancel reason'} disabled value={formData.cancelReason || ''}/>
                     </Stack>
                 </Stack>
 
-                <Stack container spacing={3}>
+                <Stack spacing={3}>
                     <Stack sx={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', gap: '1rem'}}>
                         <Button sx={{width: '10%', marginTop: '2vh', height: '5vh'}} variant="contained" color='warning'
                                 onClick={handleClosed}>
                             Close
                         </Button>
                         {
-                            formData.status.toLowerCase() === 'draft'
+                            formData?.status.toLowerCase() === 'draft'
                             &&
                             <Button sx={{width: '10%', marginTop: '2vh', height: '5vh'}} variant="contained"
                                     color='success' onClick={handleClosed}>
@@ -486,17 +561,33 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData}) {
                             </Button>
                         }
 
-                        {
-                            formData.status.toLowerCase() === 'pending approval'
-                            &&
-                            <Button sx={{width: '10%', marginTop: '2vh', height: '5vh'}} variant="contained"
-                                    color='error' onClick={handleClosed}>
+                        {formData?.status.toLowerCase() === 'pending approval' && (
+                            <Button
+                                sx={{ width: '10%', marginTop: '2vh', height: '5vh' }}
+                                variant="contained"
+                                color="error"
+                                onClick={() => setIsConfirmOpen(true)}
+                            >
                                 Cancel
                             </Button>
-                        }
-
-
+                        )}
                     </Stack>
+                    <Dialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
+                        <DialogTitle>Cancel Admission Form</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                ⚠️ Are you sure you want to cancel this admission form?
+                                <br />
+                                This action cannot be undone and the child may lose their enrollment opportunity for this term.
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setIsConfirmOpen(false)}>No</Button>
+                            <Button onClick={HandleCancelForm} color="error" autoFocus disabled={isCancelling}>
+                                { isCancelling ? "Cancalling..." : "Yes, Cancel" }
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Stack>
             </Box>
         </Dialog>
@@ -508,9 +599,11 @@ function RenderPage({forms, openFormModelFunc, openDetailModalFunc, setSelectedF
     return (
         <div className="container">
             <Typography variant={'caption'} style={{
+                marginTop: '2rem',
                 fontSize: '2rem',
                 fontWeight: 'bold',
                 fontFamily: '-moz-initial',
+                color: '#2c3e50',
             }}>
                 ADMISSION FORM
             </Typography>
@@ -519,8 +612,11 @@ function RenderPage({forms, openFormModelFunc, openDetailModalFunc, setSelectedF
                     variant="contained"
                     endIcon={<Add/>}
                     sx={{
-                        width: '20%',
-                        height: '5vh'
+                        width: '15%',
+                        height: '5vh',
+                        backgroundColor: '#2c3e50',
+                        borderRadius: '10px',
+                        marginRight: '3rem',
                     }}
                     onClick={openFormModelFunc}
                 >
@@ -533,26 +629,34 @@ function RenderPage({forms, openFormModelFunc, openDetailModalFunc, setSelectedF
     )
 }
 
-export default function AdmissionForm() {
+export default function Form() {
     const [forms, setForms] = useState([]);
     const [modal, setModal] = useState({
         isOpen: false,
         type: ''
     });
 
+    const [children, setChildren] = useState([]);
+    const [selectedChildId, setSelectedChildId] = useState(null);
     const [selectedForm, setSelectedForm] = useState(null);
 
-    async function getFormList() {
+    async function GetFormList() {
         const response = await getForms()
         if (response && response.success) {
             return response.data;
         }
     }
 
-    console.log(selectedForm);
+    async function FetchChildren() {
+        const response = await getChildren();
+        if (response && response.success) {
+            return response.data;
+        }
+    }
 
     useEffect(() => {
-        getFormList().then(res => setForms(res))
+        GetFormList().then(res => setForms(res))
+        FetchChildren().then(res => setChildren(res))
     }, []) // chay lan dau tien
 
     const handleOpenModal = (type) => {
@@ -561,30 +665,33 @@ export default function AdmissionForm() {
 
     const handleCloseModal = () => {
         setModal({...modal, isOpen: false, type: ''});
+        GetFormList().then(res => setForms(res))
     };
-
-    const handleSetSelectedForm = (selectedForm) => {
-        setSelectedForm(selectedForm);
-    }
-
+    console.log(selectedChildId)
     return (
         <>
             <RenderPage
                 forms={forms}
                 openFormModelFunc={() => handleOpenModal('form')}
                 openDetailModalFunc={() => handleOpenModal('detail')}
-                setSelectedFormFunc={handleSetSelectedForm}
+                setSelectedFormFunc={setSelectedForm} // truyền hàm setSelectedForm để cập nhật form đã chọn
             />
             {
-                modal.isOpen && modal.type === 'form' &&
-                <RenderForm isModalOpened={open} handleCloseFunc={handleCloseModal}/> // condition de ko thi mean = true and component
+                modal.isOpen && modal.type === 'form' && children.length > 0 && (
+                    <RenderForm isModalOpened={modal.isOpen}
+                                handleCloseFunc={handleCloseModal}
+                                children={children}
+                                fetchForms={GetFormList}
+                    /> // condition de ko thi mean = true and component
+                )
             }
-
             {
                 modal.isOpen && modal.type === 'detail' &&
-                <RenderDetail isModalOpened={open} handleCloseFunc={handleCloseModal} formData={selectedForm}/> // condition de ko thi mean = true and component
+                <RenderDetail isModalOpened={modal.isOpen}
+                              handleCloseFunc={handleCloseModal}
+                              formData={selectedForm || {}} //pass đúng đata nếu cần
+                /> // condition de ko thi mean = true and component
             }
         </>
-
     )
 }

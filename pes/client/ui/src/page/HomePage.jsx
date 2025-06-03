@@ -68,7 +68,7 @@ function RenderHeader() {
 
     return (
         <div className="header">
-            <img fetchpriority="high" width="200" height="70"
+            <img fetchPriority="high" width="200" height="70"
                  src="https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal.png" alt=""
                  srcSet="https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal.png 903w, https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal-300x113.png 300w, https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal-768x289.png 768w"
                  sizes="(max-width: 100vw) 100vw, 903px"/>

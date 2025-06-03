@@ -12,7 +12,7 @@ const axiosClient = axios.create({
     withCredentials: true
 })
 
-axios.interceptors.response.use(
+axiosClient.interceptors.response.use(
     response => response,
     async error => {
         const originalRequest = error.config;

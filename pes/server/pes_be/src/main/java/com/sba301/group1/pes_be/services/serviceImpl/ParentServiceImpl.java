@@ -11,6 +11,7 @@ import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
 import com.sba301.group1.pes_be.services.JWTService;
@@ -46,7 +47,7 @@ public class ParentServiceImpl implements ParentService {
 
         Account acc = jwtService.extractAccountFromCookie(request);
 
-        if (acc == null || acc.getRole().equals(Role.PARENT)) {
+        if (acc == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Get list failed")
@@ -57,7 +58,8 @@ public class ParentServiceImpl implements ParentService {
         }
 
         List<Map<String, Object>> admissionForms = admissionFormRepo.findAll().stream()
-                .filter(form -> form.getParent().getId().equals(acc.getParent().getId()))
+                .filter(form -> form.getParent() != null && acc.getParent() != null &&
+                        form.getParent().getId().equals(acc.getParent().getId()))
                 .sorted(Comparator.comparing(AdmissionForm::getSubmittedDate).reversed()) // sort form theo ngày chỉnh sửa mới nhất
                 .map(this::getFormDetail)
                 .toList();
@@ -74,14 +76,14 @@ public class ParentServiceImpl implements ParentService {
     private Map<String, Object> getFormDetail(AdmissionForm form) {
         Map<String, Object> data = new HashMap<>();
         data.put("id", form.getId());
-        data.put("childName", form.getStudentName());
-        data.put("childGender", form.getGender());
+        data.put("childName", form.getChildName());
+        data.put("childGender", form.getChildGender());
         data.put("dateOfBirth", form.getDateOfBirth());
         data.put("placeOfBirth", form.getPlaceOfBirth());
         data.put("profileImage", form.getProfileImage());
         data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
         data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
-        data.put("birthCertificateImg", form.getChildBirthCertificateImg());
+        data.put("birthCertificateImg", form.getBirthCertificateImg());
         data.put("commitmentImg", form.getCommitmentImg());
         data.put("submittedDate", form.getSubmittedDate());
         data.put("cancelReason", form.getCancelReason());
@@ -91,10 +93,10 @@ public class ParentServiceImpl implements ParentService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> cancelAdmissionForm(int id, HttpServletRequest httpRequest) {
+    public ResponseEntity<ResponseObject> cancelAdmissionForm(CancelAdmissionForm request, HttpServletRequest httpRequest) {
 
         Account acc = jwtService.extractAccountFromCookie(httpRequest);
-        if (acc == null || acc.getRole().equals(Role.PARENT)) {
+        if (acc == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Cancelled admission form failed")
@@ -104,7 +106,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        String error = FormByParentValidation.canceledValidate(id, acc, admissionFormRepo);
+        String error = FormByParentValidation.canceledValidate(request, acc, admissionFormRepo);
 
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
@@ -116,7 +118,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        AdmissionForm form = admissionFormRepo.findById(id).orElse(null);
+        AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
         assert form != null;
 
         form.setStatus(Status.CANCELLED.getValue());
@@ -126,16 +128,22 @@ public class ParentServiceImpl implements ParentService {
                 ResponseObject.builder()
                         .message("Successfully cancelled")
                         .success(true)
-                        .data(null)
+                        .data(getIdOfForm(form))
                         .build()
         );
+    }
+
+    private Map<String, Object> getIdOfForm(AdmissionForm form) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", form.getId());
+        return data;
     }
 
     @Override
     public ResponseEntity<ResponseObject> submitAdmissionForm(SubmitAdmissionFormRequest request, HttpServletRequest httpRequest) {
 
         Account account = jwtService.extractAccountFromCookie(httpRequest);
-        if (account == null || account.getRole().equals(Role.PARENT)) {
+        if (account == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Submitted admission form failed")
@@ -157,7 +165,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        List<AdmissionForm> formList = admissionFormRepo.findAllByParent_IdAndStudentName(account.getParent().getId(), request.getName());
+        List<AdmissionForm> formList = admissionFormRepo.findAllByParent_IdAndChildName(account.getParent().getId(), request.getName());
 
         if (!formList.isEmpty()) {
             return ResponseEntity.ok().body(
@@ -183,19 +191,20 @@ public class ParentServiceImpl implements ParentService {
 
         admissionFormRepo.save(
                 AdmissionForm.builder()
-                        .studentName(request.getName())
-                        .gender(request.getGender())
+                        .childName(request.getName())
+                        .childGender(request.getGender())
                         .dateOfBirth(request.getDateOfBirth())
                         .placeOfBirth(request.getPlaceOfBirth())
                         .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
                         .profileImage(request.getProfileImage())
+                        .birthCertificateImg(request.getBirthCertificateImg())
                         .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                        .childBirthCertificateImg(request.getBirthCertificateImg())
                         .commitmentImg(request.getCommitmentImg())
                         .note(request.getNote())
                         .submittedDate(LocalDate.now())
                         .status(Status.PENDING_APPROVAL.getValue())
                         .admissionTerm(term)
+                        .parent(account.getParent()) //gán parent khi tạo form đăng kí
                         .build()
         );
 
@@ -223,7 +232,7 @@ public class ParentServiceImpl implements ParentService {
         }
 
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
-        if (parent == null || !parent.getId().equals(acc.getParent().getId())) {
+        if (parent == null) {
             return ResponseEntity.ok(
                     ResponseObject.builder()
                             .message("Access denied: You are not allowed to view children of this parent.")
