@@ -89,7 +89,7 @@ function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
                                                 <TableCell align={"center"}>{form.childName}</TableCell>
                                                 <TableCell align={"center"}>{form.dateOfBirth}</TableCell>
                                                 <TableCell align={"center"}>{form.submittedDate}</TableCell>
-                                                <TableCell align={"center"}>{form.status}</TableCell>
+                                                <TableCell align={"center"}  className={form.status === 'approved' ? "status-color-green" : "status-color-red"}>{form.status}</TableCell>
                                                 <TableCell align={"center"}>
                                                     <IconButton color="primary" onClick={() => handleDetailClick(form)}>
                                                         <Info/>
