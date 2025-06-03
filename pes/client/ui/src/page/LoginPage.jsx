@@ -114,7 +114,7 @@ const signInPage = async (provider, formData) => {
 
                     switch (role.toLowerCase()) {
                         case 'admission':
-                            window.location.href = "/admission/tracking/form";
+                            window.location.href = "/admission/process/form";
                             break;
 
                         case 'parent':

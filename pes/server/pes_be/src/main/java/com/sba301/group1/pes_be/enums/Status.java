@@ -18,10 +18,7 @@ public enum Status {
 
     ACTIVE_TERM("active"), // trong khoảng ngày cho phép
     INACTIVE_TERM("inactive"), // chưa đến ngày
-    CLOSED("closed"), // hết hạn đăng ký
-    LOCKED_TERM("locked"),
-    ARCHIVED("archived");
-    ;
+    LOCKED_TERM("locked"); // đã hết ngày cho phép đăng ký
 
     private final String value;
 }

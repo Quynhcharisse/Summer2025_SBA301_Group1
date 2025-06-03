@@ -12,7 +12,7 @@ public interface AdmissionService {
 
     ResponseEntity<ResponseObject> updateAdmissionTerm(AdmissionTermRequest request);
 
-    ResponseEntity<ResponseObject> viewAdmissionFormList(int year);
+    ResponseEntity<ResponseObject> viewAdmissionFormList();
 
     ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request);
 }

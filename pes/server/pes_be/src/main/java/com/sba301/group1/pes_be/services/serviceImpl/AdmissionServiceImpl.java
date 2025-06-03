@@ -160,11 +160,10 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     @Override
-    public ResponseEntity<ResponseObject> viewAdmissionFormList(int year) {
+    public ResponseEntity<ResponseObject> viewAdmissionFormList() {
 
         List<Map<String, Object>> formList = admissionFormRepo.findAll().stream()
                 .filter(form -> form.getAdmissionTerm() != null
-                        && form.getAdmissionTerm().getStatus().equals(Status.LOCKED_TERM.getValue())
                         && form.getAdmissionTerm().getYear() == LocalDate.now().getYear())
                 .map(
                         form -> {
@@ -197,7 +196,6 @@ public class AdmissionServiceImpl implements AdmissionService {
         );
     }
 
-
     @Override
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {
         String error = AdmissionTermValidation.processFormByManagerValidate(request, admissionFormRepo);
@@ -218,6 +216,17 @@ public class AdmissionServiceImpl implements AdmissionService {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Form not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        AdmissionTerm term = form.getAdmissionTerm();
+        if(term == null || !term.getStatus().equals(Status.LOCKED_TERM.getValue())) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("You can only approve or reject forms after the admission term is locked.")
                             .success(false)
                             .data(null)
                             .build()
