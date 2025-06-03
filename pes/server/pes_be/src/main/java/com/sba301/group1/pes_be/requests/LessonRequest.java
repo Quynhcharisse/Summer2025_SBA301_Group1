@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LessonRequest {
-    private String lessonId;
+    private Integer lessonId;
     private String topic;
     private String description;
 }

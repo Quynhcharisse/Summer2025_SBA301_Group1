@@ -15,7 +15,7 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SyllabusRequest {
-    private String syllabusId;
+    private Integer syllabusId;
     private String title;
     private String description;
     private List<LessonSyllabus> lessons;

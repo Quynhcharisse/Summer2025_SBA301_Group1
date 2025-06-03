@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.requests;
 
 public class LessonSyllabus {
-    private String lessonId;
-    private String syllabusId;
+    private Integer lessonId;
+    private Integer syllabusId;
     private String note;
 }
