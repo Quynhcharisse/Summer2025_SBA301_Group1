@@ -1,0 +1,48 @@
+package com.sba301.group1.pes_be.controllers;
+
+import com.sba301.group1.pes_be.requests.ClassRequest;
+import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.services.ClassService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("api/v1/class")
+@RequiredArgsConstructor
+@Tag(name = "Class", description = "Class management APIs")
+public class ClassController {
+
+    private final ClassService classService;
+
+    @PostMapping()
+    @PreAuthorize("hasRole('manager')")
+    @Operation(summary = "Create a class", description = "Allows managers to create a new class")
+    public ResponseEntity<ResponseObject> createClass(@RequestBody ClassRequest request) {
+        return classService.createClass(request);
+    }
+
+    @PutMapping("/{classId}")
+    @PreAuthorize("hasRole('manager')")
+    @Operation(summary = "Update a class", description = "Allows managers to update an existing class")
+    public ResponseEntity<ResponseObject> updateClass(@PathVariable Integer classId, @RequestBody ClassRequest request) {
+        return classService.updateClass(classId, request);
+    }
+
+    @GetMapping("/{classId}")
+    @PreAuthorize("hasRole('manager')")
+    @Operation(summary = "View class", description = "Allows managers to view class details")
+    public ResponseEntity<ResponseObject> viewClass(@PathVariable Integer classId) {
+        return classService.viewClass(classId);
+    }
+
+    @GetMapping("")
+    @PreAuthorize("hasRole('admission')")
+    @Operation(summary = "View class list", description = "Allows admission staff to view all classes for a specific year")
+    public ResponseEntity<ResponseObject> viewClassList() {
+        return classService.viewClassList();
+    }
+}

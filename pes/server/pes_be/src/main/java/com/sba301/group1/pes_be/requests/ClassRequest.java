@@ -15,9 +15,9 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ClassRequest {
-    private String classId;
-    private String teacherId;
-    private String syllabusId;
+    private Integer classId;
+    private Integer teacherId;
+    private Integer syllabusId;
     private String name;
     private int numberStudent;
     private String roomNumber;
