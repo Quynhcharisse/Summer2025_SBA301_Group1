@@ -42,6 +42,7 @@ function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
         "Child name",
         "Date of birth",
         "Submitted date",
+        "Term Status",
         "Status",
         "Action"
     ]
@@ -95,6 +96,22 @@ function RenderTable({forms, openDetailModalFunc, setSelectedFormFunc}) {
                                                 align="center">{dayjs(form.dateOfBirth).format('DD/MM/YYYY')}</TableCell>
                                             <TableCell
                                                 align="center">{dayjs(form.submittedDate).format('DD/MM/YYYY')}</TableCell>
+                                            <TableCell align="center">
+                                            <span
+                                                style={{
+                                                    textTransform: 'lowercase',
+                                                    fontWeight: 'bold',
+                                                    color:
+                                                        form.admissionTerm?.admissionTermStatus === 'LOCKED_TERM'
+                                                            ? 'green'
+                                                            : form.admissionTerm?.admissionTermStatus === 'ACTIVE_TERM'
+                                                                ? '#f39c12' // orange
+                                                                : '#7f8c8d', // grey
+                                                }}
+                                            >
+                                                    {form.admissionTerm?.admissionTermStatus?.toLowerCase() ?? 'n/a'}
+                                                  </span>
+                                            </TableCell>
                                             <TableCell
                                                 align={"center"}
                                                 className={form.status === 'approved' ? "status-color-green" : "status-color-red"}
@@ -134,24 +151,24 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData, onActionComplet
         reason: ''
     });
 
-    async function handleProcessForm(isApproved, reason = '') {
-        const response = await processAdmissionForm(formData.id, isApproved, reason);
+        async function handleProcessForm(isApproved, reason) {
+            const response = await processAdmissionForm(formData.id, isApproved, reason);
+            console.log('Response: ', response);
+            if (response?.success) {
+                enqueueSnackbar(
+                    isApproved ? "Approved successfully" : "Rejected successfully",
+                    {variant: "success"}
+                )
+                handleCloseFunc()
+                onActionCompleted()
+            } else {
+                enqueueSnackbar(
+                    isApproved ? "Approval failed" : "Rejection failed",
+                    {variant: "error"}
+                )
+            }
 
-        if (response?.success) {
-            enqueueSnackbar(
-                isApproved ? "Approved successfully" : "Rejected successfully",
-                {variant: isApproved ? "success" : "success"}
-            )
-            handleCloseFunc()
-            onActionCompleted?.()
-        } else {
-            enqueueSnackbar(
-                isApproved ? "Approval failed" : "Rejection failed",
-                {variant: "error"}
-            )
         }
-
-    }
 
 
     function handleClosed() {
@@ -230,7 +247,7 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData, onActionComplet
                         {
                             formData.status.toLowerCase() === 'pending approval'
                             &&
-                            <TextField fullWidth label={'Cancel reason'} disabled value={formData.cancelReason}/>
+                            <TextField fullWidth label={'Cancel reason'} disabled value={formData.cancelReason ? formData.cancelReason : ''}/>
                         }
                     </Stack>
 
@@ -262,7 +279,7 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData, onActionComplet
 
                         {
                             formData.status.toLowerCase() === 'pending approval' &&
-                            formData.admissionTerm?.status?.toLowerCase() === 'locked_term' &&
+                            formData.admissionTerm?.admissionTermStatus?.toLowerCase() === 'locked' &&
                             <Button
                                 sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
@@ -277,7 +294,7 @@ function RenderDetail({handleCloseFunc, isModalOpened, formData, onActionComplet
 
                         {
                             formData.status.toLowerCase() === 'pending approval' &&
-                            formData.admissionTerm?.status?.toLowerCase() === 'locked_term' &&
+                            formData.admissionTerm?.admissionTermStatus?.toLowerCase() === 'locked' &&
                             <Button
                                 sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
                                 variant="contained"
@@ -400,7 +417,6 @@ export default function ProcessForm() {
         setModal({...modal, isOpen: false, type: ''});
     };
 
-    console.log(selectedForm);
     return (
         <>
             <RenderPage

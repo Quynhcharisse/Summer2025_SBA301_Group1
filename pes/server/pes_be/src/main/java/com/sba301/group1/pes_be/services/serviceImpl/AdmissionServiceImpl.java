@@ -72,11 +72,10 @@ public class AdmissionServiceImpl implements AdmissionService {
 
         for (AdmissionTerm term : terms) {
             String updateStatus = updateTermStatus(term, today);
-            if (term.getStatus().equals(updateStatus)) {
+            if (!term.getStatus().equals(updateStatus)) {
                 term.setStatus(updateStatus);
             }
         }
-
         admissionTermRepo.saveAll(terms);
 
         List<Map<String, Object>> result = terms.stream()
@@ -182,6 +181,12 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("cancelReason", form.getCancelReason());
                             data.put("note", form.getNote());
                             data.put("status", form.getStatus());
+
+                            Map<String, Object> admissionTermData = new HashMap<>();
+                            if (form.getAdmissionTerm() != null) {
+                                admissionTermData.put("admissionTermStatus", form.getAdmissionTerm().getStatus());
+                            }
+                            data.put("admissionTerm", admissionTermData);
                             return data;
                         }
                 )
@@ -199,7 +204,6 @@ public class AdmissionServiceImpl implements AdmissionService {
     @Override
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {
         String error = AdmissionTermValidation.processFormByManagerValidate(request, admissionFormRepo);
-
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -211,7 +215,6 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
-
         if (form == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -223,7 +226,24 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         AdmissionTerm term = form.getAdmissionTerm();
-        if(term == null || !term.getStatus().equals(Status.LOCKED_TERM.getValue())) {
+        if (term == null) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Admission term is missing")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        //Cập nhật lại trạng thái term real-time
+        String updatedStatus = updateTermStatus(term, LocalDate.now());
+        if (!term.getStatus().equals(updatedStatus)) {
+            term.setStatus(updatedStatus);
+            admissionTermRepo.save(term);
+        }
+
+        if (!updatedStatus.equals(Status.LOCKED_TERM.getValue())) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("You can only approve or reject forms after the admission term is locked.")
@@ -239,15 +259,15 @@ public class AdmissionServiceImpl implements AdmissionService {
             form.setStatus(Status.REJECTED.getValue());
             form.setCancelReason(request.getReason());
         }
+
         admissionFormRepo.save(form);
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message(request.isApproved() ? "Form Approved" : "Form Rejected")
                         .success(true)
-                        .data(form)
+                        .data(null)
                         .build()
         );
     }
-
 }
