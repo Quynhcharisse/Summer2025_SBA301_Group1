@@ -34,6 +34,8 @@ public class Manager {
 
     String department;
 
+    String status;
+
     @Column(name = "`password_changed`")
     boolean passwordChanged;
 

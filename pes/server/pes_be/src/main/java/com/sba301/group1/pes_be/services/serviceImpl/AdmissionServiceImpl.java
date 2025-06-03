@@ -170,14 +170,14 @@ public class AdmissionServiceImpl implements AdmissionService {
                         form -> {
                             Map<String, Object> data = new HashMap<>();
                             data.put("id", form.getId());
-                            data.put("childName", form.getStudentName());
-                            data.put("childGender", form.getGender());
+                            data.put("childName", form.getChildName());
+                            data.put("childGender", form.getChildGender());
                             data.put("dateOfBirth", form.getDateOfBirth());
                             data.put("placeOfBirth", form.getPlaceOfBirth());
                             data.put("profileImage", form.getProfileImage());
                             data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
                             data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
-                            data.put("birthCertificateImg", form.getChildBirthCertificateImg());
+                            data.put("birthCertificateImg", form.getBirthCertificateImg());
                             data.put("commitmentImg", form.getCommitmentImg());
                             data.put("submittedDate", form.getSubmittedDate());
                             data.put("cancelReason", form.getCancelReason());

@@ -6,7 +6,7 @@ function ParentLayout() {
         {
             segment: 'parent/form',
             title: 'Admission Form',
-            icon: <InsertDriveFileIcon/>
+            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
         }
     ]
     return (

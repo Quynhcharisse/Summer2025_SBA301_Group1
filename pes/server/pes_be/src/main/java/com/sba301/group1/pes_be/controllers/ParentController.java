@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.controllers;
 
+import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.SaveDraftAdmissionFormRequest;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
@@ -28,7 +29,7 @@ public class ParentController {
         return parentService.viewAdmissionFormList(request);
     }
 
-    @PutMapping("/form/submit")
+    @PostMapping("/form/submit")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> submitAdmissionForm(@RequestBody SubmitAdmissionFormRequest request, HttpServletRequest httpRequest) {
         return parentService.submitAdmissionForm(request, httpRequest);
@@ -36,8 +37,8 @@ public class ParentController {
 
     @PutMapping("/form/cancel")
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> cancelAdmissionForm(@RequestBody int id, HttpServletRequest httpRequest) {
-        return parentService.cancelAdmissionForm(id, httpRequest);
+    public ResponseEntity<ResponseObject> cancelAdmissionForm(@RequestBody CancelAdmissionForm request, HttpServletRequest httpRequest) {
+        return parentService.cancelAdmissionForm(request, httpRequest);
     }
 
     @GetMapping("/children")

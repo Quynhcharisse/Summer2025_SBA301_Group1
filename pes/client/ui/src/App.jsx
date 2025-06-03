@@ -5,8 +5,10 @@ import {SnackbarProvider} from "notistack";
 import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ParentLayout from "./layouts/ParentLayout.jsx";
-import ProtectRouter from "./config/ProtectRouter.jsx";
+import ProtectRoute from "./config/ProtectRoute.jsx";
 import AdmissionForm from "./components/parent/Form.jsx";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 
 
 const router = createBrowserRouter([
@@ -18,16 +20,13 @@ const router = createBrowserRouter([
         path: "/home",
         element: <HomePage/>
     },
-    {
-        path: '*',
-        element: <Navigate to='/home'/>
-    },
+
     {
         path: "/parent",
         element: (
-            <ProtectRouter allowedRoles={["PARENT"]}>
+            <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
-            </ProtectRouter>
+            </ProtectRoute>
         ),
         children: [
             {
@@ -40,16 +39,19 @@ const router = createBrowserRouter([
             }
         ]
     },
+    {
+        path: '*',
+        element: <Navigate to='/home'/>
+    },
 ])
 
 function App() {
-
-
     return (
         <>
-            <SnackbarProvider maxSnack={3} anchorOrigin={{horizontal: 'right', vertical: 'top'}}
-                              autoHideDuration={3000}>
-                <RouterProvider router={router}/>
+            <SnackbarProvider maxSnack={3} anchorOrigin={{horizontal: 'right', vertical: 'top'}} autoHideDuration={3000}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <RouterProvider router={router}/>
+                </LocalizationProvider>
             </SnackbarProvider>
         </>
     )

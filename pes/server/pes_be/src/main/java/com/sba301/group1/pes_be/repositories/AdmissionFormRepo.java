@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface AdmissionFormRepo extends JpaRepository<AdmissionForm, Integer> {
 
-    List<AdmissionForm> findAllByParent_IdAndStudentName(int parentId, String studentName);
+    List<AdmissionForm> findAllByParent_IdAndChildName(int parentId, String childName);
 }
