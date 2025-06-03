@@ -12,9 +12,9 @@ import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.ParentRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.requests.ChildRequest;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.ParentService;
 import com.sba301.group1.pes_be.validations.ParentValidation.FormByParentValidation;
@@ -279,39 +279,12 @@ public class ParentServiceImpl implements ParentService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> getParentById(int id, HttpServletRequest httpRequest) {
-        Parent parent = parentRepo.findById(id).orElse(null);
-        if (parent == null || !parent.getId().equals(id)) {
-            return ResponseEntity.ok(
-                    ResponseObject.builder()
-                            .message("Parent not found or access denied.")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
-        Map<String, Object> parentData = new HashMap<>();
-        parentData.put("id", parent.getId());
-        parentData.put("job", parent.getJob());
-        parentData.put("relationshipToChild", parent.getRelationshipToChild());
-        parentData.put("dayOfBirth", parent.getDayOfBirth());
-        parentData.put("passwordChanged", parent.isPasswordChanged());
-        parentData.put("account", parent.getAccount());
-        parentData.put("address", parent.getAddress());
-        return ResponseEntity.ok(
-                ResponseObject.builder()
-                        .message("Parent retrieved successfully.")
-                        .success(true)
-                        .data(parentData)
-                        .build());
-    }
-
-    @Override
-    public ResponseEntity<ResponseObject> updateParent(ParentRequest request, HttpServletRequest httpRequest) {
-        Account acc = jwtService.extractAccountFromCookie(httpRequest);
+    public ResponseEntity<ResponseObject> addChild(ChildRequest childRequest, HttpServletRequest request) {
+        Account acc = jwtService.extractAccountFromCookie(request);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("Update parent failed: Unauthorized")
+                            .message("Add child failed: Unauthorized")
                             .success(false)
                             .data(null)
                             .build());
@@ -327,36 +300,50 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Update fields (giả sử ParentRequest có các trường tương ứng)
-        parent.setJob(request.getJob());
-        parent.setRelationshipToChild(request.getRelationshipToChild());
-        parent.setDayOfBirth(request.getDayOfBirth());
-        parent.setAddress(request.getAddress());
-        // Thêm các trường khác nếu cần
+        Student student = Student.builder()
+                .name(childRequest.getName())
+                .gender(childRequest.getGender())
+                .dateOfBirth(childRequest.getDateOfBirth())
+                .placeOfBirth(childRequest.getPlaceOfBirth())
+                .profileImage(childRequest.getProfileImage())
+                .isStudent(false)
+                .parent(parent)
+                .build();
 
-        parentRepo.save(parent);
+        studentRepo.save(student);
+
+        Map<String, Object> childData = new HashMap<>();
+        childData.put("id", student.getId());
+        childData.put("name", student.getName());
+        childData.put("gender", student.getGender());
+        childData.put("dateOfBirth", student.getDateOfBirth());
+        childData.put("placeOfBirth", student.getPlaceOfBirth());
+        childData.put("profileImage", student.getProfileImage());
+        childData.put("isStudent", student.isStudent());
+        childData.put("parentId", parent.getId());
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Parent updated successfully")
+                        .message("Child added successfully")
                         .success(true)
-                        .data(parent)
+                        .data(childData)
                         .build());
     }
 
     @Override
-    public ResponseEntity<ResponseObject> deleteParent(int id, HttpServletRequest httpRequest) {
-        Account acc = jwtService.extractAccountFromCookie(httpRequest);
+    public ResponseEntity<ResponseObject> updateChild(ChildRequest childRequest, HttpServletRequest request) {
+        Account acc = jwtService.extractAccountFromCookie(request);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("Delete parent failed: Unauthorized")
+                            .message("Update child failed: Unauthorized")
                             .success(false)
                             .data(null)
                             .build());
         }
 
-        Parent parent = parentRepo.findById(id).orElse(null);
+        // Tìm parent từ account
+        Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         if (parent == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -366,15 +353,41 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Có thể kiểm tra quyền xóa ở đây nếu cần
+        // Tìm student theo id và parent
+        Student student = studentRepo.findById(childRequest.getId()).orElse(null);
+        if (student == null || !student.getParent().getId().equals(parent.getId())) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Child not found or access denied")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
 
-        parentRepo.delete(parent);
+        // Cập nhật thông tin
+        student.setName(childRequest.getName());
+        student.setGender(childRequest.getGender());
+        student.setDateOfBirth(childRequest.getDateOfBirth());
+        student.setPlaceOfBirth(childRequest.getPlaceOfBirth());
+        // Thêm các trường khác nếu có
+
+        studentRepo.save(student);
+
+        Map<String, Object> childData = new HashMap<>();
+        childData.put("id", student.getId());
+        childData.put("name", student.getName());
+        childData.put("gender", student.getGender());
+        childData.put("dateOfBirth", student.getDateOfBirth());
+        childData.put("placeOfBirth", student.getPlaceOfBirth());
+        childData.put("profileImage", student.getProfileImage());
+        childData.put("isStudent", student.isStudent());
+        childData.put("parentId", parent.getId());
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Parent deleted successfully")
+                        .message("Child updated successfully")
                         .success(true)
-                        .data(null)
+                        .data(childData)
                         .build());
     }
 }

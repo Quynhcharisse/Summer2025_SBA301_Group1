@@ -1,6 +1,7 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.requests.ChildRequest;
 import com.sba301.group1.pes_be.requests.ParentRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.SaveDraftAdmissionFormRequest;
@@ -37,27 +38,24 @@ public class ParentController {
         return parentService.cancelAdmissionForm(request, httpRequest);
     }
 
+                                    //------- Child Management ---------//
+
     @GetMapping("/children")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> getChildren(HttpServletRequest request) {
         return parentService.getChildren(request);
     }
 
-    @GetMapping("/{id}")
+    @PostMapping
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getParentById(@PathVariable int id, HttpServletRequest httpRequest) {
-        return parentService.getParentById(id, httpRequest);
+    public ResponseEntity<ResponseObject> addChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
+        return parentService.addChild(childRequest, request);
     }
 
-    @PutMapping()
+    @PutMapping
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> updateParent(@RequestBody ParentRequest request, HttpServletRequest httpRequest) {
-        return parentService.updateParent(request, httpRequest);
+    public ResponseEntity<ResponseObject> updateChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
+        return parentService.updateChild(childRequest, request);
     }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('parent')")// update later role can delete parent
-    public ResponseEntity<ResponseObject> deleteParent(@PathVariable int id, HttpServletRequest httpRequest) {
-        return parentService.deleteParent(id, httpRequest);
-    }
 }
