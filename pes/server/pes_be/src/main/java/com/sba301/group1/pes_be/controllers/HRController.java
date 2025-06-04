@@ -1,50 +1,41 @@
 package com.sba301.group1.pes_be.controllers;
 
+import com.sba301.group1.pes_be.requests.ParentRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.services.EducationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.sba301.group1.pes_be.services.HRService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasRole('hr')")
+@RequestMapping("api/v1/hr")
 @RequiredArgsConstructor
-@Tag(name = "HR Management", description = "APIs for HR role to view all data")
 public class HRController {
 
-    private final EducationService educationService;
+    private final HRService hrService;
 
-    // Get All Methods
-    @GetMapping("/api/activities")
-    @Operation(summary = "Get all activities")
-    public ResponseEntity<ResponseObject> getAllActivities() {
-        return educationService.getAllActivities();
+    @GetMapping("/parent")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> getParentById(@RequestBody int id, HttpServletRequest httpRequest) {
+        return hrService.getParentById(id, httpRequest);
     }
 
-    @GetMapping("/api/schedules")
-    @Operation(summary = "Get all schedules")
-    public ResponseEntity<ResponseObject> getAllSchedules() {
-        return educationService.getAllSchedules();
+    @PutMapping("/parent/update")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> updateParent(@RequestBody ParentRequest request, HttpServletRequest httpRequest) {
+        return hrService.updateParent(request, httpRequest);
     }
 
-    @GetMapping("/api/classes")
-    @Operation(summary = "Get all classes")
-    public ResponseEntity<ResponseObject> getAllClasses() {
-        return educationService.getAllClasses();
-    }
-
-    @GetMapping("/api/lessons")
-    @Operation(summary = "Get all lessons")
-    public ResponseEntity<ResponseObject> getAllLessons() {
-        return educationService.getAllLessons();
-    }
-
-    @GetMapping("/api/syllabus")
-    @Operation(summary = "Get all syllabi")
-    public ResponseEntity<ResponseObject> getAllSyllabi() {
-        return educationService.getAllSyllabi();
+    @PostMapping("/parent/remove")
+    @PreAuthorize("hasRole('hr')")// update later role can delete parent
+    public ResponseEntity<ResponseObject> deleteParent(@RequestBody int id, HttpServletRequest httpRequest) {
+        return hrService.deleteParent(id, httpRequest);
     }
 }

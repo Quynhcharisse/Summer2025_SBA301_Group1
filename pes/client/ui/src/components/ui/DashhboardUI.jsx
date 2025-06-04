@@ -1,8 +1,8 @@
 import {createTheme} from "@mui/material";
 import {useState} from "react";
-import {AppProvider as ReactRouterAppProvider} from "@toolpad/core";
-import {DashboardLayout} from "@toolpad/core/DashboardLayout";
-import {Outlet} from "react-router-dom";
+import {ReactRouterAppProvider} from "@toolpad/core/react-router";
+import {DashboardLayout} from "@toolpad/core";
+import {Outlet} from "react-router-dom"
 
 export default function DashboardUI({navigate, homeUrl}) {
     const [session, setSession] = useState(
@@ -29,8 +29,8 @@ export default function DashboardUI({navigate, homeUrl}) {
             navigation={navigate}
             branding={
                 {
-                    logo: <img src="/img.png" alt="logo"/>,
-                    title: "PES",
+                    logo: <img src="/logo-merrystar-horizontal.png" alt="logo"/>,
+                    title: "MerryStar",
                     homeUrl: homeUrl
                 }
             }

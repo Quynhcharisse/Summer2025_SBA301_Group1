@@ -1,0 +1,84 @@
+.container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+p {
+    margin: 0 !important;
+}
+
+.css-rwkbif-MuiPaper-root-MuiAppBar-root {
+    background-color: #2c3e50 !important;
+}
+
+/* tiêu đề chữ */
+.css-mpaqru-MuiTypography-root {
+    color: #2c3e50 !important;
+    font-weight: bold !important;
+}
+
+/* viền trắng của slide bar */
+.css-njufkc-MuiButtonBase-root-MuiListItemButton-root.Mui-selected {
+    background-color: white !important;
+}
+
+.css-23htwk,
+.css-ku8xer,
+.css-1kojr6p{
+    background-image: url("https://merrystar.edu.vn/wp-content/uploads/2021/09/hoi-dong-khoa-hoc-bg.png")
+}
+
+.css-1umw9bq-MuiSvgIcon-root {
+}
+
+.css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiSvgIcon-root {
+    background-color: white !important;
+}
+
+
+.css-mpaqru-MuiTypography-root {
+    background-color: white !important;
+    font-weight: bold !important;
+}
+
+.css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiSvgIcon-root {
+    background-color: #d3dae0 !important;
+    border-color: #d3dae0 !important;
+    border-radius: 1rem !important;
+}
+
+.status-color-green{
+    color: green !important;
+}
+
+.status-color-red{
+    color: red !important;
+}
+
+.status-color-blue{
+    color: blue !important;
+}
+
+.css-1umw9bq-MuiSvgIcon-root {
+    fill: white !important;
+}
+
+.css-35pwe3-MuiPaper-root-MuiAppBar-root {
+    background-color: #2c3e50 !important;
+}
+
+.css-1ckov0h-MuiSvgIcon-root {
+    fill: #2c3e50 !important;
+}
+
+
+.css-65oee2-MuiTypography-root {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.css-14f5o8w-MuiTableContainer-root {
+    height: 48vh !important;
+}

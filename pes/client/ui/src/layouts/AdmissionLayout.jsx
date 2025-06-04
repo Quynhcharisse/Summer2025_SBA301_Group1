@@ -1,20 +1,19 @@
 import DashboardUI from "../components/ui/DashhboardUI.jsx";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-function ParentLayout() {
+function AdmissionLayout() {
     const navigate = [
         {
-            segment: 'parent/form',
-            title: 'Admission Form',
-            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
+            segment: 'admission/process/form',
+            title: 'Process Admission Form',
+            icon: <InsertDriveFileIcon/>
         }
     ]
     return (
         <DashboardUI
             navigate={navigate}
-            homeUrl={'/parent/form'}
-        />
+            homeUrl={'/admission/process/form'}/>
     )
 }
 
-export default ParentLayout;
+export default AdmissionLayout;

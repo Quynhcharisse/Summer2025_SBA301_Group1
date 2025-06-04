@@ -113,8 +113,8 @@ const signInPage = async (provider, formData) => {
                     const role = decode.role;
 
                     switch (role.toLowerCase()) {
-                        case 'manager':
-                            window.location.href = "/manager/dashboard";
+                        case 'admission':
+                            window.location.href = "/admission/process/form";
                             break;
 
                         case 'parent':

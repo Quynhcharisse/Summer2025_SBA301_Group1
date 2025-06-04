@@ -43,7 +43,7 @@ public class AdmissionTerm {
     @Column(name = "`start_date`")
     LocalDate startDate;
 
-    @Column(name = "`end_date `")
+    @Column(name = "`end_date`")
     LocalDate endDate;
 
     int year;

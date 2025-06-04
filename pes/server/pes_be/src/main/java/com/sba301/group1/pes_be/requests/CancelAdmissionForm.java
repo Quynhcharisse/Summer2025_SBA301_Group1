@@ -1,16 +1,17 @@
 package com.sba301.group1.pes_be.requests;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProcessAdmissionFormRequest {
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class CancelAdmissionForm {
     int id;
-    boolean isApproved; // true = approve, false = reject
-    String reason; // Lý do từ chối nếu rejected
 }

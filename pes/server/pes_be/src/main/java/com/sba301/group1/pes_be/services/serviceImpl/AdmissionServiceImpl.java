@@ -72,11 +72,10 @@ public class AdmissionServiceImpl implements AdmissionService {
 
         for (AdmissionTerm term : terms) {
             String updateStatus = updateTermStatus(term, today);
-            if (term.getStatus().equals(updateStatus)) {
+            if (!term.getStatus().equals(updateStatus)) {
                 term.setStatus(updateStatus);
             }
         }
-
         admissionTermRepo.saveAll(terms);
 
         List<Map<String, Object>> result = terms.stream()
@@ -160,29 +159,34 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     @Override
-    public ResponseEntity<ResponseObject> viewAdmissionFormList(int year) {
+    public ResponseEntity<ResponseObject> viewAdmissionFormList() {
 
         List<Map<String, Object>> formList = admissionFormRepo.findAll().stream()
                 .filter(form -> form.getAdmissionTerm() != null
-                        && form.getAdmissionTerm().getStatus().equals(Status.LOCKED_TERM.getValue())
                         && form.getAdmissionTerm().getYear() == LocalDate.now().getYear())
                 .map(
                         form -> {
                             Map<String, Object> data = new HashMap<>();
                             data.put("id", form.getId());
-                            data.put("childName", form.getStudentName());
-                            data.put("childGender", form.getGender());
+                            data.put("childName", form.getChildName());
+                            data.put("childGender", form.getChildGender());
                             data.put("dateOfBirth", form.getDateOfBirth());
                             data.put("placeOfBirth", form.getPlaceOfBirth());
                             data.put("profileImage", form.getProfileImage());
                             data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
                             data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
-                            data.put("birthCertificateImg", form.getChildBirthCertificateImg());
+                            data.put("birthCertificateImg", form.getBirthCertificateImg());
                             data.put("commitmentImg", form.getCommitmentImg());
                             data.put("submittedDate", form.getSubmittedDate());
                             data.put("cancelReason", form.getCancelReason());
                             data.put("note", form.getNote());
                             data.put("status", form.getStatus());
+
+                            Map<String, Object> admissionTermData = new HashMap<>();
+                            if (form.getAdmissionTerm() != null) {
+                                admissionTermData.put("admissionTermStatus", form.getAdmissionTerm().getStatus());
+                            }
+                            data.put("admissionTerm", admissionTermData);
                             return data;
                         }
                 )
@@ -197,11 +201,9 @@ public class AdmissionServiceImpl implements AdmissionService {
         );
     }
 
-
     @Override
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {
         String error = AdmissionTermValidation.processFormByManagerValidate(request, admissionFormRepo);
-
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -213,11 +215,38 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
-
         if (form == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Form not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        AdmissionTerm term = form.getAdmissionTerm();
+        if (term == null) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Admission term is missing")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        //Cập nhật lại trạng thái term real-time
+        String updatedStatus = updateTermStatus(term, LocalDate.now());
+        if (!term.getStatus().equals(updatedStatus)) {
+            term.setStatus(updatedStatus);
+            admissionTermRepo.save(term);
+        }
+
+        if (!updatedStatus.equals(Status.LOCKED_TERM.getValue())) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("You can only approve or reject forms after the admission term is locked.")
                             .success(false)
                             .data(null)
                             .build()
@@ -230,15 +259,15 @@ public class AdmissionServiceImpl implements AdmissionService {
             form.setStatus(Status.REJECTED.getValue());
             form.setCancelReason(request.getReason());
         }
+
         admissionFormRepo.save(form);
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message(request.isApproved() ? "Form Approved" : "Form Rejected")
                         .success(true)
-                        .data(form)
+                        .data(null)
                         .build()
         );
     }
-
 }

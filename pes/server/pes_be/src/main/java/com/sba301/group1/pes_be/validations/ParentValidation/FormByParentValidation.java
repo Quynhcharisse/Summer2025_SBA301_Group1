@@ -4,19 +4,20 @@ import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
+import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
 
 import java.time.LocalDate;
 
 public class FormByParentValidation {
-    public static String canceledValidate(int id, Account account, AdmissionFormRepo admissionFormRepo) {
-        AdmissionForm form = admissionFormRepo.findById(id).orElse(null);
+    public static String canceledValidate(CancelAdmissionForm request, Account account, AdmissionFormRepo admissionFormRepo) {
+        AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
 
         if (form == null) {
             return "Admission form not found.";
         }
 
-        if (!form.getParent().getId().equals(account.getId())) {
+        if (!form.getParent().getId().equals(account.getParent().getId())) {
             return "You do not have permission to access this form.";
         }
 

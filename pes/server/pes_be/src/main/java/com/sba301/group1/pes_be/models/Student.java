@@ -51,6 +51,9 @@ public class Student {
     @Column(name = "`profile_image`")
     String profileImage;
 
+    @Column(name = "`is_student`")
+    boolean isStudent;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`parent_id`")
     Parent parent;

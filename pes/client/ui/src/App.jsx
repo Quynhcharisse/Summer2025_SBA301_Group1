@@ -5,13 +5,12 @@ import {SnackbarProvider} from "notistack";
 import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ParentLayout from "./layouts/ParentLayout.jsx";
-import ManagerLayout from "./layouts/ManagerLayout.jsx";
-import ProtectRouter from "./config/ProtectRouter.jsx";
+import ProtectRoute from "./config/ProtectRoute.jsx";
 import AdmissionForm from "./components/parent/Form.jsx";
-import Dashboard from "./components/manager/Dashboard.jsx";
-import ClassList from "./components/manager/ClassList.jsx";
-import ScheduleManagement from "./components/manager/ScheduleManagement.jsx";
-import ActivityManagement from "./components/manager/ActivityManagement.jsx";
+import {LocalizationProvider} from '@mui/x-date-pickers';
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
+import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 
 
 const router = createBrowserRouter([
@@ -24,15 +23,30 @@ const router = createBrowserRouter([
         element: <HomePage/>
     },
     {
-        path: '*',
-        element: <Navigate to='/home'/>
+        path: "/admission",
+        element: (
+            <ProtectRoute allowedRoles={["ADMISSION"]}>
+                <AdmissionLayout/>
+            </ProtectRoute>
+        ),
+        children: [
+            {
+                index: true,
+                element: <Navigate to="/admission/process/form"/>
+            },
+            {
+                path: 'process/form',
+                element: <ProcessForm/>
+            }
+        ]
     },
+
     {
         path: "/parent",
         element: (
-            <ProtectRouter allowedRoles={["PARENT"]}>
+            <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
-            </ProtectRouter>
+            </ProtectRoute>
         ),
         children: [
             {
@@ -46,45 +60,19 @@ const router = createBrowserRouter([
         ]
     },
     {
-        path: "/manager",
-        element: (
-            <ProtectRouter allowedRoles={["MANAGER"]}>
-                <ManagerLayout/>
-            </ProtectRouter>
-        ),
-        children: [
-            {
-                index: true,
-                element: <Navigate to="/manager/dashboard"/>
-            },
-            {
-                path: 'dashboard',
-                element: <Dashboard/>
-            },
-            {
-                path: 'classes',
-                element: <ClassList/>
-            },
-            {
-                path: 'schedules',
-                element: <ScheduleManagement/>
-            },
-            {
-                path: 'activities',
-                element: <ActivityManagement/>
-            }
-        ]
+        path: '*',
+        element: <Navigate to='/home'/>
     },
 ])
 
 function App() {
-
-
     return (
         <>
             <SnackbarProvider maxSnack={3} anchorOrigin={{horizontal: 'right', vertical: 'top'}}
                               autoHideDuration={3000}>
-                <RouterProvider router={router}/>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <RouterProvider router={router}/>
+                </LocalizationProvider>
             </SnackbarProvider>
         </>
     )
