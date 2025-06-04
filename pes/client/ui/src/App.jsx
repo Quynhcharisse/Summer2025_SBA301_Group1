@@ -30,9 +30,7 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/home"/>
-    },
-    {
-        path: "/admission",
+    },    {        path: "/admission",
         element: (
             <ProtectRoute allowedRoles={["ADMISSION"]}>
                 <AdmissionLayout/>
@@ -48,10 +46,7 @@ const router = createBrowserRouter([
                 element: <ProcessForm/>
             }
         ]
-    },
-
-    {
-        path: "/parent",
+    },    {        path: "/parent",
         element: (
             <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
@@ -67,8 +62,7 @@ const router = createBrowserRouter([
                 element: <AdmissionForm/>
             }
         ]
-    },    {
-        path: "/education",
+    },    {        path: "/education",
         element: (
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>

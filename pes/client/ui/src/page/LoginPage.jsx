@@ -112,18 +112,18 @@ const signInPage = async (provider, formData) => {
                     const decode = jwtDecode(accessToken);
                     const role = decode.role;
 
-                    switch (role.toLowerCase()) {
-                        case 'admission':
+                    switch (role) {
+                        case 'ADMISSION':
                             window.location.href = "/admission/process/form";
                             break;
 
-                        case 'parent':
+                        case 'PARENT':
                             setTimeout(() => {
                                 window.location.href = "/parent/form";
                             }, 500)
                             break;
                         
-                        case 'education':
+                        case 'EDUCATION':
                             setTimeout(() => {
                                 window.location.href = "/education";
                             }, 500)
@@ -164,20 +164,26 @@ function CustomButton() {
 }
 
 function Login() {
-    // local strorege con thi se con nguyen
-    if(localStorage.length > 0) {
+    // Clear local storage only if we're actually on the login page
+    // and not being redirected here due to authentication issues
+    const isRedirectedFromAuth = new URLSearchParams(window.location.search).get('redirect') === 'auth';
+    
+    if (!isRedirectedFromAuth && localStorage.length > 0) {
         localStorage.clear()
     }
 
-    // chay 1 lan duy nhat
+    // Run logout only once when component mounts
     useEffect(() => {
-        async function signOut(){
-            return await logout();
-        }
+        // Only logout if we're not coming from an auth redirect
+        if (!isRedirectedFromAuth) {
+            async function signOut(){
+                return await logout();
+            }
 
-        signOut().then(res => {
-            console.log(res);
-        });
+            signOut().then(res => {
+                console.log(res);
+            });
+        }
     }, [])
 
     return (

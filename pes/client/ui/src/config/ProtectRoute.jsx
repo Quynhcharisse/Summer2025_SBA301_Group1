@@ -38,8 +38,17 @@ const ProtectRoute = ({children, allowedRoles}) => {
                 // Try to refresh token
                 try {
                     const res = await refreshToken();
-                    if (res.success) {
-                        window.location.reload();
+                    if (res && res.success) {
+                        // After successful refresh, check the new token
+                        const newAccessToken = Cookies.get('access');
+                        if (newAccessToken) {
+                            const decoded = jwtDecode(newAccessToken);
+                            if (decoded && allowedRoles.includes(decoded.role)) {
+                                setIsAuthorized(true);
+                            } else {
+                                enqueueSnackbar("You don't have permission to access this page", {variant: 'error'});
+                            }
+                        }
                     } else {
                         enqueueSnackbar("Session expired, please login again", {variant: 'error'});
                         navigate('/login');
@@ -56,7 +65,7 @@ const ProtectRoute = ({children, allowedRoles}) => {
     }, [allowedRoles, navigate]);
 
     if (isChecking) {
-        return <div>Loading...</div>; // Or a proper loading component
+        return <div>Loading...</div>; 
     }
 
     if (!isAuthorized) {

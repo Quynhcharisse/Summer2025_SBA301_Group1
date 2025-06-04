@@ -24,7 +24,7 @@ axiosClient.interceptors.response.use(
                 document.cookie = 'access=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
                 document.cookie = 'check=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
                 localStorage.clear();
-                window.location.href = "/login";
+                window.location.href = "/login?redirect=auth";
                 return Promise.reject(error);
             }
 
@@ -37,7 +37,7 @@ axiosClient.interceptors.response.use(
                     document.cookie = 'access=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
                     document.cookie = 'check=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
                     localStorage.clear();
-                    window.location.href = "/login";
+                    window.location.href = "/login?redirect=auth";
                 }
             } catch (refreshError) {
                 console.error("Refresh token request failed", refreshError);
