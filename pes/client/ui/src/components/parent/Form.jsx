@@ -577,12 +577,12 @@ export default function AdmissionForm() {
             />
             {
                 modal.isOpen && modal.type === 'form' &&
-                <RenderForm isModalOpened={open} handleCloseFunc={handleCloseModal}/> // condition de ko thi mean = true and component
+                <RenderForm isModalOpened={modal.isOpen} handleCloseFunc={handleCloseModal}/> // condition de ko thi mean = true and component
             }
 
             {
                 modal.isOpen && modal.type === 'detail' &&
-                <RenderDetail isModalOpened={open} handleCloseFunc={handleCloseModal} formData={selectedForm}/> // condition de ko thi mean = true and component
+                <RenderDetail isModalOpened={modal.isOpen} handleCloseFunc={handleCloseModal} formData={selectedForm}/> // condition de ko thi mean = true and component
             }
         </>
 

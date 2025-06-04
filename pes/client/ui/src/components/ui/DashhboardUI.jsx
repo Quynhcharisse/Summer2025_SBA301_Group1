@@ -1,5 +1,8 @@
 import {createTheme} from "@mui/material";
 import {useState} from "react";
+import {AppProvider as ReactRouterAppProvider} from "@toolpad/core";
+import {DashboardLayout} from "@toolpad/core/DashboardLayout";
+import {Outlet} from "react-router-dom";
 
 export default function DashboardUI({navigate, homeUrl}) {
     const [session, setSession] = useState(
