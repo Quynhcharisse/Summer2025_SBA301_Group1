@@ -15,7 +15,7 @@ import EducationLayout from "./layouts/EducationLayout.jsx";
 import ClassList from "./components/educationManager/ClassList.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
-import Dashboard from "./components/educationManager/Dashboard.jsx";
+import DashboardUI from "./components/ui/DashhboardUI.jsx";
 
 
 const router = createBrowserRouter([
@@ -67,11 +67,33 @@ const router = createBrowserRouter([
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>
             </ProtectRoute>
-        ),
-        children: [
+        ),        children: [
             {
                 index: true,
-                element: <Dashboard/>
+                element: (
+                    <div style={{ padding: '24px' }}>
+                        <h1 style={{ marginBottom: '16px', color: '#1976d2' }}>
+                            Education Management Dashboard
+                        </h1>
+                        <p style={{ marginBottom: '24px', color: '#666', fontSize: '16px' }}>
+                            Welcome to the Education Management System. Use the navigation menu to access different features.
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '32px' }}>
+                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Class Management</h3>
+                                <p style={{ color: '#666' }}>Manage student classes, enrollment, and class information.</p>
+                            </div>
+                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Activity Management</h3>
+                                <p style={{ color: '#666' }}>Organize and manage educational activities and events.</p>
+                            </div>
+                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
+                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Schedule Management</h3>
+                                <p style={{ color: '#666' }}>Plan and manage class schedules and timetables.</p>
+                            </div>
+                        </div>
+                    </div>
+                )
             },
             {
                 path: 'classes',
