@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
 import com.sba301.group1.pes_be.services.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;

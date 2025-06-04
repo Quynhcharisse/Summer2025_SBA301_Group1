@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.services;
 
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
 import org.springframework.http.ResponseEntity;
 

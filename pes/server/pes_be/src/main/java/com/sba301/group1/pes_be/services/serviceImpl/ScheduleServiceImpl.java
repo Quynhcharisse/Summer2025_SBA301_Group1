@@ -5,7 +5,7 @@ import com.sba301.group1.pes_be.models.Schedule;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
 import com.sba301.group1.pes_be.services.ScheduleService;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;

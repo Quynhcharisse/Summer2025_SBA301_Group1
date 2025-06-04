@@ -2,7 +2,7 @@ package com.sba301.group1.pes_be.services;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
-import com.sba301.group1.pes_be.requests.ResponseObject;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
 import org.springframework.http.ResponseEntity;
 
