@@ -122,6 +122,13 @@ const signInPage = async (provider, formData) => {
                                 window.location.href = "/parent/form";
                             }, 500)
                             break;
+                        
+                        case 'education':
+                            setTimeout(() => {
+                                window.location.href = "/education";
+                            }, 500)
+                            break;
+                        
                         default:
                             window.location.href = "/login";
                     }
