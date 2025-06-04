@@ -9,6 +9,8 @@ import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
+import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
+import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -19,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -356,6 +359,169 @@ public class ActivityServiceImpl implements ActivityService {
     public ResponseEntity<ResponseObject> getActivitiesByClassAndDay(Integer classId, String dayOfWeek) {
         try {
             List<Activity> activities = activityRepo.findByClassIdAndDayOfWeek(classId, dayOfWeek);
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Activities retrieved successfully")
+                    .success(true)
+                    .data(activities)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error retrieving activities: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> bulkCreateActivities(BulkCreateActivityRequest request) {
+        try {
+            // Validate schedule exists
+            Optional<Schedule> scheduleOpt = scheduleRepo.findById(request.getScheduleId());
+            if (scheduleOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Schedule not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            Schedule schedule = scheduleOpt.get();
+            List<Activity> activities = new ArrayList<>();
+
+            for (BulkCreateActivityRequest.ActivityData activityData : request.getActivities()) {
+                Activity activity = Activity.builder()
+                    .topic(activityData.getTopic())
+                    .description(activityData.getDescription())
+                    .dayOfWeek(activityData.getDayOfWeek())
+                    .startTime(activityData.getStartTime())
+                    .endTime(activityData.getEndTime())
+                    .schedule(schedule)
+                    .build();
+
+                // Set lesson if provided
+                if (activityData.getLessonId() != null) {
+                    if (lessonRepo.existsById(activityData.getLessonId())) {
+                        activity.setLesson(Lesson.builder().id(activityData.getLessonId()).build());
+                    } else {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                            ResponseObject.builder()
+                                .message("Lesson with ID " + activityData.getLessonId() + " not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                        );
+                    }
+                }
+
+                activities.add(activity);
+            }
+
+            List<Activity> savedActivities = activityRepo.saveAll(activities);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResponseObject.builder()
+                    .message("Activities created successfully")
+                    .success(true)
+                    .data(savedActivities)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error creating activities: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> createActivitiesFromLessons(CreateActivitiesFromLessonsRequest request) {
+        try {
+            // Validate schedule exists
+            Optional<Schedule> scheduleOpt = scheduleRepo.findById(request.getScheduleId());
+            if (scheduleOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Schedule not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            Schedule schedule = scheduleOpt.get();
+            List<Activity> activities = new ArrayList<>();
+
+            for (Integer lessonId : request.getLessonIds()) {
+                Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
+                if (lessonOpt.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                            .message("Lesson with ID " + lessonId + " not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+                    );
+                }
+
+                Lesson lesson = lessonOpt.get();
+                Activity activity = Activity.builder()
+                    .topic(lesson.getTopic())
+                    .description(lesson.getDescription())
+                    .dayOfWeek(request.getDayOfWeek())
+                    .startTime(request.getStartTime())
+                    .endTime(request.getEndTime())
+                    .schedule(schedule)
+                    .lesson(lesson)
+                    .build();
+
+                activities.add(activity);
+            }
+
+            List<Activity> savedActivities = activityRepo.saveAll(activities);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResponseObject.builder()
+                    .message("Activities created from lessons successfully")
+                    .success(true)
+                    .data(savedActivities)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error creating activities from lessons: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getActivitiesByLessonId(Integer lessonId) {
+        try {
+            if (!lessonRepo.existsById(lessonId)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Lesson not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            List<Activity> activities = activityRepo.findByLessonId(lessonId);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")

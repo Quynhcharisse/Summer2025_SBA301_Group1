@@ -1,6 +1,8 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
+import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
+import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -75,5 +77,23 @@ public class ActivityController {
     @Operation(summary = "Assign activity to a class")
     public ResponseEntity<ResponseObject> assignActivityToClass(@RequestBody AssignActivityToClassRequest request) {
         return activityService.assignActivityToClass(request);
+    }
+
+    @PostMapping("/bulk-create")
+    @Operation(summary = "Create multiple activities")
+    public ResponseEntity<ResponseObject> bulkCreateActivities(@RequestBody BulkCreateActivityRequest request) {
+        return activityService.bulkCreateActivities(request);
+    }
+
+    @PostMapping("/create-from-lessons")
+    @Operation(summary = "Create activities from lessons")
+    public ResponseEntity<ResponseObject> createActivitiesFromLessons(@RequestBody CreateActivitiesFromLessonsRequest request) {
+        return activityService.createActivitiesFromLessons(request);
+    }
+
+    @GetMapping("/lesson/{lessonId}")
+    @Operation(summary = "Get activities for a lesson")
+    public ResponseEntity<ResponseObject> getActivitiesByLessonId(@PathVariable Integer lessonId) {
+        return activityService.getActivitiesByLessonId(lessonId);
     }
 }

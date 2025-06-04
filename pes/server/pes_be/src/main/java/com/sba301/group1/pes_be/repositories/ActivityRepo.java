@@ -21,4 +21,6 @@ public interface ActivityRepo extends JpaRepository<Activity, Integer> {
     
     @Query("SELECT a FROM Activity a WHERE a.schedule.classes.id = :classId AND a.dayOfWeek = :dayOfWeek")
     List<Activity> findByClassIdAndDayOfWeek(@Param("classId") Integer classId, @Param("dayOfWeek") String dayOfWeek);
+    
+    List<Activity> findByLessonId(Integer lessonId);
 }

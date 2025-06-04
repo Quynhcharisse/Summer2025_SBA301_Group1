@@ -1,6 +1,8 @@
 package com.sba301.group1.pes_be.services;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
+import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
+import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -25,4 +27,10 @@ public interface ActivityService {
     ResponseEntity<ResponseObject> assignActivityToClass(AssignActivityToClassRequest request);
     
     ResponseEntity<ResponseObject> getActivitiesByClassAndDay(Integer classId, String dayOfWeek);
+    
+    ResponseEntity<ResponseObject> bulkCreateActivities(BulkCreateActivityRequest request);
+    
+    ResponseEntity<ResponseObject> createActivitiesFromLessons(CreateActivitiesFromLessonsRequest request);
+    
+    ResponseEntity<ResponseObject> getActivitiesByLessonId(Integer lessonId);
 }
