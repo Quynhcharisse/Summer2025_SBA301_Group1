@@ -34,15 +34,13 @@ import {
     createSchedule,
     updateSchedule,
     deleteSchedule,
-    getAllClasses,
-    getActivitiesByClassId
+    getAllClasses
 } from '../../services/ManagerService.jsx';
 import { enqueueSnackbar } from 'notistack';
 
 function ScheduleManagement() {
     const [schedules, setSchedules] = useState([]);
     const [classes, setClasses] = useState([]);
-    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [weeklySchedule, setWeeklySchedule] = useState([]);
@@ -53,13 +51,9 @@ function ScheduleManagement() {
     });
 
     const [formData, setFormData] = useState({
-        classId: '',
-        activityId: '',
-        dayOfWeek: '',
-        startTime: null,
-        endTime: null,
         weekNumber: 1,
-        location: ''
+        note: '',
+        classId: ''
     });
 
     useEffect(() => {
@@ -89,17 +83,6 @@ function ScheduleManagement() {
         }
     };
 
-    const fetchActivitiesByClass = async (classId) => {
-        try {
-            const response = await getActivitiesByClassId(classId);
-            if (response && response.success) {
-                setActivities(response.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching activities:', error);
-            enqueueSnackbar('Error fetching activities', { variant: 'error' });
-        }
-    };
 
     const handleViewWeeklySchedule = async (classId, weekNumber = 1) => {
         try {
@@ -118,13 +101,9 @@ function ScheduleManagement() {
 
     const handleCreateSchedule = () => {
         setFormData({
-            classId: '',
-            activityId: '',
-            dayOfWeek: '',
-            startTime: null,
-            endTime: null,
             weekNumber: 1,
-            location: ''
+            note: '',
+            classId: ''
         });
         setModal({ isOpen: true, type: 'create' });
     };
@@ -132,18 +111,10 @@ function ScheduleManagement() {
     const handleEditSchedule = (schedule) => {
         setSelectedSchedule(schedule);
         setFormData({
-            classId: schedule.classId || '',
-            activityId: schedule.activityId || '',
-            dayOfWeek: schedule.dayOfWeek || '',
-            startTime: schedule.startTime ? dayjs(schedule.startTime) : null,
-            endTime: schedule.endTime ? dayjs(schedule.endTime) : null,
             weekNumber: schedule.weekNumber || 1,
-            location: schedule.location || ''
+            note: schedule.note || '',
+            classId: schedule.classes?.id || ''
         });
-        
-        if (schedule.classId) {
-            fetchActivitiesByClass(schedule.classId);
-        }
         
         setModal({ isOpen: true, type: 'edit' });
     };
@@ -168,13 +139,9 @@ function ScheduleManagement() {
     const handleFormSubmit = async () => {
         try {
             const scheduleData = {
-                classId: parseInt(formData.classId),
-                activityId: parseInt(formData.activityId),
-                dayOfWeek: formData.dayOfWeek,
-                startTime: formData.startTime ? formData.startTime.toISOString() : null,
-                endTime: formData.endTime ? formData.endTime.toISOString() : null,
                 weekNumber: formData.weekNumber,
-                location: formData.location
+                note: formData.note,
+                classId: parseInt(formData.classId)
             };
 
             let response;
@@ -206,17 +173,7 @@ function ScheduleManagement() {
     const handleCloseModal = () => {
         setModal({ isOpen: false, type: '' });
         setSelectedSchedule(null);
-        setActivities([]);
         setWeeklySchedule([]);
-    };
-
-    const handleClassChange = (classId) => {
-        setFormData({ ...formData, classId, activityId: '' });
-        if (classId) {
-            fetchActivitiesByClass(classId);
-        } else {
-            setActivities([]);
-        }
     };
 
     const getDayColor = (day) => {
@@ -241,54 +198,6 @@ function ScheduleManagement() {
             align: 'center'
         },
         {
-            field: 'classId',
-            headerName: 'Class ID',
-            width: 100,
-            headerAlign: 'center',
-            align: 'center'
-        },
-        {
-            field: 'activityId',
-            headerName: 'Activity ID',
-            width: 100,
-            headerAlign: 'center',
-            align: 'center'
-        },
-        {
-            field: 'dayOfWeek',
-            headerName: 'Day',
-            width: 120,
-            headerAlign: 'center',
-            align: 'center',
-            renderCell: (params) => (
-                <Chip 
-                    label={params.value} 
-                    color={getDayColor(params.value)}
-                    size="small"
-                />
-            )
-        },
-        {
-            field: 'startTime',
-            headerName: 'Start Time',
-            width: 150,
-            headerAlign: 'center',
-            align: 'center',
-            renderCell: (params) => (
-                params.value ? dayjs(params.value).format('MMM DD, HH:mm') : '-'
-            )
-        },
-        {
-            field: 'endTime',
-            headerName: 'End Time',
-            width: 150,
-            headerAlign: 'center',
-            align: 'center',
-            renderCell: (params) => (
-                params.value ? dayjs(params.value).format('MMM DD, HH:mm') : '-'
-            )
-        },
-        {
             field: 'weekNumber',
             headerName: 'Week',
             width: 80,
@@ -296,10 +205,39 @@ function ScheduleManagement() {
             align: 'center'
         },
         {
-            field: 'location',
-            headerName: 'Location',
-            width: 120,
+            field: 'note',
+            headerName: 'Note',
+            width: 200,
             headerAlign: 'center'
+        },
+        {
+            field: 'className',
+            headerName: 'Class',
+            width: 150,
+            headerAlign: 'center',
+            renderCell: (params) => (
+                params.row.classes?.className || '-'
+            )
+        },
+        {
+            field: 'grade',
+            headerName: 'Grade',
+            width: 100,
+            headerAlign: 'center',
+            align: 'center',
+            renderCell: (params) => (
+                params.row.classes?.grade || '-'
+            )
+        },
+        {
+            field: 'activitiesCount',
+            headerName: 'Activities',
+            width: 100,
+            headerAlign: 'center',
+            align: 'center',
+            renderCell: (params) => (
+                params.row.activities?.length || 0
+            )
         },
         {
             field: 'actions',
@@ -331,7 +269,7 @@ function ScheduleManagement() {
                         size="small"
                         variant="outlined"
                         startIcon={<ScheduleIcon />}
-                        onClick={() => handleViewWeeklySchedule(params.row.classId, params.row.weekNumber)}
+                        onClick={() => handleViewWeeklySchedule(params.row.classes?.id, params.row.weekNumber)}
                     >
                         Week View
                     </Button>
@@ -348,56 +286,6 @@ function ScheduleManagement() {
             <DialogContent>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Class</InputLabel>
-                            <Select
-                                value={formData.classId}
-                                onChange={(e) => handleClassChange(e.target.value)}
-                                label="Class"
-                            >
-                                {classes.map((cls) => (
-                                    <MenuItem key={cls.id} value={cls.id}>
-                                        {cls.className} (Grade {cls.grade})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Activity</InputLabel>
-                            <Select
-                                value={formData.activityId}
-                                onChange={(e) => setFormData({ ...formData, activityId: e.target.value })}
-                                label="Activity"
-                                disabled={!formData.classId}
-                            >
-                                {activities.map((activity) => (
-                                    <MenuItem key={activity.id} value={activity.id}>
-                                        {activity.title}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Day of Week</InputLabel>
-                            <Select
-                                value={formData.dayOfWeek}
-                                onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
-                                label="Day of Week"
-                            >
-                                {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((day) => (
-                                    <MenuItem key={day} value={day}>{day}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
                             label="Week Number"
@@ -409,33 +297,31 @@ function ScheduleManagement() {
                     </Grid>
 
                     <Grid item xs={12} md={6}>
-                        <DateTimePicker
-                            label="Start Time"
-                            value={formData.startTime}
-                            onChange={(newValue) => setFormData({ ...formData, startTime: newValue })}
-                            slotProps={{
-                                textField: { fullWidth: true }
-                            }}
-                        />
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                        <DateTimePicker
-                            label="End Time"
-                            value={formData.endTime}
-                            onChange={(newValue) => setFormData({ ...formData, endTime: newValue })}
-                            slotProps={{
-                                textField: { fullWidth: true }
-                            }}
-                        />
+                        <FormControl fullWidth>
+                            <InputLabel>Class</InputLabel>
+                            <Select
+                                value={formData.classId}
+                                onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                                label="Class"
+                            >
+                                {classes.map((cls) => (
+                                    <MenuItem key={cls.id} value={cls.id}>
+                                        {cls.className} (Grade {cls.grade})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Grid>
 
                     <Grid item xs={12}>
                         <TextField
                             fullWidth
-                            label="Location"
-                            value={formData.location}
-                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                            label="Note"
+                            multiline
+                            rows={3}
+                            value={formData.note}
+                            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                            placeholder="Add any notes about this schedule..."
                         />
                     </Grid>
                 </Grid>
@@ -461,25 +347,30 @@ function ScheduleManagement() {
                                     <ListItemText
                                         primary={
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Chip 
-                                                    label={schedule.dayOfWeek} 
-                                                    color={getDayColor(schedule.dayOfWeek)}
-                                                    size="small"
-                                                />
                                                 <Typography variant="subtitle1">
-                                                    Activity ID: {schedule.activityId}
+                                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
                                                 </Typography>
                                             </Box>
                                         }
                                         secondary={
                                             <>
                                                 <Typography variant="body2">
-                                                    Time: {dayjs(schedule.startTime).format('HH:mm')} - {dayjs(schedule.endTime).format('HH:mm')}
+                                                    Note: {schedule.note || 'No notes'}
                                                 </Typography>
-                                                {schedule.location && (
-                                                    <Typography variant="body2">
-                                                        Location: {schedule.location}
-                                                    </Typography>
+                                                <Typography variant="body2">
+                                                    Activities: {schedule.activities?.length || 0}
+                                                </Typography>
+                                                {schedule.activities && schedule.activities.length > 0 && (
+                                                    <Box sx={{ mt: 1 }}>
+                                                        {schedule.activities.map((activity, actIndex) => (
+                                                            <Chip
+                                                                key={actIndex}
+                                                                label={`${activity.topic} (${activity.dayOfWeek})`}
+                                                                size="small"
+                                                                sx={{ mr: 1, mb: 1 }}
+                                                            />
+                                                        ))}
+                                                    </Box>
                                                 )}
                                             </>
                                         }

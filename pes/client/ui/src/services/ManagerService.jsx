@@ -33,17 +33,17 @@ export const getClassesByGrade = async (grade) => {
 
 // Syllabus APIs
 export const getAllSyllabi = async () => {
-    const response = await axiosClient.get('/syllabi')
+    const response = await axiosClient.get('/syllabus')
     return response ? response.data : null
 }
 
 export const getSyllabusById = async (syllabusId) => {
-    const response = await axiosClient.get(`/syllabi/${syllabusId}`)
+    const response = await axiosClient.get(`/syllabus/${syllabusId}`)
     return response ? response.data : null
 }
 
 export const getLessonsBySyllabusId = async (syllabusId) => {
-    const response = await axiosClient.get(`/syllabi/${syllabusId}/lessons`)
+    const response = await axiosClient.get(`/syllabus/${syllabusId}/lessons`)
     return response ? response.data : null
 }
 
@@ -65,12 +65,31 @@ export const getLessonsByTopic = async (topic) => {
 
 // Activity APIs
 export const createActivity = async (activityData) => {
-    const response = await axiosClient.post('/activities', activityData)
+    // Transform frontend data to match backend CreateActivityRequest
+    const transformedData = {
+        topic: activityData.topic || activityData.title,
+        description: activityData.description,
+        dayOfWeek: activityData.dayOfWeek,
+        startTime: activityData.startTime,
+        endTime: activityData.endTime,
+        scheduleId: activityData.scheduleId,
+        lessonId: activityData.lessonId
+    }
+    const response = await axiosClient.post('/activities', transformedData)
     return response ? response.data : null
 }
 
 export const updateActivity = async (activityId, activityData) => {
-    const response = await axiosClient.put(`/activities/${activityId}`, activityData)
+    // Transform frontend data to match backend UpdateActivityRequest
+    const transformedData = {
+        topic: activityData.topic || activityData.title,
+        description: activityData.description,
+        dayOfWeek: activityData.dayOfWeek,
+        startTime: activityData.startTime,
+        endTime: activityData.endTime,
+        lessonId: activityData.lessonId
+    }
+    const response = await axiosClient.put(`/activities/${activityId}`, transformedData)
     return response ? response.data : null
 }
 
@@ -121,12 +140,23 @@ export const createActivitiesFromLessons = async (lessonsData) => {
 
 // Schedule APIs
 export const createSchedule = async (scheduleData) => {
-    const response = await axiosClient.post('/schedules', scheduleData)
+    // Transform frontend data to match backend CreateScheduleRequest
+    const transformedData = {
+        weekNumber: scheduleData.weekNumber,
+        note: scheduleData.note || scheduleData.location || '',
+        classId: scheduleData.classId
+    }
+    const response = await axiosClient.post('/schedules', transformedData)
     return response ? response.data : null
 }
 
 export const updateSchedule = async (scheduleId, scheduleData) => {
-    const response = await axiosClient.put(`/schedules/${scheduleId}`, scheduleData)
+    // Transform frontend data to match backend UpdateScheduleRequest
+    const transformedData = {
+        weekNumber: scheduleData.weekNumber,
+        note: scheduleData.note || scheduleData.location || ''
+    }
+    const response = await axiosClient.put(`/schedules/${scheduleId}`, transformedData)
     return response ? response.data : null
 }
 

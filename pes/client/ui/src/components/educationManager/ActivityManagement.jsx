@@ -34,7 +34,8 @@ import {
     deleteActivity,
     bulkCreateActivities,
     getAllClasses,
-    getAllLessons
+    getAllLessons,
+    getAllSchedules
 } from '../../services/ManagerService.jsx';
 import { enqueueSnackbar } from 'notistack';
 
@@ -42,6 +43,7 @@ function ActivityManagement() {
     const [activities, setActivities] = useState([]);
     const [classes, setClasses] = useState([]);
     const [lessons, setLessons] = useState([]);
+    const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedActivity, setSelectedActivity] = useState(null);
     
@@ -51,34 +53,30 @@ function ActivityManagement() {
     });
 
     const [formData, setFormData] = useState({
-        title: '',
+        topic: '',
         description: '',
-        activityType: '',
-        duration: '',
-        difficulty: '',
-        materials: '',
-        instructions: '',
+        dayOfWeek: '',
+        startTime: '',
+        endTime: '',
         lessonId: '',
-        classId: ''
+        scheduleId: ''
     });
 
     const [bulkFormData, setBulkFormData] = useState({
-        classId: '',
+        scheduleId: '',
         activities: [
             {
-                title: '',
+                topic: '',
                 description: '',
-                activityType: '',
-                duration: '',
-                difficulty: '',
-                materials: '',
-                instructions: ''
+                dayOfWeek: '',
+                startTime: '',
+                endTime: '',
+                lessonId: ''
             }
         ]
     });
 
-    const activityTypes = ['LESSON', 'EXERCISE', 'PROJECT', 'ASSESSMENT', 'DISCUSSION', 'PRESENTATION'];
-    const difficulties = ['EASY', 'MEDIUM', 'HARD'];
+    const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
     useEffect(() => {
         fetchInitialData();
@@ -87,10 +85,11 @@ function ActivityManagement() {
     const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const [activitiesResponse, classesResponse, lessonsResponse] = await Promise.all([
+            const [activitiesResponse, classesResponse, lessonsResponse, schedulesResponse] = await Promise.all([
                 getAllActivities(),
                 getAllClasses(),
-                getAllLessons()
+                getAllLessons(),
+                getAllSchedules()
             ]);
 
             if (activitiesResponse && activitiesResponse.success) {
@@ -104,6 +103,10 @@ function ActivityManagement() {
             if (lessonsResponse && lessonsResponse.success) {
                 setLessons(lessonsResponse.data || []);
             }
+
+            if (schedulesResponse && schedulesResponse.success) {
+                setSchedules(schedulesResponse.data || []);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
             enqueueSnackbar('Error fetching data', { variant: 'error' });
@@ -114,15 +117,13 @@ function ActivityManagement() {
 
     const handleCreateActivity = () => {
         setFormData({
-            title: '',
+            topic: '',
             description: '',
-            activityType: '',
-            duration: '',
-            difficulty: '',
-            materials: '',
-            instructions: '',
+            dayOfWeek: '',
+            startTime: '',
+            endTime: '',
             lessonId: '',
-            classId: ''
+            scheduleId: ''
         });
         setModal({ isOpen: true, type: 'create' });
     };
@@ -130,15 +131,13 @@ function ActivityManagement() {
     const handleEditActivity = (activity) => {
         setSelectedActivity(activity);
         setFormData({
-            title: activity.title || '',
+            topic: activity.topic || '',
             description: activity.description || '',
-            activityType: activity.activityType || '',
-            duration: activity.duration || '',
-            difficulty: activity.difficulty || '',
-            materials: activity.materials || '',
-            instructions: activity.instructions || '',
-            lessonId: activity.lessonId || '',
-            classId: activity.classId || ''
+            dayOfWeek: activity.dayOfWeek || '',
+            startTime: activity.startTime || '',
+            endTime: activity.endTime || '',
+            lessonId: activity.lesson?.id || activity.lessonId || '',
+            scheduleId: activity.schedule?.id || activity.scheduleId || ''
         });
         setModal({ isOpen: true, type: 'edit' });
     };
@@ -163,13 +162,12 @@ function ActivityManagement() {
     const handleFormSubmit = async () => {
         try {
             const activityData = {
-                title: formData.title,
+                topic: formData.topic,
                 description: formData.description,
-                activityType: formData.activityType,
-                duration: parseInt(formData.duration),
-                difficulty: formData.difficulty,
-                materials: formData.materials,
-                instructions: formData.instructions,
+                dayOfWeek: formData.dayOfWeek,
+                startTime: formData.startTime,
+                endTime: formData.endTime,
+                scheduleId: formData.scheduleId ? parseInt(formData.scheduleId) : null,
                 lessonId: formData.lessonId ? parseInt(formData.lessonId) : null
             };
 
@@ -201,16 +199,15 @@ function ActivityManagement() {
 
     const handleBulkCreate = () => {
         setBulkFormData({
-            classId: '',
+            scheduleId: '',
             activities: [
                 {
-                    title: '',
+                    topic: '',
                     description: '',
-                    activityType: '',
-                    duration: '',
-                    difficulty: '',
-                    materials: '',
-                    instructions: ''
+                    dayOfWeek: '',
+                    startTime: '',
+                    endTime: '',
+                    lessonId: ''
                 }
             ]
         });
@@ -223,13 +220,12 @@ function ActivityManagement() {
             activities: [
                 ...bulkFormData.activities,
                 {
-                    title: '',
+                    topic: '',
                     description: '',
-                    activityType: '',
-                    duration: '',
-                    difficulty: '',
-                    materials: '',
-                    instructions: ''
+                    dayOfWeek: '',
+                    startTime: '',
+                    endTime: '',
+                    lessonId: ''
                 }
             ]
         });
@@ -255,10 +251,14 @@ function ActivityManagement() {
     const handleBulkSubmit = async () => {
         try {
             const bulkData = {
-                classId: parseInt(bulkFormData.classId),
+                scheduleId: parseInt(bulkFormData.scheduleId),
                 activities: bulkFormData.activities.map(activity => ({
-                    ...activity,
-                    duration: parseInt(activity.duration)
+                    topic: activity.topic,
+                    description: activity.description,
+                    dayOfWeek: activity.dayOfWeek,
+                    startTime: activity.startTime,
+                    endTime: activity.endTime,
+                    lessonId: activity.lessonId ? parseInt(activity.lessonId) : null
                 }))
             };
 
@@ -311,52 +311,48 @@ function ActivityManagement() {
             align: 'center'
         },
         {
-            field: 'title',
-            headerName: 'Title',
+            field: 'topic',
+            headerName: 'Topic',
             width: 200,
             headerAlign: 'center'
         },
         {
-            field: 'activityType',
-            headerName: 'Type',
+            field: 'dayOfWeek',
+            headerName: 'Day of Week',
             width: 120,
             headerAlign: 'center',
             align: 'center',
             renderCell: (params) => (
-                <Chip 
-                    label={params.value} 
-                    color={getTypeColor(params.value)}
+                <Chip
+                    label={params.value}
+                    color="primary"
                     size="small"
                 />
             )
         },
         {
-            field: 'duration',
-            headerName: 'Duration (min)',
+            field: 'startTime',
+            headerName: 'Start Time',
             width: 120,
             headerAlign: 'center',
             align: 'center'
         },
         {
-            field: 'difficulty',
-            headerName: 'Difficulty',
+            field: 'endTime',
+            headerName: 'End Time',
             width: 120,
             headerAlign: 'center',
-            align: 'center',
-            renderCell: (params) => (
-                <Chip 
-                    label={params.value} 
-                    color={getDifficultyColor(params.value)}
-                    size="small"
-                />
-            )
+            align: 'center'
         },
         {
             field: 'lessonId',
             headerName: 'Lesson ID',
             width: 100,
             headerAlign: 'center',
-            align: 'center'
+            align: 'center',
+            renderCell: (params) => (
+                params.row.lesson?.id || params.value || '-'
+            )
         },
         {
             field: 'description',
@@ -405,22 +401,22 @@ function ActivityManagement() {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Title"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            label="Topic"
+                            value={formData.topic}
+                            onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
                         />
                     </Grid>
                     
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth>
-                            <InputLabel>Activity Type</InputLabel>
+                            <InputLabel>Day of Week</InputLabel>
                             <Select
-                                value={formData.activityType}
-                                onChange={(e) => setFormData({ ...formData, activityType: e.target.value })}
-                                label="Activity Type"
+                                value={formData.dayOfWeek}
+                                onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                                label="Day of Week"
                             >
-                                {activityTypes.map((type) => (
-                                    <MenuItem key={type} value={type}>{type}</MenuItem>
+                                {daysOfWeek.map((day) => (
+                                    <MenuItem key={day} value={day}>{day}</MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
@@ -429,24 +425,42 @@ function ActivityManagement() {
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
-                            label="Duration (minutes)"
-                            type="number"
-                            value={formData.duration}
-                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                            inputProps={{ min: 1 }}
+                            label="Start Time"
+                            type="time"
+                            value={formData.startTime}
+                            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            label="End Time"
+                            type="time"
+                            value={formData.endTime}
+                            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
                         />
                     </Grid>
 
                     <Grid item xs={12} md={6}>
                         <FormControl fullWidth>
-                            <InputLabel>Difficulty</InputLabel>
+                            <InputLabel>Schedule</InputLabel>
                             <Select
-                                value={formData.difficulty}
-                                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                                label="Difficulty"
+                                value={formData.scheduleId}
+                                onChange={(e) => setFormData({ ...formData, scheduleId: e.target.value })}
+                                label="Schedule"
                             >
-                                {difficulties.map((difficulty) => (
-                                    <MenuItem key={difficulty} value={difficulty}>{difficulty}</MenuItem>
+                                <MenuItem value="">None</MenuItem>
+                                {schedules.map((schedule) => (
+                                    <MenuItem key={schedule.id} value={schedule.id}>
+                                        Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
+                                    </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
@@ -480,28 +494,6 @@ function ActivityManagement() {
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         />
                     </Grid>
-
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Materials"
-                            multiline
-                            rows={2}
-                            value={formData.materials}
-                            onChange={(e) => setFormData({ ...formData, materials: e.target.value })}
-                        />
-                    </Grid>
-
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Instructions"
-                            multiline
-                            rows={3}
-                            value={formData.instructions}
-                            onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                        />
-                    </Grid>
                 </Grid>
             </DialogContent>
             <DialogActions>
@@ -519,15 +511,15 @@ function ActivityManagement() {
             <DialogContent>
                 <Box sx={{ mb: 2 }}>
                     <FormControl fullWidth>
-                        <InputLabel>Target Class</InputLabel>
+                        <InputLabel>Target Schedule</InputLabel>
                         <Select
-                            value={bulkFormData.classId}
-                            onChange={(e) => setBulkFormData({ ...bulkFormData, classId: e.target.value })}
-                            label="Target Class"
+                            value={bulkFormData.scheduleId}
+                            onChange={(e) => setBulkFormData({ ...bulkFormData, scheduleId: e.target.value })}
+                            label="Target Schedule"
                         >
-                            {classes.map((cls) => (
-                                <MenuItem key={cls.id} value={cls.id}>
-                                    {cls.className} (Grade {cls.grade})
+                            {schedules.map((schedule) => (
+                                <MenuItem key={schedule.id} value={schedule.id}>
+                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -554,22 +546,22 @@ function ActivityManagement() {
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
-                                    label="Title"
-                                    value={activity.title}
-                                    onChange={(e) => updateBulkActivity(index, 'title', e.target.value)}
+                                    label="Topic"
+                                    value={activity.topic}
+                                    onChange={(e) => updateBulkActivity(index, 'topic', e.target.value)}
                                 />
                             </Grid>
                             
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
-                                    <InputLabel>Type</InputLabel>
+                                    <InputLabel>Day of Week</InputLabel>
                                     <Select
-                                        value={activity.activityType}
-                                        onChange={(e) => updateBulkActivity(index, 'activityType', e.target.value)}
-                                        label="Type"
+                                        value={activity.dayOfWeek}
+                                        onChange={(e) => updateBulkActivity(index, 'dayOfWeek', e.target.value)}
+                                        label="Day of Week"
                                     >
-                                        {activityTypes.map((type) => (
-                                            <MenuItem key={type} value={type}>{type}</MenuItem>
+                                        {daysOfWeek.map((day) => (
+                                            <MenuItem key={day} value={day}>{day}</MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -578,23 +570,42 @@ function ActivityManagement() {
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
-                                    label="Duration (min)"
-                                    type="number"
-                                    value={activity.duration}
-                                    onChange={(e) => updateBulkActivity(index, 'duration', e.target.value)}
+                                    label="Start Time"
+                                    type="time"
+                                    value={activity.startTime}
+                                    onChange={(e) => updateBulkActivity(index, 'startTime', e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    label="End Time"
+                                    type="time"
+                                    value={activity.endTime}
+                                    onChange={(e) => updateBulkActivity(index, 'endTime', e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
                                 />
                             </Grid>
 
                             <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
-                                    <InputLabel>Difficulty</InputLabel>
+                                    <InputLabel>Lesson (Optional)</InputLabel>
                                     <Select
-                                        value={activity.difficulty}
-                                        onChange={(e) => updateBulkActivity(index, 'difficulty', e.target.value)}
-                                        label="Difficulty"
+                                        value={activity.lessonId}
+                                        onChange={(e) => updateBulkActivity(index, 'lessonId', e.target.value)}
+                                        label="Lesson (Optional)"
                                     >
-                                        {difficulties.map((difficulty) => (
-                                            <MenuItem key={difficulty} value={difficulty}>{difficulty}</MenuItem>
+                                        <MenuItem value="">None</MenuItem>
+                                        {lessons.map((lesson) => (
+                                            <MenuItem key={lesson.id} value={lesson.id}>
+                                                {lesson.topic}
+                                            </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
