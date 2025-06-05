@@ -16,7 +16,7 @@ public interface ActivityRepo extends JpaRepository<Activity, Integer> {
     @Query("SELECT a FROM Activity a WHERE a.schedule.classes.id = :classId")
     List<Activity> findByClassId(@Param("classId") Integer classId);
     
-    @Query("SELECT a FROM Activity a WHERE a.schedule.id = :scheduleId ORDER BY a.dayOfWeek, a.startTime")
+    @Query("SELECT a FROM Activity a LEFT JOIN FETCH a.lesson WHERE a.schedule.id = :scheduleId ORDER BY a.dayOfWeek, a.startTime")
     List<Activity> findByScheduleIdOrderByDayAndTime(@Param("scheduleId") Integer scheduleId);
     
     @Query("SELECT a FROM Activity a WHERE a.schedule.classes.id = :classId AND a.dayOfWeek = :dayOfWeek")
