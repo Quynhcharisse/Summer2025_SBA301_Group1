@@ -37,7 +37,7 @@ import {
     getAllClasses,
     getAllLessons,
     getAllSchedules
-} from '../../services/ManagerService.jsx';
+} from '../../services/EducationService.jsx';
 import { enqueueSnackbar } from 'notistack';
 
 function ActivityManagement() {
