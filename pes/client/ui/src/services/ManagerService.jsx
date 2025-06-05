@@ -2,64 +2,64 @@ import axiosClient from '../config/APIConfig.jsx'
 
 // Classes APIs
 export const getAllClasses = async () => {
-    const response = await axiosClient.get('/classes')
+    const response = await axiosClient.get('/education/classes')
     return response ? response.data : null
 }
 
 export const getClassById = async (classId) => {
-    const response = await axiosClient.get(`/classes/${classId}`)
+    const response = await axiosClient.get(`/education/classes/${classId}`)
     return response ? response.data : null
 }
 
 export const getSyllabusByClassId = async (classId) => {
-    const response = await axiosClient.get(`/classes/${classId}/syllabus`)
+    const response = await axiosClient.get(`/education/classes/${classId}/syllabus`)
     return response ? response.data : null
 }
 
 export const getLessonsByClassId = async (classId) => {
-    const response = await axiosClient.get(`/classes/${classId}/lessons`)
+    const response = await axiosClient.get(`/education/classes/${classId}/lessons`)
     return response ? response.data : null
 }
 
 export const getClassesByStatus = async (status) => {
-    const response = await axiosClient.get(`/classes/status/${status}`)
+    const response = await axiosClient.get(`/education/classes/status/${status}`)
     return response ? response.data : null
 }
 
 export const getClassesByGrade = async (grade) => {
-    const response = await axiosClient.get(`/classes/grade/${grade}`)
+    const response = await axiosClient.get(`/education/classes/grade/${grade}`)
     return response ? response.data : null
 }
 
 // Syllabus APIs
 export const getAllSyllabi = async () => {
-    const response = await axiosClient.get('/syllabus')
+    const response = await axiosClient.get('/education/syllabus')
     return response ? response.data : null
 }
 
 export const getSyllabusById = async (syllabusId) => {
-    const response = await axiosClient.get(`/syllabus/${syllabusId}`)
+    const response = await axiosClient.get(`/education/syllabus/${syllabusId}`)
     return response ? response.data : null
 }
 
 export const getLessonsBySyllabusId = async (syllabusId) => {
-    const response = await axiosClient.get(`/syllabus/${syllabusId}/lessons`)
+    const response = await axiosClient.get(`/education/syllabus/${syllabusId}/lessons`)
     return response ? response.data : null
 }
 
 // Lesson APIs
 export const getAllLessons = async () => {
-    const response = await axiosClient.get('/lessons')
+    const response = await axiosClient.get('/education/lessons')
     return response ? response.data : null
 }
 
 export const getLessonById = async (lessonId) => {
-    const response = await axiosClient.get(`/lessons/${lessonId}`)
+    const response = await axiosClient.get(`/education/lessons/${lessonId}`)
     return response ? response.data : null
 }
 
 export const getLessonsByTopic = async (topic) => {
-    const response = await axiosClient.get(`/lessons/search?topic=${topic}`)
+    const response = await axiosClient.get(`/education/lessons/search?topic=${topic}`)
     return response ? response.data : null
 }
 
@@ -75,7 +75,7 @@ export const createActivity = async (activityData) => {
         scheduleId: activityData.scheduleId,
         lessonId: activityData.lessonId
     }
-    const response = await axiosClient.post('/activities', transformedData)
+    const response = await axiosClient.post('/education/activities', transformedData)
     return response ? response.data : null
 }
 
@@ -89,52 +89,52 @@ export const updateActivity = async (activityId, activityData) => {
         endTime: activityData.endTime,
         lessonId: activityData.lessonId
     }
-    const response = await axiosClient.put(`/activities/${activityId}`, transformedData)
+    const response = await axiosClient.put(`/education/activities/${activityId}`, transformedData)
     return response ? response.data : null
 }
 
 export const getActivityById = async (activityId) => {
-    const response = await axiosClient.get(`/activities/${activityId}`)
+    const response = await axiosClient.get(`/education/activities/${activityId}`)
     return response ? response.data : null
 }
 
 export const getAllActivities = async () => {
-    const response = await axiosClient.get('/activities')
+    const response = await axiosClient.get('/education/activities')
     return response ? response.data : null
 }
 
 export const getActivitiesByScheduleId = async (scheduleId) => {
-    const response = await axiosClient.get(`/activities/schedule/${scheduleId}`)
+    const response = await axiosClient.get(`/education/activities/schedule/${scheduleId}`)
     return response ? response.data : null
 }
 
 export const getActivitiesByClassId = async (classId) => {
-    const response = await axiosClient.get(`/activities/class/${classId}`)
+    const response = await axiosClient.get(`/education/activities/class/${classId}`)
     return response ? response.data : null
 }
 
 export const getActivitiesByLessonId = async (lessonId) => {
-    const response = await axiosClient.get(`/activities/lesson/${lessonId}`)
+    const response = await axiosClient.get(`/education/activities/lesson/${lessonId}`)
     return response ? response.data : null
 }
 
 export const deleteActivity = async (activityId) => {
-    const response = await axiosClient.delete(`/activities/${activityId}`)
+    const response = await axiosClient.delete(`/education/activities/${activityId}`)
     return response ? response.data : null
 }
 
 export const assignActivityToClass = async (assignData) => {
-    const response = await axiosClient.post('/activities/assign', assignData)
+    const response = await axiosClient.post('/education/activities/assign', assignData)
     return response ? response.data : null
 }
 
 export const bulkCreateActivities = async (bulkData) => {
-    const response = await axiosClient.post('/activities/bulk-create', bulkData)
+    const response = await axiosClient.post('/education/activities/bulk-create', bulkData)
     return response ? response.data : null
 }
 
 export const createActivitiesFromLessons = async (lessonsData) => {
-    const response = await axiosClient.post('/activities/create-from-lessons', lessonsData)
+    const response = await axiosClient.post('/education/activities/create-from-lessons', lessonsData)
     return response ? response.data : null
 }
 
@@ -146,7 +146,7 @@ export const createSchedule = async (scheduleData) => {
         note: scheduleData.note || scheduleData.location || '',
         classId: scheduleData.classId
     }
-    const response = await axiosClient.post('/schedules', transformedData)
+    const response = await axiosClient.post('/education/schedules', transformedData)
     return response ? response.data : null
 }
 
@@ -156,31 +156,31 @@ export const updateSchedule = async (scheduleId, scheduleData) => {
         weekNumber: scheduleData.weekNumber,
         note: scheduleData.note || scheduleData.location || ''
     }
-    const response = await axiosClient.put(`/schedules/${scheduleId}`, transformedData)
+    const response = await axiosClient.put(`/education/schedules/${scheduleId}`, transformedData)
     return response ? response.data : null
 }
 
 export const getScheduleById = async (scheduleId) => {
-    const response = await axiosClient.get(`/schedules/${scheduleId}`)
+    const response = await axiosClient.get(`/education/schedules/${scheduleId}`)
     return response ? response.data : null
 }
 
 export const getAllSchedules = async () => {
-    const response = await axiosClient.get('/schedules')
+    const response = await axiosClient.get('/education/schedules')
     return response ? response.data : null
 }
 
 export const getSchedulesByClassId = async (classId) => {
-    const response = await axiosClient.get(`/schedules/class/${classId}`)
+    const response = await axiosClient.get(`/education/schedules/class/${classId}`)
     return response ? response.data : null
 }
 
 export const getWeeklySchedule = async (classId, weekNumber) => {
-    const response = await axiosClient.get(`/schedules/class/${classId}/week/${weekNumber}`)
+    const response = await axiosClient.get(`/education/schedules/class/${classId}/week/${weekNumber}`)
     return response ? response.data : null
 }
 
 export const deleteSchedule = async (scheduleId) => {
-    const response = await axiosClient.delete(`/schedules/${scheduleId}`)
+    const response = await axiosClient.delete(`/education/schedules/${scheduleId}`)
     return response ? response.data : null
 }
