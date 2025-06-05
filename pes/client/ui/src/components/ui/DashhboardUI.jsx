@@ -30,6 +30,7 @@ export default function DashboardUI({navigate, homeUrl}) {
             branding={
                 {
                     logo: <img src="/logo-merrystar-horizontal.png" alt="logo"/>,
+                    title: "MerryStar",
                     homeUrl: homeUrl
                 }
             }

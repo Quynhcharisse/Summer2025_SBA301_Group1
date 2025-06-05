@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProcessAdmissionFormRequest {
     int id;
-    boolean approved; // true = approve, false = reject
+    boolean isApproved; // true = approve, false = reject
     String reason; // Lý do từ chối nếu rejected
 }

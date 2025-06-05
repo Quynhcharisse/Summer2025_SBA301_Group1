@@ -152,12 +152,12 @@ public class PesBeApplication {
                 if (!admissionTermRepo.existsByYear(termYear)) {
                     AdmissionTerm term = AdmissionTerm.builder()
                             .name("Fall Term " + termYear)
-                            .startDate(LocalDate.of(2025, 8, 1))
-                            .endDate(LocalDate.of(2025, 12, 15))
+                            .startDate(LocalDate.of(2025, 4, 1))
+                            .endDate(LocalDate.of(2025, 6, 1))
                             .year(termYear)
                             .maxNumberRegistration(200)
                             .grade(Grade.BUD) // Or Grade.MAM_NON etc.
-                            .status(Status.ACTIVE_TERM.getValue())
+                            .status(Status.LOCKED_TERM.getValue())
                             .build();
                     admissionTermRepo.save(term);
                     System.out.println("Created Admission Term for year: " + termYear);
