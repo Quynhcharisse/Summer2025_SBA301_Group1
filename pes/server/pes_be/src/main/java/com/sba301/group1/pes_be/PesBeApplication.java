@@ -207,4 +207,38 @@ public class PesBeApplication {
             }
         };
     }
+
+    @Bean
+    public CommandLineRunner initEducationStaff() {
+        return args -> {
+            String emailEducation = "education@gmail.com";
+            if (!accountRepo.existsByEmail(emailEducation)) {
+                Account educationAccount = Account.builder()
+                        .email(emailEducation)
+                        .password("education@123")
+                        .role(Role.EDUCATION)
+                        .name("Ms. Education Staff")
+                        .phone(generateRandomPhone())
+                        .identityNumber(generateRandomCCCD())
+                        .gender("female")
+                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .createdAt(LocalDate.now())
+                        .build();
+                accountRepo.save(educationAccount);
+
+                Manager educationManager = Manager.builder()
+                        .account(educationAccount)
+                        .department("Education Manager")
+                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .passwordChanged(false)
+                        .build();
+                managerRepo.save(educationManager);
+
+                System.out.println("Created Education Staff: " + emailEducation);
+                System.out.println("Education Account Details - Email: " + educationAccount.getEmail() + ", Role: " + educationAccount.getRole() + ", Status: " + educationAccount.getStatus());
+            } else {
+                System.out.println("Education Staff already exists: " + emailEducation);
+            }
+        };
+    }
 }
