@@ -642,22 +642,6 @@ function ActivityManagement() {
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                     Activity Management
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<PostAdd />}
-                        onClick={handleBulkCreate}
-                    >
-                        Bulk Create
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={handleCreateActivity}
-                    >
-                        Create Activity
-                    </Button>
-                </Box>
             </Box>
 
             <Paper sx={{ height: 600, width: '100%' }}>
