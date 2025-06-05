@@ -4,20 +4,20 @@ import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Classes;
 import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
-import com.sba301.group1.pes_be.repositories.ClassRepo;
+import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.services.ClassService;
+import com.sba301.group1.pes_be.services.ClassesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ClassServiceImpl implements ClassService {
+public class ClassesServiceImpl implements ClassesService {
 
-    private final ClassRepo classRepo;
+    private final ClassesRepo classRepo;
     private final AccountRepo accountRepo;
     private final SyllabusRepo syllabusRepo;
 

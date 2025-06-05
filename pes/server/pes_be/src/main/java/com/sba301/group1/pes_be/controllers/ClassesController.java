@@ -2,7 +2,7 @@ package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.services.ClassService;
+import com.sba301.group1.pes_be.services.ClassesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/v1/class")
 @RequiredArgsConstructor
-@Tag(name = "Class", description = "Class management APIs")
-public class ClassController {
+@Tag(name = "Classes", description = "Class management APIs")
+public class ClassesController {
 
-    private final ClassService classService;
+    private final ClassesService classService;
 
     @PostMapping()
     @PreAuthorize("hasRole('manager')")
