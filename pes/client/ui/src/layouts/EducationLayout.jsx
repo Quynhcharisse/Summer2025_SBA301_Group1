@@ -10,14 +10,14 @@ function EducationLayout() {
             icon: <School />,
         },
         {
-            segment: 'education/activities',
-            title: 'Activity Management',
-            icon: <Event />,
-        },
-        {
             segment: 'education/schedules',
             title: 'Schedule Management',
             icon: <CalendarToday />,
+        },
+        {
+            segment: 'education/activities',
+            title: 'Activity Management',
+            icon: <Event />,
         }
     ];
 
