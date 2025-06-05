@@ -1,11 +1,13 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dto.*;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.models.*;
 import com.sba301.group1.pes_be.repositories.*;
 import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.EducationService;
+import com.sba301.group1.pes_be.utils.DTOMapper;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;
 import lombok.RequiredArgsConstructor;
@@ -541,11 +543,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllClasses() {
         try {
             List<Classes> classes = classesRepo.findAll();
+            List<ClassesDTO> classesDTOs = DTOMapper.toClassesDTOList(classes);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All classes retrieved successfully")
                     .success(true)
-                    .data(classes)
+                    .data(classesDTOs)
                     .build()
             );
         } catch (Exception e) {
@@ -573,11 +576,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ClassesDTO classDTO = DTOMapper.toClassesDTO(classOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Class retrieved successfully")
                     .success(true)
-                    .data(classOpt.get())
+                    .data(classDTO)
                     .build()
             );
         } catch (Exception e) {
@@ -615,11 +619,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            SyllabusDTO syllabusDTO = DTOMapper.toSyllabusDTO(syllabus);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Syllabus retrieved successfully")
                     .success(true)
-                    .data(syllabus)
+                    .data(syllabusDTO)
                     .build()
             );
         } catch (Exception e) {
@@ -647,11 +652,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Lesson> lessons = lessonRepo.findByClassId(classId);
+            List<LessonDTO> lessonDTOs = DTOMapper.toLessonDTOList(lessons);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Lessons retrieved successfully")
                     .success(true)
-                    .data(lessons)
+                    .data(lessonDTOs)
                     .build()
             );
         } catch (Exception e) {
@@ -749,11 +755,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllLessons() {
         try {
             List<Lesson> lessons = lessonRepo.findAll();
+            List<LessonDTO> lessonDTOs = DTOMapper.toLessonDTOList(lessons);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All lessons retrieved successfully")
                     .success(true)
-                    .data(lessons)
+                    .data(lessonDTOs)
                     .build()
             );
         } catch (Exception e) {
@@ -781,11 +788,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            LessonDTO lessonDTO = DTOMapper.toLessonDTO(lessonOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Lesson retrieved successfully")
                     .success(true)
-                    .data(lessonOpt.get())
+                    .data(lessonDTO)
                     .build()
             );
         } catch (Exception e) {
@@ -1090,11 +1098,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllSyllabi() {
         try {
             List<Syllabus> syllabi = syllabusRepo.findAll();
+            List<SyllabusDTO> syllabusDTOs = DTOMapper.toSyllabusDTOList(syllabi);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All syllabi retrieved successfully")
                     .success(true)
-                    .data(syllabi)
+                    .data(syllabusDTOs)
                     .build()
             );
         } catch (Exception e) {
@@ -1122,11 +1131,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            SyllabusDTO syllabusDTO = DTOMapper.toSyllabusDTO(syllabusOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Syllabus retrieved successfully")
                     .success(true)
-                    .data(syllabusOpt.get())
+                    .data(syllabusDTO)
                     .build()
             );
         } catch (Exception e) {
