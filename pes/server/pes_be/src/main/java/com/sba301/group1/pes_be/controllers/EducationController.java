@@ -107,6 +107,13 @@ public class EducationController {
         return educationService.getActivitiesByLessonId(lessonId);
     }
 
+    @GetMapping("/activities")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all activities")
+    public ResponseEntity<ResponseObject> getAllActivities() {
+        return educationService.getAllActivities();
+    }
+
     // Schedule Management Methods
     @PostMapping("/schedules")
     @PreAuthorize("hasRole('education')")
@@ -152,6 +159,13 @@ public class EducationController {
     @Operation(summary = "Delete a schedule")
     public ResponseEntity<ResponseObject> deleteSchedule(@PathVariable Integer scheduleId) {
         return educationService.deleteSchedule(scheduleId);
+    }
+
+    @GetMapping("/schedules")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all schedules")
+    public ResponseEntity<ResponseObject> getAllSchedules() {
+        return educationService.getAllSchedules();
     }
 
     // Classes Viewing Methods
@@ -233,6 +247,13 @@ public class EducationController {
         return educationService.getLessonsByClassId(classId);
     }
 
+    @GetMapping("/lessons")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all lessons")
+    public ResponseEntity<ResponseObject> getAllLessons() {
+        return educationService.getAllLessons();
+    }
+
     // Syllabus Viewing Methods
     @GetMapping("/syllabus/{syllabusId}")
     @PreAuthorize("hasRole('education')")
@@ -260,6 +281,13 @@ public class EducationController {
     @Operation(summary = "Get syllabus for a class")
     public ResponseEntity<ResponseObject> getSyllabusForClass(@PathVariable Integer classId) {
         return educationService.getSyllabusByClassId(classId);
+    }
+
+    @GetMapping("/syllabus")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all syllabi")
+    public ResponseEntity<ResponseObject> getAllSyllabi() {
+        return educationService.getAllSyllabi();
     }
 
 }
