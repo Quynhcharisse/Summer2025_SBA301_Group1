@@ -21,7 +21,8 @@ import {
     List,
     ListItem,
     ListItemText,
-    Divider
+    Divider,
+    Stack
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Add, Edit, Delete, Assignment, PostAdd } from '@mui/icons-material';
@@ -397,104 +398,94 @@ function ActivityManagement() {
                 {modal.type === 'create' ? 'Create New Activity' : 'Edit Activity'}
             </DialogTitle>
             <DialogContent>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="Topic"
-                            value={formData.topic}
-                            onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-                        />
-                    </Grid>
+                <Stack spacing={3} sx={{ mt: 2 }}>
+                    <TextField
+                        fullWidth
+                        label="Topic"
+                        value={formData.topic}
+                        onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                        required
+                    />
                     
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Day of Week</InputLabel>
-                            <Select
-                                value={formData.dayOfWeek}
-                                onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
-                                label="Day of Week"
-                            >
-                                {daysOfWeek.map((day) => (
-                                    <MenuItem key={day} value={day}>{day}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
+                    <FormControl fullWidth required>
+                        <InputLabel>Day of Week</InputLabel>
+                        <Select
+                            value={formData.dayOfWeek}
+                            onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                            label="Day of Week"
+                        >
+                            {daysOfWeek.map((day) => (
+                                <MenuItem key={day} value={day}>{day}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="Start Time"
-                            type="time"
-                            value={formData.startTime}
-                            onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-                    </Grid>
+                    <TextField
+                        fullWidth
+                        label="Start Time"
+                        type="time"
+                        value={formData.startTime}
+                        onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        required
+                    />
 
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="End Time"
-                            type="time"
-                            value={formData.endTime}
-                            onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-                    </Grid>
+                    <TextField
+                        fullWidth
+                        label="End Time"
+                        type="time"
+                        value={formData.endTime}
+                        onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                        required
+                    />
 
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Schedule</InputLabel>
-                            <Select
-                                value={formData.scheduleId}
-                                onChange={(e) => setFormData({ ...formData, scheduleId: e.target.value })}
-                                label="Schedule"
-                            >
-                                <MenuItem value="">None</MenuItem>
-                                {schedules.map((schedule) => (
-                                    <MenuItem key={schedule.id} value={schedule.id}>
-                                        Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
+                    <FormControl fullWidth required>
+                        <InputLabel>Schedule</InputLabel>
+                        <Select
+                            value={formData.scheduleId}
+                            onChange={(e) => setFormData({ ...formData, scheduleId: e.target.value })}
+                            label="Schedule"
+                        >
+                            <MenuItem value="">None</MenuItem>
+                            {schedules.map((schedule) => (
+                                <MenuItem key={schedule.id} value={schedule.id}>
+                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Lesson (Optional)</InputLabel>
-                            <Select
-                                value={formData.lessonId}
-                                onChange={(e) => setFormData({ ...formData, lessonId: e.target.value })}
-                                label="Lesson (Optional)"
-                            >
-                                <MenuItem value="">None</MenuItem>
-                                {lessons.map((lesson) => (
-                                    <MenuItem key={lesson.id} value={lesson.id}>
-                                        {lesson.topic}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
+                    <FormControl fullWidth>
+                        <InputLabel>Lesson (Optional)</InputLabel>
+                        <Select
+                            value={formData.lessonId}
+                            onChange={(e) => setFormData({ ...formData, lessonId: e.target.value })}
+                            label="Lesson (Optional)"
+                        >
+                            <MenuItem value="">None</MenuItem>
+                            {lessons.map((lesson) => (
+                                <MenuItem key={lesson.id} value={lesson.id}>
+                                    {lesson.topic}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Description"
-                            multiline
-                            rows={3}
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </Grid>
-                </Grid>
+                    <TextField
+                        fullWidth
+                        label="Description"
+                        multiline
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Enter activity description..."
+                    />
+                </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseModal}>Cancel</Button>
@@ -509,8 +500,8 @@ function ActivityManagement() {
         <>
             <DialogTitle>Bulk Create Activities</DialogTitle>
             <DialogContent>
-                <Box sx={{ mb: 2 }}>
-                    <FormControl fullWidth>
+                <Stack spacing={3} sx={{ mt: 2 }}>
+                    <FormControl fullWidth required>
                         <InputLabel>Target Schedule</InputLabel>
                         <Select
                             value={bulkFormData.scheduleId}
@@ -524,36 +515,35 @@ function ActivityManagement() {
                             ))}
                         </Select>
                     </FormControl>
-                </Box>
 
-                {bulkFormData.activities.map((activity, index) => (
-                    <Card key={index} sx={{ mb: 2, p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Activity {index + 1}
-                            {bulkFormData.activities.length > 1 && (
-                                <Button
-                                    size="small"
-                                    color="error"
-                                    onClick={() => removeBulkActivity(index)}
-                                    sx={{ ml: 2 }}
-                                >
-                                    Remove
-                                </Button>
-                            )}
-                        </Typography>
-                        
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={6}>
+                    {bulkFormData.activities.map((activity, index) => (
+                        <Card key={index} sx={{ p: 3, border: '1px solid #e0e0e0' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="h6" color="primary">
+                                    Activity {index + 1}
+                                </Typography>
+                                {bulkFormData.activities.length > 1 && (
+                                    <Button
+                                        size="small"
+                                        color="error"
+                                        variant="outlined"
+                                        onClick={() => removeBulkActivity(index)}
+                                    >
+                                        Remove
+                                    </Button>
+                                )}
+                            </Box>
+                            
+                            <Stack spacing={2}>
                                 <TextField
                                     fullWidth
                                     label="Topic"
                                     value={activity.topic}
                                     onChange={(e) => updateBulkActivity(index, 'topic', e.target.value)}
+                                    required
                                 />
-                            </Grid>
-                            
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
+                                
+                                <FormControl fullWidth required>
                                     <InputLabel>Day of Week</InputLabel>
                                     <Select
                                         value={activity.dayOfWeek}
@@ -565,9 +555,7 @@ function ActivityManagement() {
                                         ))}
                                     </Select>
                                 </FormControl>
-                            </Grid>
 
-                            <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
                                     label="Start Time"
@@ -577,10 +565,9 @@ function ActivityManagement() {
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
+                                    required
                                 />
-                            </Grid>
 
-                            <Grid item xs={12} md={6}>
                                 <TextField
                                     fullWidth
                                     label="End Time"
@@ -590,10 +577,9 @@ function ActivityManagement() {
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
+                                    required
                                 />
-                            </Grid>
 
-                            <Grid item xs={12} md={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Lesson (Optional)</InputLabel>
                                     <Select
@@ -609,9 +595,7 @@ function ActivityManagement() {
                                         ))}
                                     </Select>
                                 </FormControl>
-                            </Grid>
 
-                            <Grid item xs={12}>
                                 <TextField
                                     fullWidth
                                     label="Description"
@@ -619,21 +603,29 @@ function ActivityManagement() {
                                     rows={2}
                                     value={activity.description}
                                     onChange={(e) => updateBulkActivity(index, 'description', e.target.value)}
+                                    placeholder="Enter activity description..."
                                 />
-                            </Grid>
-                        </Grid>
-                    </Card>
-                ))}
+                            </Stack>
+                        </Card>
+                    ))}
 
-                <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Add />}
-                    onClick={addBulkActivity}
-                    sx={{ mt: 2 }}
-                >
-                    Add Another Activity
-                </Button>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        startIcon={<Add />}
+                        onClick={addBulkActivity}
+                        sx={{
+                            mt: 2,
+                            py: 2,
+                            borderStyle: 'dashed',
+                            '&:hover': {
+                                borderStyle: 'solid'
+                            }
+                        }}
+                    >
+                        Add Another Activity
+                    </Button>
+                </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseModal}>Cancel</Button>

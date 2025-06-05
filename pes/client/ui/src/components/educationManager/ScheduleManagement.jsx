@@ -21,7 +21,8 @@ import {
     List,
     ListItem,
     ListItemText,
-    Divider
+    Divider,
+    Stack
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Add, Edit, Delete, Visibility, Schedule as ScheduleIcon } from '@mui/icons-material';
@@ -284,47 +285,44 @@ function ScheduleManagement() {
                 {modal.type === 'create' ? 'Create New Schedule' : 'Edit Schedule'}
             </DialogTitle>
             <DialogContent>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="Week Number"
-                            type="number"
-                            value={formData.weekNumber}
-                            onChange={(e) => setFormData({ ...formData, weekNumber: parseInt(e.target.value) })}
-                            inputProps={{ min: 1 }}
-                        />
-                    </Grid>
+                <Stack spacing={3} sx={{ mt: 2 }}>
+                    <TextField
+                        fullWidth
+                        label="Week Number"
+                        type="number"
+                        value={formData.weekNumber}
+                        onChange={(e) => setFormData({ ...formData, weekNumber: parseInt(e.target.value) || 1 })}
+                        inputProps={{ min: 1 }}
+                        required
+                        helperText="Enter the week number for this schedule (e.g., 1, 2, 3...)"
+                    />
 
-                    <Grid item xs={12} md={6}>
-                        <FormControl fullWidth>
-                            <InputLabel>Class</InputLabel>
-                            <Select
-                                value={formData.classId}
-                                onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                                label="Class"
-                            >
-                                {classes.map((cls) => (
-                                    <MenuItem key={cls.id} value={cls.id}>
-                                        {cls.className} (Grade {cls.grade})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
+                    <FormControl fullWidth required>
+                        <InputLabel>Class</InputLabel>
+                        <Select
+                            value={formData.classId}
+                            onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                            label="Class"
+                        >
+                            {classes.map((cls) => (
+                                <MenuItem key={cls.id} value={cls.id}>
+                                    {cls.className} (Grade {cls.grade})
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="Note"
-                            multiline
-                            rows={3}
-                            value={formData.note}
-                            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                            placeholder="Add any notes about this schedule..."
-                        />
-                    </Grid>
-                </Grid>
+                    <TextField
+                        fullWidth
+                        label="Note"
+                        multiline
+                        rows={4}
+                        value={formData.note}
+                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        placeholder="Add any notes about this schedule (optional)..."
+                        helperText="You can add location, special instructions, or any other relevant information"
+                    />
+                </Stack>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseModal}>Cancel</Button>
