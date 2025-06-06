@@ -445,21 +445,20 @@ function ScheduleManagement() {
             headerName: 'Week',
             width: 80,
             headerAlign: 'center',
-            align: 'center'
-        },
-        {
+            align: 'center'        },        {
             field: 'note',
             headerName: 'Note',
-            width: 200,
-            headerAlign: 'center'
-        },
-        {
+            width: 300,
+            headerAlign: 'center',
+            align: 'center'
+        },        {
             field: 'className',
             headerName: 'Class',
             width: 150,
             headerAlign: 'center',
+            align: 'center',
             renderCell: (params) => (
-                params.row.classes?.className || '-'
+                params.row.classes?.name || '-'
             )
         },
         {
@@ -471,12 +470,13 @@ function ScheduleManagement() {
             renderCell: (params) => (
                 params.row.classes?.grade || '-'
             )
-        },
+        },        
         {
             field: 'activitiesCount',
             headerName: 'Activities',
             width: 350,
             headerAlign: 'center',
+            align: 'center',
             sortable: false,
             renderCell: (params) => {
                 const activities = params.row.activities;
@@ -534,14 +534,14 @@ function ScheduleManagement() {
                         )}
                     </Box>
                 );
-            }
-        },        {
+            }        },        {
             field: 'actions',
             headerName: 'Actions',
-            width: 300,
+            width: 400,
             headerAlign: 'center',
             align: 'center',
-            sortable: false,            renderCell: (params) => (
+            sortable: false,
+            renderCell: (params) => (
                 <Box className="activity-actions-container">
                     <Button
                         size="small"
