@@ -110,7 +110,19 @@ function ActivityManagement() {
             }
         } catch (error) {
             console.error('Error fetching data:', error);
-            enqueueSnackbar('Error fetching data', { variant: 'error' });
+            
+            // Handle different types of errors with specific messages
+            let errorMessage = 'Failed to load activities. Please check your network connection or login status.';
+            
+            if (error.status === 401 || error.status === 403) {
+                errorMessage = 'Authentication failed. Please log in again to access this page.';
+            } else if (error.status === 500) {
+                errorMessage = 'Server error occurred. Please try again later or contact support.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            enqueueSnackbar(errorMessage, { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -137,8 +149,8 @@ function ActivityManagement() {
             dayOfWeek: activity.dayOfWeek || '',
             startTime: activity.startTime || '',
             endTime: activity.endTime || '',
-            lessonId: activity.lesson?.id || activity.lessonId || '',
-            scheduleId: activity.schedule?.id || activity.scheduleId || ''
+            lessonId: activity.lessonId || '',
+            scheduleId: activity.scheduleId || ''
         });
         setModal({ isOpen: true, type: 'edit' });
     };
@@ -155,7 +167,15 @@ function ActivityManagement() {
                 }
             } catch (error) {
                 console.error('Error deleting activity:', error);
-                enqueueSnackbar('Error deleting activity', { variant: 'error' });
+                
+                let errorMessage = 'Error deleting activity';
+                if (error.status === 401 || error.status === 403) {
+                    errorMessage = 'Authentication failed. Please log in again to delete activities.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                enqueueSnackbar(errorMessage, { variant: 'error' });
             }
         }
     };
@@ -194,7 +214,17 @@ function ActivityManagement() {
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-            enqueueSnackbar(`Error ${modal.type === 'create' ? 'creating' : 'updating'} activity`, { variant: 'error' });
+            
+            let errorMessage = `Error ${modal.type === 'create' ? 'creating' : 'updating'} activity`;
+            if (error.status === 401 || error.status === 403) {
+                errorMessage = 'Authentication failed. Please log in again to modify activities.';
+            } else if (error.status === 400) {
+                errorMessage = 'Invalid activity data. Please check your inputs and try again.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            enqueueSnackbar(errorMessage, { variant: 'error' });
         }
     };
 
@@ -273,7 +303,17 @@ function ActivityManagement() {
             }
         } catch (error) {
             console.error('Error creating bulk activities:', error);
-            enqueueSnackbar('Error creating activities', { variant: 'error' });
+            
+            let errorMessage = 'Error creating activities';
+            if (error.status === 401 || error.status === 403) {
+                errorMessage = 'Authentication failed. Please log in again to create activities.';
+            } else if (error.status === 400) {
+                errorMessage = 'Invalid bulk activity data. Please check your inputs and try again.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            enqueueSnackbar(errorMessage, { variant: 'error' });
         }
     };
 
@@ -352,7 +392,7 @@ function ActivityManagement() {
             headerAlign: 'center',
             align: 'center',
             renderCell: (params) => (
-                params.row.lesson?.id || params.value || '-'
+                params.row.lessonId || params.value || '-'
             )
         },
         {
@@ -454,7 +494,7 @@ function ActivityManagement() {
                             <MenuItem value="">None</MenuItem>
                             {schedules.map((schedule) => (
                                 <MenuItem key={schedule.id} value={schedule.id}>
-                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
+                                    Week {schedule.weekNumber} - {schedule.className || 'Unknown Class'}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -510,7 +550,7 @@ function ActivityManagement() {
                         >
                             {schedules.map((schedule) => (
                                 <MenuItem key={schedule.id} value={schedule.id}>
-                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
+                                    Week {schedule.weekNumber} - {schedule.className || 'Unknown Class'}
                                 </MenuItem>
                             ))}
                         </Select>

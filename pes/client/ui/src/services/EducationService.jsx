@@ -2,8 +2,17 @@ import axiosClient from '../config/APIConfig.jsx'
 
 // Classes APIs
 export const getAllClasses = async () => {
-    const response = await axiosClient.get('/education/classes')
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.get('/education/classes')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch classes',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const getClassById = async (classId) => {
@@ -49,8 +58,17 @@ export const getLessonsBySyllabusId = async (syllabusId) => {
 
 // Lesson APIs
 export const getAllLessons = async () => {
-    const response = await axiosClient.get('/education/lessons')
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.get('/education/lessons')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch lessons',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const getLessonById = async (lessonId) => {
@@ -65,32 +83,50 @@ export const getLessonsByTopic = async (topic) => {
 
 // Activity APIs
 export const createActivity = async (activityData) => {
-    // Transform frontend data to match backend CreateActivityRequest
-    const transformedData = {
-        topic: activityData.topic || activityData.title,
-        description: activityData.description,
-        dayOfWeek: activityData.dayOfWeek,
-        startTime: activityData.startTime,
-        endTime: activityData.endTime,
-        scheduleId: activityData.scheduleId,
-        lessonId: activityData.lessonId
+    try {
+        // Transform frontend data to match backend CreateActivityRequest
+        const transformedData = {
+            topic: activityData.topic || activityData.title,
+            description: activityData.description,
+            dayOfWeek: activityData.dayOfWeek,
+            startTime: activityData.startTime,
+            endTime: activityData.endTime,
+            scheduleId: activityData.scheduleId,
+            lessonId: activityData.lessonId
+        }
+        const response = await axiosClient.post('/education/activities', transformedData)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to create activity',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
     }
-    const response = await axiosClient.post('/education/activities', transformedData)
-    return response ? response.data : null
 }
 
 export const updateActivity = async (activityId, activityData) => {
-    // Transform frontend data to match backend UpdateActivityRequest
-    const transformedData = {
-        topic: activityData.topic || activityData.title,
-        description: activityData.description,
-        dayOfWeek: activityData.dayOfWeek,
-        startTime: activityData.startTime,
-        endTime: activityData.endTime,
-        lessonId: activityData.lessonId
+    try {
+        // Transform frontend data to match backend UpdateActivityRequest
+        const transformedData = {
+            topic: activityData.topic || activityData.title,
+            description: activityData.description,
+            dayOfWeek: activityData.dayOfWeek,
+            startTime: activityData.startTime,
+            endTime: activityData.endTime,
+            lessonId: activityData.lessonId
+        }
+        const response = await axiosClient.put(`/education/activities/${activityId}`, transformedData)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to update activity',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
     }
-    const response = await axiosClient.put(`/education/activities/${activityId}`, transformedData)
-    return response ? response.data : null
 }
 
 export const getActivityById = async (activityId) => {
@@ -99,8 +135,17 @@ export const getActivityById = async (activityId) => {
 }
 
 export const getAllActivities = async () => {
-    const response = await axiosClient.get('/education/activities')
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.get('/education/activities')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch activities',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const getActivitiesByScheduleId = async (scheduleId) => {
@@ -119,8 +164,17 @@ export const getActivitiesByLessonId = async (lessonId) => {
 }
 
 export const deleteActivity = async (activityId) => {
-    const response = await axiosClient.delete(`/education/activities/${activityId}`)
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.delete(`/education/activities/${activityId}`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to delete activity',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const assignActivityToClass = async (assignData) => {
@@ -129,8 +183,17 @@ export const assignActivityToClass = async (assignData) => {
 }
 
 export const bulkCreateActivities = async (bulkData) => {
-    const response = await axiosClient.post('/education/activities/bulk-create', bulkData)
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.post('/education/activities/bulk-create', bulkData)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to bulk create activities',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const createActivitiesFromLessons = async (lessonsData) => {
@@ -166,8 +229,17 @@ export const getScheduleById = async (scheduleId) => {
 }
 
 export const getAllSchedules = async () => {
-    const response = await axiosClient.get('/education/schedules')
-    return response ? response.data : null
+    try {
+        const response = await axiosClient.get('/education/schedules')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch schedules',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 export const getSchedulesByClassId = async (classId) => {

@@ -1,5 +1,7 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dtos.ActivityDTO;
+import com.sba301.group1.pes_be.dtos.ScheduleDTO;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.models.*;
 import com.sba301.group1.pes_be.repositories.*;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,30 @@ public class EducationServiceImpl implements EducationService {
     private final LessonRepo lessonRepo;
     private final ScheduleRepo scheduleRepo;
     private final SyllabusRepo syllabusRepo;
+
+    // Private helper method to convert Activity entity to DTO
+    private ActivityDTO convertToDTO(Activity activity) {
+        return new ActivityDTO(activity);
+    }
+
+    // Private helper method to convert list of Activity entities to DTOs
+    private List<ActivityDTO> convertToDTO(List<Activity> activities) {
+        return activities.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Private helper method to convert Schedule entity to DTO
+    private ScheduleDTO convertScheduleToDTO(Schedule schedule) {
+        return new ScheduleDTO(schedule);
+    }
+
+    // Private helper method to convert list of Schedule entities to DTOs
+    private List<ScheduleDTO> convertScheduleToDTO(List<Schedule> schedules) {
+        return schedules.stream()
+                .map(this::convertScheduleToDTO)
+                .collect(Collectors.toList());
+    }
 
     // Activity Service Methods
     @Override
@@ -75,11 +102,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity savedActivity = activityRepo.save(activity);
+            ActivityDTO activityDTO = convertToDTO(savedActivity);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activity created successfully")
                     .success(true)
-                    .data(savedActivity)
+                    .data(activityDTO)
                     .build()
             );
 
@@ -131,11 +159,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity updatedActivity = activityRepo.save(activity);
+            ActivityDTO activityDTO = convertToDTO(updatedActivity);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity updated successfully")
                     .success(true)
-                    .data(updatedActivity)
+                    .data(activityDTO)
                     .build()
             );
 
@@ -164,11 +193,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ActivityDTO activityDTO = convertToDTO(activityOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity retrieved successfully")
                     .success(true)
-                    .data(activityOpt.get())
+                    .data(activityDTO)
                     .build()
             );
 
@@ -187,11 +217,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByScheduleId(Integer scheduleId) {
         try {
             List<Activity> activities = activityRepo.findByScheduleIdOrderByDayAndTime(scheduleId);
+            List<ActivityDTO> activityDTOs = convertToDTO(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -210,11 +241,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByClassId(Integer classId) {
         try {
             List<Activity> activities = activityRepo.findByClassId(classId);
+            List<ActivityDTO> activityDTOs = convertToDTO(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -233,11 +265,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllActivities() {
         try {
             List<Activity> activities = activityRepo.findAll();
+            List<ActivityDTO> activityDTOs = convertToDTO(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -333,12 +366,13 @@ public class EducationServiceImpl implements EducationService {
             Activity activity = activityOpt.get();
             activity.setSchedule(schedule);
             Activity updatedActivity = activityRepo.save(activity);
+            ActivityDTO activityDTO = convertToDTO(updatedActivity);
 
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity assigned to class successfully")
                     .success(true)
-                    .data(updatedActivity)
+                    .data(activityDTO)
                     .build()
             );
 
@@ -357,11 +391,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByClassAndDay(Integer classId, String dayOfWeek) {
         try {
             List<Activity> activities = activityRepo.findByClassIdAndDayOfWeek(classId, dayOfWeek);
+            List<ActivityDTO> activityDTOs = convertToDTO(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -423,11 +458,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> savedActivities = activityRepo.saveAll(activities);
+            List<ActivityDTO> activityDTOs = convertToDTO(savedActivities);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activities created successfully")
                     .success(true)
-                    .data(savedActivities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -487,11 +523,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> savedActivities = activityRepo.saveAll(activities);
+            List<ActivityDTO> activityDTOs = convertToDTO(savedActivities);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activities created from lessons successfully")
                     .success(true)
-                    .data(savedActivities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -520,11 +557,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> activities = activityRepo.findByLessonId(lessonId);
+            List<ActivityDTO> activityDTOs = convertToDTO(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityDTOs)
                     .build()
             );
 
@@ -1075,11 +1113,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllSchedules() {
         try {
             List<Schedule> schedules = scheduleRepo.findAll();
+            List<ScheduleDTO> scheduleDTOs = convertScheduleToDTO(schedules);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All schedules retrieved successfully")
                     .success(true)
-                    .data(schedules)
+                    .data(scheduleDTOs)
                     .build()
             );
 
