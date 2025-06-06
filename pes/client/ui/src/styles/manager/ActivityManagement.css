@@ -1,7 +1,23 @@
 /* Activity Management Styles */
+
+/* CSS Variables for consistent colors */
+:root {
+    --primary-color: #1976d2;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #d32f2f;
+    --edit-color: #f57c00;
+    --delete-color: #d32f2f;
+    --background-light: #f8f9fa;
+    --white: #ffffff;
+    --border-light: #e0e0e0;
+    --text-primary: #333;
+    --text-secondary: #666;
+}
+
 .activity-management-container {
     padding: 24px;
-    background: #f8f9fa;
+    background: var(--background-light);
     min-height: 100vh;
 }
 
@@ -17,7 +33,7 @@
 }
 
 .activity-title {
-    color: #1976d2;
+    color: var(--primary-color);
     font-weight: 700;
     margin: 0;
 }
@@ -29,8 +45,8 @@
 }
 
 .create-activity-btn {
-    background: linear-gradient(135deg, #4caf50, #45a049);
-    color: white;
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: var(--white);
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
@@ -47,8 +63,8 @@
 }
 
 .bulk-create-btn {
-    background: linear-gradient(135deg, #ff9800, #f57c00);
-    color: white;
+    background: linear-gradient(135deg, var(--warning-color), var(--edit-color));
+    color: var(--white);
     border: none;
     padding: 12px 24px;
     border-radius: 8px;
@@ -65,15 +81,15 @@
 }
 
 .activity-table-container {
-    background: white;
+    background: var(--white);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .activity-table-header {
-    background: linear-gradient(135deg, #4caf50, #45a049);
-    color: white;
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: var(--white);
     padding: 16px;
 }
 
@@ -85,12 +101,12 @@
     text-transform: uppercase;
 }
 
-.type-lesson { background: #e3f2fd; color: #1976d2; }
+.type-lesson { background: #e3f2fd; color: var(--primary-color); }
 .type-exercise { background: #f3e5f5; color: #7b1fa2; }
 .type-project { background: #e0f2f1; color: #00796b; }
-.type-assessment { background: #fff3e0; color: #f57c00; }
+.type-assessment { background: #fff3e0; color: var(--edit-color); }
 .type-discussion { background: #e8f5e8; color: #388e3c; }
-.type-presentation { background: #ffebee; color: #d32f2f; }
+.type-presentation { background: #ffebee; color: var(--error-color); }
 
 .difficulty-chip {
     padding: 4px 12px;
@@ -126,14 +142,14 @@
 
 .btn-edit {
     background: #fff3e0;
-    color: #f57c00;
-    border-color: #f57c00;
+    color: var(--edit-color);
+    border-color: var(--edit-color);
 }
 
 .btn-delete {
     background: #ffebee;
-    color: #d32f2f;
-    border-color: #d32f2f;
+    color: var(--delete-color);
+    border-color: var(--delete-color);
 }
 
 /* Modal Styles */
@@ -190,17 +206,17 @@
 .bulk-class-selector {
     margin-bottom: 24px;
     padding: 16px;
-    background: #f8f9fa;
+    background: var(--background-light);
     border-radius: 8px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-light);
 }
 
 .bulk-activity-card {
     margin-bottom: 16px;
     padding: 20px;
-    background: white;
+    background: var(--white);
     border-radius: 12px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-light);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
@@ -222,13 +238,13 @@
 .bulk-activity-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .remove-activity-btn {
     background: #ffebee;
-    color: #d32f2f;
-    border: 1px solid #d32f2f;
+    color: var(--delete-color);
+    border: 1px solid var(--delete-color);
     padding: 4px 12px;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -237,15 +253,15 @@
 }
 
 .remove-activity-btn:hover {
-    background: #d32f2f;
-    color: white;
+    background: var(--delete-color);
+    color: var(--white);
 }
 
 .add-activity-btn {
     width: 100%;
     padding: 16px;
-    background: #f8f9fa;
-    color: #666;
+    background: var(--background-light);
+    color: var(--text-secondary);
     border: 2px dashed #ccc;
     border-radius: 8px;
     font-weight: 500;
@@ -264,11 +280,11 @@
 
 /* Form Validation Styles */
 .form-error {
-    border-color: #d32f2f !important;
+    border-color: var(--error-color) !important;
 }
 
 .error-text {
-    color: #d32f2f;
+    color: var(--error-color);
     font-size: 0.75rem;
     margin-top: 4px;
 }
@@ -279,7 +295,7 @@
     justify-content: center;
     align-items: center;
     height: 200px;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .activity-loading .spinner {
@@ -290,7 +306,7 @@
 .activity-empty {
     text-align: center;
     padding: 40px;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .activity-empty-icon {
@@ -322,7 +338,7 @@
 }
 
 .success-icon {
-    color: #4caf50;
+    color: var(--success-color);
 }
 
 /* Responsive Design */
@@ -379,4 +395,91 @@
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
+}
+
+/* Material-UI Button Icon Color Fix - More Specific Selectors */
+.MuiButton-root .MuiSvgIcon-root {
+    color: inherit !important;
+}
+
+.MuiButton-startIcon .MuiSvgIcon-root,
+.MuiButton-endIcon .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+/* DataGrid Action Button Styles */
+.MuiDataGrid-cell .MuiButton-outlined {
+    border-width: 1px;
+    transition: all 0.2s ease;
+}
+
+.MuiDataGrid-cell .MuiButton-outlined:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Edit Button Styling - More Specific */
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) {
+    color: var(--edit-color) !important;
+    border-color: var(--edit-color) !important;
+    background-color: rgba(245, 124, 0, 0.08) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError):hover {
+    background-color: rgba(245, 124, 0, 0.12) !important;
+    border-color: var(--edit-color) !important;
+    color: var(--edit-color) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) .MuiSvgIcon-root {
+    color: var(--edit-color) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) .MuiButton-startIcon .MuiSvgIcon-root {
+    color: var(--edit-color) !important;
+}
+
+/* Delete Button Styling - More Specific */
+.activity-actions-container .MuiButton-colorError {
+    color: var(--delete-color) !important;
+    border-color: var(--delete-color) !important;
+    background-color: rgba(211, 47, 47, 0.08) !important;
+}
+
+.activity-actions-container .MuiButton-colorError:hover {
+    background-color: rgba(211, 47, 47, 0.12) !important;
+    border-color: var(--delete-color) !important;
+    color: var(--delete-color) !important;
+}
+
+.activity-actions-container .MuiButton-colorError .MuiSvgIcon-root {
+    color: var(--delete-color) !important;
+}
+
+.activity-actions-container .MuiButton-colorError .MuiButton-startIcon .MuiSvgIcon-root {
+    color: var(--delete-color) !important;
+}
+
+/* Force icon colors in all MUI button states */
+.activity-actions-container .MuiButton-root .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+.activity-actions-container .MuiButton-root:hover .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+/* Additional action button container styling */
+.activity-actions-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.activity-actions-container .MuiButton-root {
+    min-width: auto;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
 }

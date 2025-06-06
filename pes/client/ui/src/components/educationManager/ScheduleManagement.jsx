@@ -131,7 +131,8 @@ function ScheduleManagement() {
                         dayOfWeek: activity.dayOfWeek || '',
                         startTime: activity.startTime || '',
                         endTime: activity.endTime || '',
-                        lessonId: activity.lesson?.id || ''
+                        // Handle both nested and direct lessonId access patterns
+                        lessonId: activity.lessonId || activity.lesson?.id || ''
                     }));
                 }
             }

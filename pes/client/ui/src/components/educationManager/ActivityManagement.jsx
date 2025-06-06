@@ -39,6 +39,7 @@ import {
     getAllSchedules
 } from '../../services/EducationService.jsx';
 import { enqueueSnackbar } from 'notistack';
+import '../../styles/manager/ActivityManagement.css';
 
 function ActivityManagement() {
     const [activities, setActivities] = useState([]);
@@ -143,15 +144,32 @@ function ActivityManagement() {
 
     const handleEditActivity = (activity) => {
         setSelectedActivity(activity);
-        setFormData({
+        
+        // Handle different possible field access patterns for lessonId and scheduleId
+        const lessonId = activity.lessonId ||
+                         activity.lesson?.id ||
+                         (activity.getLessonId && activity.getLessonId()) ||
+                         '';
+                         
+        const scheduleId = activity.scheduleId ||
+                          activity.schedule?.id ||
+                          (activity.getScheduleId && activity.getScheduleId()) ||
+                          '';
+        
+        // Convert dayOfWeek to uppercase to match the dropdown options
+        const dayOfWeek = activity.dayOfWeek ? activity.dayOfWeek.toUpperCase() : '';
+        
+        const formDataToSet = {
             topic: activity.topic || '',
             description: activity.description || '',
-            dayOfWeek: activity.dayOfWeek || '',
+            dayOfWeek: dayOfWeek,
             startTime: activity.startTime || '',
             endTime: activity.endTime || '',
-            lessonId: activity.lessonId || '',
-            scheduleId: activity.scheduleId || ''
-        });
+            lessonId: lessonId,
+            scheduleId: scheduleId
+        };
+        
+        setFormData(formDataToSet);
         setModal({ isOpen: true, type: 'edit' });
     };
 
@@ -409,12 +427,24 @@ function ActivityManagement() {
             align: 'center',
             sortable: false,
             renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box className="activity-actions-container">
                     <Button
                         size="small"
                         variant="outlined"
-                        startIcon={<Edit />}
+                        startIcon={<Edit sx={{ color: 'var(--edit-color)' }} />}
                         onClick={() => handleEditActivity(params.row)}
+                        sx={{
+                            color: 'var(--edit-color)',
+                            borderColor: 'var(--edit-color)',
+                            backgroundColor: 'rgba(245, 124, 0, 0.08)',
+                            '&:hover': {
+                                backgroundColor: 'rgba(245, 124, 0, 0.12)',
+                                borderColor: 'var(--edit-color)',
+                            },
+                            '& .MuiSvgIcon-root': {
+                                color: 'var(--edit-color) !important'
+                            }
+                        }}
                     >
                         Edit
                     </Button>
@@ -422,8 +452,20 @@ function ActivityManagement() {
                         size="small"
                         variant="outlined"
                         color="error"
-                        startIcon={<Delete />}
+                        startIcon={<Delete sx={{ color: 'var(--delete-color)' }} />}
                         onClick={() => handleDeleteActivity(params.row.id)}
+                        sx={{
+                            color: 'var(--delete-color)',
+                            borderColor: 'var(--delete-color)',
+                            backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                            '&:hover': {
+                                backgroundColor: 'rgba(211, 47, 47, 0.12)',
+                                borderColor: 'var(--delete-color)',
+                            },
+                            '& .MuiSvgIcon-root': {
+                                color: 'var(--delete-color) !important'
+                            }
+                        }}
                     >
                         Delete
                     </Button>
@@ -450,7 +492,8 @@ function ActivityManagement() {
                     <FormControl fullWidth required>
                         <InputLabel>Day of Week</InputLabel>
                         <Select
-                            value={formData.dayOfWeek}
+                            key={`dayOfWeek-${selectedActivity?.id || 'new'}-${formData.dayOfWeek}`}
+                            value={formData.dayOfWeek || ''}
                             onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
                             label="Day of Week"
                         >

@@ -48,7 +48,7 @@ function ScheduleForm({
     useEffect(() => {
         if (open) {
             if (mode === 'create') {
-                setFormData({
+                const newFormData = {
                     weekNumber: initialData?.weekNumber || 1,
                     note: initialData?.note || '',
                     classId: initialData?.classId || '',
@@ -60,21 +60,37 @@ function ScheduleForm({
                         endTime: '',
                         lessonId: ''
                     }]
-                });
+                };
+                setFormData(newFormData);
             } else if (mode === 'edit' && initialData) {
-                setFormData({
+                // Ensure activities are properly formatted with all required fields
+                const processedActivities = (initialData.activities || []).map(activity => ({
+                    id: activity.id,
+                    topic: activity.topic || '',
+                    description: activity.description || '',
+                    dayOfWeek: activity.dayOfWeek || '', // Ensure this is properly set
+                    startTime: activity.startTime || '',
+                    endTime: activity.endTime || '',
+                    lessonId: activity.lessonId || (activity.lesson?.id) || ''
+                }));
+                
+                // If no activities exist, provide one empty template
+                const activitiesArray = processedActivities.length > 0 ? processedActivities : [{
+                    topic: '',
+                    description: '',
+                    dayOfWeek: '',
+                    startTime: '',
+                    endTime: '',
+                    lessonId: ''
+                }];
+                
+                const newFormData = {
                     weekNumber: initialData.weekNumber || 1,
                     note: initialData.note || '',
                     classId: initialData.classId || '',
-                    activities: initialData.activities || [{
-                        topic: '',
-                        description: '',
-                        dayOfWeek: '',
-                        startTime: '',
-                        endTime: '',
-                        lessonId: ''
-                    }]
-                });
+                    activities: activitiesArray
+                };
+                setFormData(newFormData);
             }
             setActivityErrors([]);
         }
