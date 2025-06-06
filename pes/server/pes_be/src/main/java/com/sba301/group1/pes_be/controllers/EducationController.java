@@ -72,6 +72,13 @@ public class EducationController {
     }
 
 
+    @GetMapping("/activities/{activityId}/deletion-impact")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Check activity deletion impact on schedules")
+    public ResponseEntity<ResponseObject> checkActivityDeletionImpact(@PathVariable Integer activityId) {
+        return educationService.checkActivityDeletionImpact(activityId);
+    }
+
     @DeleteMapping("/activities/{activityId}")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Delete an activity")

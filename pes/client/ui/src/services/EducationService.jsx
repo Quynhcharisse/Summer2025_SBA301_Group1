@@ -163,6 +163,20 @@ export const getActivitiesByLessonId = async (lessonId) => {
     return response ? response.data : null
 }
 
+export const checkActivityDeletionImpact = async (activityId) => {
+    try {
+        const response = await axiosClient.get(`/education/activities/${activityId}/deletion-impact`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to check activity deletion impact',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
 export const deleteActivity = async (activityId) => {
     try {
         const response = await axiosClient.delete(`/education/activities/${activityId}`)

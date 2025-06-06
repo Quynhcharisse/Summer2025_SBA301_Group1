@@ -289,10 +289,23 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            Activity activity = activityOpt.get();
+            
+            // Check if activity is part of a schedule and gather information for response
+            String scheduleInfo = "";
+            if (activity.getSchedule() != null) {
+                Schedule schedule = activity.getSchedule();
+                scheduleInfo = String.format(" (was part of Week %d schedule for class %s)",
+                    schedule.getWeekNumber(),
+                    schedule.getClasses() != null ? schedule.getClasses().getName() : "Unknown");
+            }
+
             activityRepo.deleteById(activityId);
+            
+            String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                    .message("Activity deleted successfully")
+                    .message(successMessage)
                     .success(true)
                     .data(null)
                     .build()
@@ -302,6 +315,63 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error deleting activity: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> checkActivityDeletionImpact(Integer activityId) {
+        try {
+            Optional<Activity> activityOpt = activityRepo.findById(activityId);
+            if (activityOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Activity not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            Activity activity = activityOpt.get();
+            
+            // Build impact information
+            java.util.Map<String, Object> impactInfo = new java.util.HashMap<>();
+            impactInfo.put("activityId", activityId);
+            impactInfo.put("activityTopic", activity.getTopic());
+            impactInfo.put("hasScheduleImpact", activity.getSchedule() != null);
+            
+            if (activity.getSchedule() != null) {
+                Schedule schedule = activity.getSchedule();
+                impactInfo.put("scheduleId", schedule.getId());
+                impactInfo.put("weekNumber", schedule.getWeekNumber());
+                
+                if (schedule.getClasses() != null) {
+                    impactInfo.put("className", schedule.getClasses().getName());
+                    impactInfo.put("classId", schedule.getClasses().getId());
+                }
+                
+                // Count other activities in the same schedule
+                List<Activity> scheduleActivities = activityRepo.findByScheduleId(schedule.getId());
+                impactInfo.put("totalActivitiesInSchedule", scheduleActivities.size());
+                impactInfo.put("isLastActivityInSchedule", scheduleActivities.size() == 1);
+            }
+            
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Activity deletion impact analysis completed")
+                    .success(true)
+                    .data(impactInfo)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error analyzing activity deletion impact: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()

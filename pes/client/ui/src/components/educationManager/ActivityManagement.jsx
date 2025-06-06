@@ -33,6 +33,7 @@ import {
     createActivity,
     updateActivity,
     deleteActivity,
+    checkActivityDeletionImpact,
     bulkCreateActivities,
     getAllClasses,
     getAllLessons,
@@ -51,7 +52,13 @@ function ActivityManagement() {
     
     const [modal, setModal] = useState({
         isOpen: false,
-        type: '' // 'create', 'edit', 'bulk', 'view'
+        type: '' // 'create', 'edit', 'bulk', 'view', 'delete-confirm'
+    });
+
+    const [deleteConfirmData, setDeleteConfirmData] = useState({
+        activityId: null,
+        activityTopic: '',
+        impactInfo: null
     });
 
     const [formData, setFormData] = useState({
@@ -174,28 +181,60 @@ function ActivityManagement() {
     };
 
     const handleDeleteActivity = async (activityId) => {
-        if (window.confirm('Are you sure you want to delete this activity?')) {
-            try {
-                const response = await deleteActivity(activityId);
-                if (response && response.success) {
-                    enqueueSnackbar('Activity deleted successfully', { variant: 'success' });
-                    fetchInitialData();
-                } else {
-                    enqueueSnackbar('Failed to delete activity', { variant: 'error' });
-                }
-            } catch (error) {
-                console.error('Error deleting activity:', error);
+        try {
+            // First check the deletion impact
+            const impactResponse = await checkActivityDeletionImpact(activityId);
+            if (impactResponse && impactResponse.success) {
+                const impactData = impactResponse.data;
                 
-                let errorMessage = 'Error deleting activity';
-                if (error.status === 401 || error.status === 403) {
-                    errorMessage = 'Authentication failed. Please log in again to delete activities.';
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
+                setDeleteConfirmData({
+                    activityId: activityId,
+                    activityTopic: impactData.activityTopic,
+                    impactInfo: impactData
+                });
                 
-                enqueueSnackbar(errorMessage, { variant: 'error' });
+                setModal({ isOpen: true, type: 'delete-confirm' });
+            } else {
+                // Fallback to simple confirmation if impact check fails
+                if (window.confirm('Are you sure you want to delete this activity?')) {
+                    await performActivityDeletion(activityId);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking activity deletion impact:', error);
+            // Fallback to simple confirmation
+            if (window.confirm('Are you sure you want to delete this activity?')) {
+                await performActivityDeletion(activityId);
             }
         }
+    };
+
+    const performActivityDeletion = async (activityId) => {
+        try {
+            const response = await deleteActivity(activityId);
+            if (response && response.success) {
+                enqueueSnackbar(response.message || 'Activity deleted successfully', { variant: 'success' });
+                fetchInitialData();
+                handleCloseModal();
+            } else {
+                enqueueSnackbar('Failed to delete activity', { variant: 'error' });
+            }
+        } catch (error) {
+            console.error('Error deleting activity:', error);
+            
+            let errorMessage = 'Error deleting activity';
+            if (error.status === 401 || error.status === 403) {
+                errorMessage = 'Authentication failed. Please log in again to delete activities.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            enqueueSnackbar(errorMessage, { variant: 'error' });
+        }
+    };
+
+    const handleConfirmDelete = () => {
+        performActivityDeletion(deleteConfirmData.activityId);
     };
 
     const handleFormSubmit = async () => {
@@ -338,6 +377,11 @@ function ActivityManagement() {
     const handleCloseModal = () => {
         setModal({ isOpen: false, type: '' });
         setSelectedActivity(null);
+        setDeleteConfirmData({
+            activityId: null,
+            activityTopic: '',
+            impactInfo: null
+        });
     };
 
     const getDifficultyColor = (difficulty) => {
@@ -719,6 +763,71 @@ function ActivityManagement() {
         </>
     );
 
+    const renderDeleteConfirmModal = () => (
+        <>
+            <DialogTitle sx={{ color: 'error.main' }}>
+                Confirm Activity Deletion
+            </DialogTitle>
+            <DialogContent>
+                <Stack spacing={3} sx={{ mt: 2 }}>
+                    <Alert severity="warning">
+                        You are about to delete the activity: <strong>"{deleteConfirmData.activityTopic}"</strong>
+                    </Alert>
+                    
+                    {deleteConfirmData.impactInfo?.hasScheduleImpact && (
+                        <Card sx={{ p: 2, backgroundColor: '#fff3e0' }}>
+                            <Typography variant="h6" color="warning.main" gutterBottom>
+                                Schedule Impact Warning
+                            </Typography>
+                            <List dense>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Schedule Information"
+                                        secondary={`Week ${deleteConfirmData.impactInfo.weekNumber} - ${deleteConfirmData.impactInfo.className || 'Unknown Class'}`}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Activities in Schedule"
+                                        secondary={`${deleteConfirmData.impactInfo.totalActivitiesInSchedule} total activities`}
+                                    />
+                                </ListItem>
+                                {deleteConfirmData.impactInfo.isLastActivityInSchedule && (
+                                    <ListItem>
+                                        <Alert severity="error" sx={{ width: '100%' }}>
+                                            This is the last activity in the schedule. Deleting it may leave the schedule empty.
+                                        </Alert>
+                                    </ListItem>
+                                )}
+                            </List>
+                        </Card>
+                    )}
+                    
+                    {!deleteConfirmData.impactInfo?.hasScheduleImpact && (
+                        <Alert severity="info">
+                            This activity is not currently assigned to any schedule. Deletion will not affect any schedules.
+                        </Alert>
+                    )}
+                    
+                    <Typography variant="body2" color="text.secondary">
+                        This action cannot be undone. Are you sure you want to proceed?
+                    </Typography>
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleCloseModal}>Cancel</Button>
+                <Button
+                    onClick={handleConfirmDelete}
+                    variant="contained"
+                    color="error"
+                    startIcon={<Delete />}
+                >
+                    Delete Activity
+                </Button>
+            </DialogActions>
+        </>
+    );
+
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -750,7 +859,9 @@ function ActivityManagement() {
                 maxWidth="md"
                 fullWidth
             >
-                {modal.type === 'bulk' ? renderBulkModal() : renderFormModal()}
+                {modal.type === 'bulk' ? renderBulkModal() :
+                 modal.type === 'delete-confirm' ? renderDeleteConfirmModal() :
+                 renderFormModal()}
             </Dialog>
         </Box>
     );
