@@ -19,7 +19,8 @@ const ProtectRoute = ({children, allowedRoles}) => {
         if (decoded && allowedRoles.includes(decoded.role)) { //decode = giai ma
             return children
         } else { // bắt TH phủ định của phủ định trường hợp đúng
-            return null; // nếu ko có access, thì có refresh để refresh token lại
+            enqueueSnackbar("You are not authorized to access this page", {variant: 'error'});
+            return <Navigate to="/login"/>;
         }
     }
     refreshToken().then(res => {

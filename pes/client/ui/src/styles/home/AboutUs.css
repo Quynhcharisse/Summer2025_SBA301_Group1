@@ -146,7 +146,7 @@
     position: absolute;
     width: 140px;
     height: 140px;
-    background: url('https://merrystar.edu.vn/wp-content/themes/merrystar/assets/images/decor-circle.svg') no-repeat center/contain;
+    background: none;
     opacity: 0.15;
     z-index: 0;
     top: -30px;
@@ -207,11 +207,11 @@
 
 /* Màu background riêng nếu muốn giữ các class màu (không bắt buộc) */
 .core-blue {
-    /* optional: background-color: #e3f2fd; */
+    /* Blue themed item */
 }
 .core-pink {
-    /* optional: background-color: #fde0e0; */
+    /* Pink themed item */
 }
 .core-yellow {
-    /* optional: background-color: #fffde7; */
+    /* Yellow themed item */
 }
