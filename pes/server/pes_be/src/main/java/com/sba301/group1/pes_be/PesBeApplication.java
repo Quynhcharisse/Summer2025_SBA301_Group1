@@ -4,21 +4,25 @@ import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Activity;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Classes;
 import com.sba301.group1.pes_be.models.Lesson;
 import com.sba301.group1.pes_be.models.Manager;
 import com.sba301.group1.pes_be.models.Parent;
+import com.sba301.group1.pes_be.models.Schedule;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.ActivityRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ManagerRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
+import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
@@ -53,6 +57,10 @@ public class PesBeApplication {
     private final SyllabusLessonRepo syllabusLessonRepo;
 
     private final ClassesRepo classesRepo;
+
+    private final ScheduleRepo scheduleRepo;
+
+    private final ActivityRepo activityRepo;
 
 
     public static void main(String[] args) {
@@ -420,6 +428,70 @@ public class PesBeApplication {
             }
 
             System.out.println("Education data initialization completed successfully!");
+        };
+    }
+
+    @Bean
+    public CommandLineRunner initSchedulesAndActivities() {
+        return args -> {
+            // Get all classes to create schedules for
+            var allClasses = classesRepo.findAll();
+            
+            if (allClasses.isEmpty()) {
+                System.out.println("No classes found, skipping schedule and activity initialization");
+                return;
+            }
+
+            // Get all lessons for creating activities
+            var allLessons = lessonRepo.findAll();
+            
+            for (Classes classEntity : allClasses) {
+                // Create schedules for 4 weeks for each class
+                for (int week = 1; week <= 4; week++) {
+                    // Check if schedule already exists for this class and week
+                    if (scheduleRepo.findByClassesIdAndWeekNumber(classEntity.getId(), week).isEmpty()) {
+                        Schedule schedule = Schedule.builder()
+                                .weekNumber(week)
+                                .note("Week " + week + " schedule for " + classEntity.getName())
+                                .classes(classEntity)
+                                .build();
+                        schedule = scheduleRepo.save(schedule);
+                        System.out.println("Created Schedule for " + classEntity.getName() + " - Week " + week);
+
+                        // Create activities for each day of the week
+                        String[] daysOfWeek = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+                        String[] timeSlots = {"08:00", "09:30", "10:30", "14:00", "15:30"};
+                        String[] endTimes = {"09:00", "10:30", "11:30", "15:00", "16:30"};
+
+                        for (int day = 0; day < daysOfWeek.length; day++) {
+                            // Create 2-3 activities per day
+                            int activitiesPerDay = 2 + (int)(Math.random() * 2); // 2 or 3 activities
+                            
+                            for (int activityIndex = 0; activityIndex < activitiesPerDay && activityIndex < timeSlots.length; activityIndex++) {
+                                // Select a random lesson from available lessons
+                                Lesson selectedLesson = allLessons.get((int)(Math.random() * allLessons.size()));
+                                
+                                // Create activity topic based on lesson and day
+                                String activityTopic = selectedLesson.getTopic() + " - " + daysOfWeek[day];
+                                
+                                Activity activity = Activity.builder()
+                                        .topic(activityTopic)
+                                        .description("Engaging " + selectedLesson.getTopic().toLowerCase() + " session for " + classEntity.getGrade() + " students")
+                                        .dayOfWeek(daysOfWeek[day])
+                                        .startTime(timeSlots[activityIndex])
+                                        .endTime(endTimes[activityIndex])
+                                        .schedule(schedule)
+                                        .lesson(selectedLesson)
+                                        .build();
+                                activityRepo.save(activity);
+                            }
+                        }
+                        System.out.println("Created activities for " + classEntity.getName() + " - Week " + week);
+                    }
+                }
+            }
+
+            System.out.println("Schedules and Activities initialization completed successfully!");
         };
     }
 }
