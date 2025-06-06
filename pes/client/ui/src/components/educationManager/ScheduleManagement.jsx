@@ -18,10 +18,9 @@ import {
     Card
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, Edit, Delete, Schedule as ScheduleIcon } from '@mui/icons-material';
+import { Add, Edit, Delete } from '@mui/icons-material';
 import {
     getAllSchedules,
-    getWeeklySchedule,
     createSchedule,
     updateSchedule,
     deleteSchedule,
@@ -43,10 +42,9 @@ function ScheduleManagement() {
     const [lessons, setLessons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
-    const [weeklySchedule, setWeeklySchedule] = useState([]);
       const [modal, setModal] = useState({
         isOpen: false,
-        type: '' // 'create', 'edit', 'weekly', 'delete-confirm'
+        type: '' // 'create', 'edit', 'delete-confirm'
     });
 
     const [deleteConfirmData, setDeleteConfirmData] = useState({
@@ -90,21 +88,6 @@ function ScheduleManagement() {
         }
     };
 
-
-    const handleViewWeeklySchedule = async (classId, weekNumber = 1) => {
-        try {
-            const response = await getWeeklySchedule(classId, weekNumber);
-            if (response && response.success) {
-                setWeeklySchedule(response.data || []);
-                setModal({ isOpen: true, type: 'weekly' });
-            } else {
-                enqueueSnackbar('Failed to fetch weekly schedule', { variant: 'error' });
-            }
-        } catch (error) {
-            console.error('Error fetching weekly schedule:', error);
-            enqueueSnackbar('Error fetching weekly schedule', { variant: 'error' });
-        }
-    };
 
     const handleCreateSchedule = () => {
         setInitialFormData({
@@ -610,79 +593,10 @@ function ScheduleManagement() {
                     >
                         Delete
                     </Button>
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<ScheduleIcon />}
-                        onClick={() => handleViewWeeklySchedule(params.row.classes?.id, params.row.weekNumber)}
-                        sx={{
-                            color: 'primary.main',
-                            borderColor: 'primary.main',
-                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                            '&:hover': {
-                                backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                                borderColor: 'primary.main',
-                            }
-                        }}
-                    >
-                        Week View
-                    </Button>
                 </Box>
             )
         }
     ];
-    const renderWeeklyModal = () => (
-        <>
-            <DialogTitle>Weekly Schedule View</DialogTitle>
-            <DialogContent>
-                {weeklySchedule.length > 0 ? (
-                    <List>
-                        {weeklySchedule.map((schedule, index) => (
-                            <React.Fragment key={schedule.id}>
-                                <ListItem>
-                                    <ListItemText
-                                        primary={
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography variant="subtitle1">
-                                                    Week {schedule.weekNumber} - {schedule.classes?.className || 'Unknown Class'}
-                                                </Typography>
-                                            </Box>
-                                        }
-                                        secondary={
-                                            <>
-                                                <Typography variant="body2">
-                                                    Note: {schedule.note || 'No notes'}
-                                                </Typography>
-                                                <Typography variant="body2">
-                                                    Activities: {schedule.activities?.length || 0}
-                                                </Typography>
-                                                {schedule.activities && schedule.activities.length > 0 && (
-                                                    <Box sx={{ mt: 1 }}>
-                                                        {schedule.activities.map((activity, actIndex) => (
-                                                            <Chip
-                                                                key={actIndex}
-                                                                label={`${activity.topic} (${activity.dayOfWeek})`}
-                                                                size="small"
-                                                                sx={{ mr: 1, mb: 1 }}
-                                                            />
-                                                        ))}
-                                                    </Box>
-                                                )}
-                                            </>
-                                        }
-                                    />
-                                </ListItem>
-                                {index < weeklySchedule.length - 1 && <Divider />}
-                            </React.Fragment>
-                        ))}
-                    </List>
-                ) : (
-                    <Alert severity="info">No schedules found for this week</Alert>
-                )}
-            </DialogContent>
-        </>
-    );
-
     const renderDeleteConfirmModal = () => (
         <>
             <DialogTitle sx={{ color: 'error.main' }}>
@@ -788,18 +702,7 @@ function ScheduleManagement() {
                 classes={classes}
                 lessons={lessons}
                 loading={formLoading}
-            />            {/* Weekly Schedule Dialog */}
-            <Dialog
-                open={modal.isOpen && modal.type === 'weekly'}
-                onClose={handleCloseModal}
-                maxWidth="md"
-                fullWidth
-            >
-                {renderWeeklyModal()}
-                <DialogActions>
-                    <Button onClick={handleCloseModal}>Close</Button>
-                </DialogActions>
-            </Dialog>
+            />
 
             {/* Delete Confirmation Dialog */}
             <Dialog

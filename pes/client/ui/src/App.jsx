@@ -12,10 +12,8 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
-import ClassManagement from "./components/educationManager/ClassManagement.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
-import DashboardUI from "./components/ui/DashhboardUI.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
 
 
@@ -63,7 +61,9 @@ const router = createBrowserRouter([
                 element: <AdmissionForm/>
             }
         ]
-    },    {        path: "/education",
+    },    
+    {        
+        path: "/education",
         element: (
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>
@@ -72,10 +72,6 @@ const router = createBrowserRouter([
             {
                 index: true,
                 element: <EducationDashboard />
-            },
-            {
-                path: 'classes',
-                element: <ClassManagement/>
             },
             {
                 path: 'activities',

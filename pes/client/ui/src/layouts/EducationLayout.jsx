@@ -5,11 +5,6 @@ import DashboardUI from '../components/ui/DashhboardUI';
 function EducationLayout() {
     const navigationItems = [
         {
-            segment: 'education/classes',
-            title: 'Class Management',
-            icon: <School />,
-        },
-        {
             segment: 'education/schedules',
             title: 'Schedule Management',
             icon: <CalendarToday />,

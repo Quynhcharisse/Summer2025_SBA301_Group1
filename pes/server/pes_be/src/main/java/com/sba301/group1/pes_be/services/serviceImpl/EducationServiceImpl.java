@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -276,6 +277,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> deleteActivity(Integer activityId) {
         try {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
@@ -293,14 +295,31 @@ public class EducationServiceImpl implements EducationService {
             
             // Check if activity is part of a schedule and gather information for response
             String scheduleInfo = "";
+            Schedule schedule = null;
             if (activity.getSchedule() != null) {
-                Schedule schedule = activity.getSchedule();
+                schedule = activity.getSchedule();
                 scheduleInfo = String.format(" (was part of Week %d schedule for class %s)",
                     schedule.getWeekNumber(),
                     schedule.getClasses() != null ? schedule.getClasses().getName() : "Unknown");
             }
 
-            activityRepo.deleteById(activityId);
+            // Proper bidirectional relationship cleanup for orphanRemoval
+            if (schedule != null) {
+                // Fetch the full schedule with activities to ensure the collection is loaded
+                Schedule managedSchedule = scheduleRepo.findById(schedule.getId()).orElse(null);
+                if (managedSchedule != null && managedSchedule.getActivities() != null) {
+                    // Remove the activity from the schedule's collection
+                    // This will trigger orphanRemoval and delete the activity automatically
+                    managedSchedule.getActivities().removeIf(a -> a.getId().equals(activityId));
+                    scheduleRepo.save(managedSchedule);
+                } else {
+                    // If schedule is not managed or has no activities, delete directly
+                    activityRepo.deleteById(activityId);
+                }
+            } else {
+                // Activity has no schedule, safe to delete directly
+                activityRepo.deleteById(activityId);
+            }
             
             String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.ok().body(
@@ -1137,6 +1156,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> deleteSchedule(Integer scheduleId) {
         try {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);
