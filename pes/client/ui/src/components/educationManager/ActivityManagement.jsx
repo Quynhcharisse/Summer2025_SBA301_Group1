@@ -22,10 +22,11 @@ import {
     ListItem,
     ListItemText,
     Divider,
-    Stack
+    Stack,
+    InputAdornment
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, Edit, Delete, Assignment, PostAdd } from '@mui/icons-material';
+import { Add, Edit, Delete, Assignment, PostAdd, Search } from '@mui/icons-material';
 import {
     getAllActivities,
     getActivitiesByClassId,
@@ -49,6 +50,7 @@ function ActivityManagement() {
     const [schedules, setSchedules] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedActivity, setSelectedActivity] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     
     const [modal, setModal] = useState({
         isOpen: false,
@@ -405,6 +407,21 @@ function ActivityManagement() {
         return colors[type] || 'default';
     };
 
+    // Filter activities based on search term
+    const filteredActivities = activities.filter(activity => {
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            activity.topic?.toLowerCase().includes(searchLower) ||
+            activity.description?.toLowerCase().includes(searchLower) ||
+            activity.dayOfWeek?.toLowerCase().includes(searchLower) ||
+            activity.startTime?.toLowerCase().includes(searchLower) ||
+            activity.endTime?.toLowerCase().includes(searchLower) ||
+            activity.lessonId?.toString().includes(searchLower)
+        );
+    });
+
     const columns = [
         {
             field: 'id',
@@ -416,7 +433,7 @@ function ActivityManagement() {
         {
             field: 'topic',
             headerName: 'Topic',
-            width: 200,
+            width: 300,
             headerAlign: 'center'
         },
         {
@@ -460,7 +477,7 @@ function ActivityManagement() {
         {
             field: 'description',
             headerName: 'Description',
-            width: 200,
+            width: 350,
             headerAlign: 'center'
         },
         {
@@ -829,7 +846,8 @@ function ActivityManagement() {
     );
 
     return (
-        <Box sx={{ p: 3 }}>            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                     Activity Management
                 </Typography>
@@ -851,9 +869,33 @@ function ActivityManagement() {
                 </Box>
             </Box>
 
+            {/* Search Bar */}
+            <Box sx={{ mb: 3 }}>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Search activities by topic, description, day of week, time, or lesson ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Search />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{
+                        maxWidth: 600,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                        }
+                    }}
+                />
+            </Box>
+
             <Paper sx={{ height: 600, width: '100%' }}>
                 <DataGrid
-                    rows={activities}
+                    rows={filteredActivities}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[5, 10, 20]}

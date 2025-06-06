@@ -7,12 +7,12 @@ function EducationLayout() {
         {
             segment: 'education/schedules',
             title: 'Schedule Management',
-            icon: <CalendarToday />,
+            icon: <CalendarToday sx={{ color: '#666' }} />,
         },
         {
             segment: 'education/activities',
             title: 'Activity Management',
-            icon: <Event />,
+            icon: <Event sx={{ color: '#666' }} />,
         }
     ];
 

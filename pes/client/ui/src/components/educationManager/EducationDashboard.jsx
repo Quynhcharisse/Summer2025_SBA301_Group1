@@ -70,7 +70,7 @@ function EducationDashboard() {
                             Education Management Dashboard
                         </Typography>
                         <Chip
-                            icon={<TrendingUp />}
+                            icon={<TrendingUp sx={{ color: '#666' }} />}
                             label="Management Portal"
                             color="primary"
                             variant="outlined"

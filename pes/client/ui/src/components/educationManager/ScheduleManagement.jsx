@@ -15,10 +15,12 @@ import {
     DialogContent,
     DialogActions,
     Stack,
-    Card
+    Card,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, Edit, Delete } from '@mui/icons-material';
+import { Add, Edit, Delete, Search } from '@mui/icons-material';
 import {
     getAllSchedules,
     createSchedule,
@@ -42,6 +44,7 @@ function ScheduleManagement() {
     const [lessons, setLessons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
       const [modal, setModal] = useState({
         isOpen: false,
         type: '' // 'create', 'edit', 'delete-confirm'
@@ -441,6 +444,24 @@ function ScheduleManagement() {
         return colors[day] || 'default';
     };
 
+    // Filter schedules based on search term
+    const filteredSchedules = schedules.filter(schedule => {
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            schedule.weekNumber?.toString().includes(searchLower) ||
+            schedule.note?.toLowerCase().includes(searchLower) ||
+            schedule.classes?.name?.toLowerCase().includes(searchLower) ||
+            schedule.classes?.grade?.toLowerCase().includes(searchLower) ||
+            schedule.activities?.some(activity =>
+                activity.topic?.toLowerCase().includes(searchLower) ||
+                activity.description?.toLowerCase().includes(searchLower) ||
+                activity.dayOfWeek?.toLowerCase().includes(searchLower)
+            )
+        );
+    });
+
     const columns = [
         {
             field: 'id',
@@ -675,9 +696,33 @@ function ScheduleManagement() {
                 </Button>
             </Box>
 
+            {/* Search Bar */}
+            <Box sx={{ mb: 3 }}>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Search schedules by week number, note, class name, grade, or activity details..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Search />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{
+                        maxWidth: 600,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                        }
+                    }}
+                />
+            </Box>
+
             <Paper sx={{ height: 600, width: '100%' }}>
                 <DataGrid
-                    rows={schedules}
+                    rows={filteredSchedules}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[5, 10, 20]}
