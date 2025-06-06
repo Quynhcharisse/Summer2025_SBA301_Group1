@@ -13,7 +13,9 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    Stack,
+    Card
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Add, Edit, Delete, Schedule as ScheduleIcon } from '@mui/icons-material';
@@ -42,10 +44,15 @@ function ScheduleManagement() {
     const [loading, setLoading] = useState(true);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [weeklySchedule, setWeeklySchedule] = useState([]);
-    
-    const [modal, setModal] = useState({
+      const [modal, setModal] = useState({
         isOpen: false,
-        type: '' // 'create', 'edit', 'weekly'
+        type: '' // 'create', 'edit', 'weekly', 'delete-confirm'
+    });
+
+    const [deleteConfirmData, setDeleteConfirmData] = useState({
+        scheduleId: null,
+        scheduleInfo: '',
+        activitiesCount: 0
     });
 
     const [formLoading, setFormLoading] = useState(false);
@@ -177,22 +184,39 @@ function ScheduleManagement() {
             });
             setModal({ isOpen: true, type: 'edit' });
         }
+    };    const handleDeleteSchedule = async (scheduleId, scheduleData) => {
+        try {
+            // Set up delete confirmation data
+            const schedule = schedules.find(s => s.id === scheduleId) || scheduleData;
+            const activitiesCount = schedule?.activities?.length || 0;
+            const scheduleInfo = `Week ${schedule?.weekNumber || 'Unknown'} - ${schedule?.classes?.name || 'Unknown Class'}`;
+            
+            setDeleteConfirmData({
+                scheduleId: scheduleId,
+                scheduleInfo: scheduleInfo,
+                activitiesCount: activitiesCount
+            });
+            
+            setModal({ isOpen: true, type: 'delete-confirm' });
+        } catch (error) {
+            console.error('Error preparing schedule deletion:', error);
+            enqueueSnackbar('Error preparing to delete schedule', { variant: 'error' });
+        }
     };
 
-    const handleDeleteSchedule = async (scheduleId) => {
-        if (window.confirm('Are you sure you want to delete this schedule?')) {
-            try {
-                const response = await deleteSchedule(scheduleId);
-                if (response && response.success) {
-                    enqueueSnackbar('Schedule deleted successfully', { variant: 'success' });
-                    fetchInitialData();
-                } else {
-                    enqueueSnackbar('Failed to delete schedule', { variant: 'error' });
-                }
-            } catch (error) {
-                console.error('Error deleting schedule:', error);
-                enqueueSnackbar('Error deleting schedule', { variant: 'error' });
+    const handleConfirmDelete = async () => {
+        try {
+            const response = await deleteSchedule(deleteConfirmData.scheduleId);
+            if (response && response.success) {
+                enqueueSnackbar('Schedule deleted successfully', { variant: 'success' });
+                fetchInitialData();
+                handleCloseModal();
+            } else {
+                enqueueSnackbar('Failed to delete schedule', { variant: 'error' });
             }
+        } catch (error) {
+            console.error('Error deleting schedule:', error);
+            enqueueSnackbar('Error deleting schedule', { variant: 'error' });
         }
     };
 
@@ -408,14 +432,17 @@ function ScheduleManagement() {
         }
         
         return results;
-    };
-
-    const handleCloseModal = () => {
+    };    const handleCloseModal = () => {
         setModal({ isOpen: false, type: '' });
         setSelectedSchedule(null);
         setWeeklySchedule([]);
         setInitialFormData(null);
         setFormLoading(false);
+        setDeleteConfirmData({
+            scheduleId: null,
+            scheduleInfo: '',
+            activitiesCount: 0
+        });
     };
 
     const getDayColor = (day) => {
@@ -604,8 +631,6 @@ function ScheduleManagement() {
             )
         }
     ];
-
-
     const renderWeeklyModal = () => (
         <>
             <DialogTitle>Weekly Schedule View</DialogTitle>
@@ -658,6 +683,69 @@ function ScheduleManagement() {
         </>
     );
 
+    const renderDeleteConfirmModal = () => (
+        <>
+            <DialogTitle sx={{ color: 'error.main' }}>
+                Confirm Schedule Deletion
+            </DialogTitle>
+            <DialogContent>
+                <Stack spacing={3} sx={{ mt: 2 }}>
+                    <Alert severity="warning">
+                        You are about to delete the schedule: <strong>"{deleteConfirmData.scheduleInfo}"</strong>
+                    </Alert>
+                    
+                    {deleteConfirmData.activitiesCount > 0 && (
+                        <Card sx={{ p: 2, backgroundColor: '#fff3e0' }}>
+                            <Typography variant="h6" color="warning.main" gutterBottom>
+                                Activities Impact Warning
+                            </Typography>
+                            <List dense>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Schedule Information"
+                                        secondary={deleteConfirmData.scheduleInfo}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Activities in Schedule"
+                                        secondary={`${deleteConfirmData.activitiesCount} activities will be deleted`}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <Alert severity="error" sx={{ width: '100%' }}>
+                                        Deleting this schedule will also permanently remove all {deleteConfirmData.activitiesCount} associated activities.
+                                    </Alert>
+                                </ListItem>
+                            </List>
+                        </Card>
+                    )}
+                    
+                    {deleteConfirmData.activitiesCount === 0 && (
+                        <Alert severity="info">
+                            This schedule has no associated activities. Only the schedule will be deleted.
+                        </Alert>
+                    )}
+                    
+                    <Typography variant="body2" color="text.secondary">
+                        This action cannot be undone. Are you sure you want to proceed?
+                    </Typography>
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleCloseModal}>Cancel</Button>
+                <Button
+                    onClick={handleConfirmDelete}
+                    variant="contained"
+                    color="error"
+                    startIcon={<Delete />}
+                >
+                    Delete Schedule
+                </Button>
+            </DialogActions>
+        </>
+    );
+
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -700,9 +788,7 @@ function ScheduleManagement() {
                 classes={classes}
                 lessons={lessons}
                 loading={formLoading}
-            />
-
-            {/* Weekly Schedule Dialog */}
+            />            {/* Weekly Schedule Dialog */}
             <Dialog
                 open={modal.isOpen && modal.type === 'weekly'}
                 onClose={handleCloseModal}
@@ -713,6 +799,16 @@ function ScheduleManagement() {
                 <DialogActions>
                     <Button onClick={handleCloseModal}>Close</Button>
                 </DialogActions>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={modal.isOpen && modal.type === 'delete-confirm'}
+                onClose={handleCloseModal}
+                maxWidth="sm"
+                fullWidth
+            >
+                {renderDeleteConfirmModal()}
             </Dialog>
         </Box>
     );

@@ -1173,7 +1173,7 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllSchedules() {
         try {
-            List<Schedule> schedules = scheduleRepo.findAll();
+            List<Schedule> schedules = scheduleRepo.findAllWithActivitiesAndClasses();
             List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()

@@ -18,6 +18,7 @@ public class ScheduleResponse {
     private Integer weekNumber;
     private String note;
     private SimpleClassResponse classes;
+    private List<SimpleActivityResponse> activities;
 
     @Data
     @NoArgsConstructor
@@ -29,6 +30,19 @@ public class ScheduleResponse {
         private String roomNumber;
         private String status;
         private String grade;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SimpleActivityResponse {
+        private Integer id;
+        private String topic;
+        private String description;
+        private String dayOfWeek;
+        private String startTime;
+        private String endTime;
     }
 
     public static ScheduleResponse fromEntity(Schedule schedule) {
@@ -46,11 +60,26 @@ public class ScheduleResponse {
                 .build();
         }
 
+        List<SimpleActivityResponse> activityResponses = null;
+        if (schedule.getActivities() != null) {
+            activityResponses = schedule.getActivities().stream()
+                .map(activity -> SimpleActivityResponse.builder()
+                    .id(activity.getId())
+                    .topic(activity.getTopic())
+                    .description(activity.getDescription())
+                    .dayOfWeek(activity.getDayOfWeek())
+                    .startTime(activity.getStartTime())
+                    .endTime(activity.getEndTime())
+                    .build())
+                .collect(Collectors.toList());
+        }
+
         return ScheduleResponse.builder()
             .id(schedule.getId())
             .weekNumber(schedule.getWeekNumber())
             .note(schedule.getNote())
             .classes(classResponse)
+            .activities(activityResponses)
             .build();
     }
 
