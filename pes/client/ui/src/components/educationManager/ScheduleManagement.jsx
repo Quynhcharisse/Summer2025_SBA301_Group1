@@ -33,6 +33,7 @@ import {
 } from '../../services/EducationService.jsx';
 import { enqueueSnackbar } from 'notistack';
 import ScheduleForm from './ScheduleForm.jsx';
+import '../../styles/manager/ActivityManagement.css';
 
 function ScheduleManagement() {
     const [schedules, setSchedules] = useState([]);
@@ -534,21 +535,31 @@ function ScheduleManagement() {
                     </Box>
                 );
             }
-        },
-        {
+        },        {
             field: 'actions',
             headerName: 'Actions',
-            width: 250,
+            width: 300,
             headerAlign: 'center',
             align: 'center',
-            sortable: false,
-            renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+            sortable: false,            renderCell: (params) => (
+                <Box className="activity-actions-container">
                     <Button
                         size="small"
                         variant="outlined"
-                        startIcon={<Edit />}
+                        startIcon={<Edit sx={{ color: 'var(--edit-color)' }} />}
                         onClick={() => handleEditSchedule(params.row)}
+                        sx={{
+                            color: 'var(--edit-color)',
+                            borderColor: 'var(--edit-color)',
+                            backgroundColor: 'rgba(245, 124, 0, 0.08)',
+                            '&:hover': {
+                                backgroundColor: 'rgba(245, 124, 0, 0.12)',
+                                borderColor: 'var(--edit-color)',
+                            },
+                            '& .MuiSvgIcon-root': {
+                                color: 'var(--edit-color) !important'
+                            }
+                        }}
                     >
                         Edit
                     </Button>
@@ -556,8 +567,20 @@ function ScheduleManagement() {
                         size="small"
                         variant="outlined"
                         color="error"
-                        startIcon={<Delete />}
+                        startIcon={<Delete sx={{ color: 'var(--delete-color)' }} />}
                         onClick={() => handleDeleteSchedule(params.row.id)}
+                        sx={{
+                            color: 'var(--delete-color)',
+                            borderColor: 'var(--delete-color)',
+                            backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                            '&:hover': {
+                                backgroundColor: 'rgba(211, 47, 47, 0.12)',
+                                borderColor: 'var(--delete-color)',
+                            },
+                            '& .MuiSvgIcon-root': {
+                                color: 'var(--delete-color) !important'
+                            }
+                        }}
                     >
                         Delete
                     </Button>
@@ -566,6 +589,15 @@ function ScheduleManagement() {
                         variant="outlined"
                         startIcon={<ScheduleIcon />}
                         onClick={() => handleViewWeeklySchedule(params.row.classes?.id, params.row.weekNumber)}
+                        sx={{
+                            color: 'primary.main',
+                            borderColor: 'primary.main',
+                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                            '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                                borderColor: 'primary.main',
+                            }
+                        }}
                     >
                         Week View
                     </Button>

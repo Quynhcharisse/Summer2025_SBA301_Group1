@@ -829,11 +829,26 @@ function ActivityManagement() {
     );
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ p: 3 }}>            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                     Activity Management
                 </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={handleCreateActivity}
+                    >
+                        Create Activity
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<PostAdd />}
+                        onClick={handleBulkCreate}
+                    >
+                        Bulk Create
+                    </Button>
+                </Box>
             </Box>
 
             <Paper sx={{ height: 600, width: '100%' }}>
