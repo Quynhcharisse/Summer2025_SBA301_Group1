@@ -1027,11 +1027,12 @@ public class EducationServiceImpl implements EducationService {
             schedule.setNote(request.getNote());
 
             Schedule updatedSchedule = scheduleRepo.save(schedule);
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(updatedSchedule);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedule updated successfully")
                     .success(true)
-                    .data(updatedSchedule)
+                    .data(scheduleResponse)
                     .build()
             );
 

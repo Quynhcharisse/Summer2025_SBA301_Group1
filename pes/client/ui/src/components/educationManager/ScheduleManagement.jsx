@@ -124,12 +124,11 @@ function ScheduleManagement() {
             let existingActivities = [];
             if (schedule.id) {
                 const activitiesResponse = await getActivitiesByScheduleId(schedule.id);
-                if (activitiesResponse && activitiesResponse.success) {
-                    existingActivities = activitiesResponse.data.map(activity => ({
+                if (activitiesResponse && activitiesResponse.success) {                    existingActivities = activitiesResponse.data.map(activity => ({
                         id: activity.id, // Keep the ID to distinguish existing vs new activities
                         topic: activity.topic || '',
                         description: activity.description || '',
-                        dayOfWeek: activity.dayOfWeek || '',
+                        dayOfWeek: activity.dayOfWeek ? activity.dayOfWeek.toUpperCase() : '',
                         startTime: activity.startTime || '',
                         endTime: activity.endTime || '',
                         // Handle both nested and direct lessonId access patterns
