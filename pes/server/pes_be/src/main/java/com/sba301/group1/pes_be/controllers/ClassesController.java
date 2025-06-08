@@ -19,29 +19,29 @@ public class ClassesController {
     private final ClassesService classService;
 
     @PostMapping()
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Create a class", description = "Allows managers to create a new class")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a class", description = "Allows educations to create a new class")
     public ResponseEntity<ResponseObject> createClass(@RequestBody ClassRequest request) {
         return classService.createClass(request);
     }
 
     @PutMapping("/{classId}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Update a class", description = "Allows managers to update an existing class")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Update a class", description = "Allows educations to update an existing class")
     public ResponseEntity<ResponseObject> updateClass(@PathVariable Integer classId, @RequestBody ClassRequest request) {
         return classService.updateClass(classId, request);
     }
 
     @GetMapping("/{classId}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "View class", description = "Allows managers to view class details")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "View class", description = "Allows educations to view class details")
     public ResponseEntity<ResponseObject> viewClass(@PathVariable Integer classId) {
         return classService.viewClass(classId);
     }
 
     @GetMapping("")
-    @PreAuthorize("hasRole('admission')")
-    @Operation(summary = "View class list", description = "Allows admission staff to view all classes for a specific year")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "View class list", description = "Allows education staff to view all classes for a specific year")
     public ResponseEntity<ResponseObject> viewClassList() {
         return classService.viewClassList();
     }
