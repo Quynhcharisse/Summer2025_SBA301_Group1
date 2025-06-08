@@ -16,4 +16,6 @@ public class LessonRequest {
     private Integer lessonId;
     private String topic;
     private String description;
+    private Integer duration;
+    private String materials;
 }

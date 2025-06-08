@@ -3,6 +3,7 @@ package com.sba301.group1.pes_be.services.serviceImpl;
 import com.sba301.group1.pes_be.models.Lesson;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.response.LessonResponse;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.LessonService;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +18,20 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     public ResponseEntity<ResponseObject> createLesson(LessonRequest request) {
-        Lesson lesson =  Lesson.builder().topic(request.getTopic()).description(request.getDescription()).build();
+        Lesson lesson = Lesson.builder()
+                .topic(request.getTopic())
+                .description(request.getDescription())
+                .duration(request.getDuration())
+                .materials(request.getMaterials())
+                .build();
 
         lessonRepo.save(lesson);
+
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("Create lesson successfully")
                         .success(true)
-                        .data(lesson)
+                        .data(LessonResponse.fromEntity(lesson))
                         .build()
         );
     }
@@ -43,13 +50,15 @@ public class LessonServiceImpl implements LessonService {
 
         lesson.setTopic(request.getTopic());
         lesson.setDescription(request.getDescription());
+        lesson.setDuration(request.getDuration());
+        lesson.setMaterials(request.getMaterials());
         lessonRepo.save(lesson);
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("Update lesson successfully")
                         .success(true)
-                        .data(lesson)
+                        .data(LessonResponse.fromEntity(lesson))
                         .build()
         );
     }
@@ -70,7 +79,7 @@ public class LessonServiceImpl implements LessonService {
                 ResponseObject.builder()
                         .message("View lesson successfully")
                         .success(true)
-                        .data(lesson)
+                        .data(LessonResponse.fromEntity(lesson))
                         .build()
         );
     }
@@ -81,7 +90,7 @@ public class LessonServiceImpl implements LessonService {
                 ResponseObject.builder()
                         .message("View all lessons successfully")
                         .success(true)
-                        .data(lessonRepo.findAll())
+                        .data(LessonResponse.fromEntities(lessonRepo.findAll()))
                         .build()
         );
     }

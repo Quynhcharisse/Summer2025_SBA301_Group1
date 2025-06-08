@@ -7,16 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SyllabusRequest {
+public class LessonSyllabusRequest {
+    private Integer lessonId;
     private Integer syllabusId;
-    private String title;
-    private String description;
-    private List<LessonSyllabusRequest> lessons;
+    private String note;
 }

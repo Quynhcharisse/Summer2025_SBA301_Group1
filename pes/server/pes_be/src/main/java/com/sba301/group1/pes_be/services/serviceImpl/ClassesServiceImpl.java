@@ -23,6 +23,26 @@ public class ClassesServiceImpl implements ClassesService {
 
     @Override
     public ResponseEntity<ResponseObject> createClass(ClassRequest request) {
+        // Validate teacherId is not null
+        if (request.getTeacherId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Teacher ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        // Validate syllabusId is not null
+        if (request.getSyllabusId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Syllabus ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
         Account teacher = accountRepo.findById(request.getTeacherId()).orElse(null);
         if (teacher == null) {
             return ResponseEntity.badRequest().body(
@@ -79,6 +99,26 @@ public class ClassesServiceImpl implements ClassesService {
 
     @Override
     public ResponseEntity<ResponseObject> updateClass(Integer classId, ClassRequest request) {
+        // Validate teacherId is not null
+        if (request.getTeacherId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Teacher ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        // Validate syllabusId is not null
+        if (request.getSyllabusId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Syllabus ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
         return classRepo.findById(classId)
                 .map(classes -> {
                     Account teacher = accountRepo.findById(request.getTeacherId()).orElse(null);
