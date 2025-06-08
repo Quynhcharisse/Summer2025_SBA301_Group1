@@ -13,35 +13,32 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("api/v1/lesson")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('education')")
 @Tag(name = "Lesson", description = "Lesson management APIs")
 public class LessonController {
 
     private final LessonService lessonService;
 
     @PostMapping()
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Create a lesson", description = "Allows managers to create a new lesson")
+    @Operation(summary = "Create a lesson", description = "Allows education staff to create a new lesson")
     public ResponseEntity<ResponseObject> createLesson(@RequestBody LessonRequest request) {
         return lessonService.createLesson(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Update a lesson", description = "Allows managers to update an existing lesson")
+    @Operation(summary = "Update a lesson", description = "Allows education staff to update an existing lesson")
     public ResponseEntity<ResponseObject> updateLesson(@PathVariable int id, @RequestBody LessonRequest request) {
         return lessonService.updateLesson(id, request);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "View a lesson", description = "Allows managers to view a specific lesson by ID")
+    @Operation(summary = "View a lesson", description = "Allows education staff to view a specific lesson by ID")
     public ResponseEntity<ResponseObject> viewLesson(@PathVariable int id) {
         return lessonService.viewLesson(id);
     }
 
     @GetMapping("/")
-    @PreAuthorize("hasRole('admission')")
-    @Operation(summary = "View lesson list", description = "Allows admission staff to view all lessons")
+    @Operation(summary = "View lesson list", description = "Allows education staff to view all lessons")
     public ResponseEntity<ResponseObject> viewLessonList() {
         return lessonService.viewAllLessons();
     }

@@ -19,35 +19,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/v1/syllabus")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('education')")
 @Tag(name = "Syllabus", description = "Syllabus management APIs")
 public class SyllabusController {
 
     private final SyllabusService syllabusService;
 
     @PostMapping()
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Create a syllabus", description = "Allows managers to create a new syllabus")
+    @Operation(summary = "Create a syllabus", description = "Allows education staff to create a new syllabus")
     public ResponseEntity<ResponseObject> createSyllabus(@RequestBody SyllabusRequest request) {
         return syllabusService.createSyllabus(request);
     }
 
     @PutMapping("/{syllabusId}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "Update a syllabus", description = "Allows managers to update an existing syllabus")
+    @Operation(summary = "Update a syllabus", description = "Allows education staff to update an existing syllabus")
     public ResponseEntity<ResponseObject> updateSyllabus(@PathVariable Integer syllabusId, @RequestBody SyllabusRequest request) {
         return syllabusService.updateSyllabus(syllabusId, request);
     }
 
     @GetMapping("/{syllabusId}")
-    @PreAuthorize("hasRole('manager')")
-    @Operation(summary = "View a syllabus", description = "Allows managers to view a specific syllabus by ID")
+    @Operation(summary = "View a syllabus", description = "Allows education staff to view a specific syllabus by ID")
     public ResponseEntity<ResponseObject> viewSyllabus(@PathVariable Integer syllabusId) {
         return syllabusService.viewSyllabus(syllabusId);
     }
 
     @GetMapping("/")
-    @PreAuthorize("hasRole('admission')")
-    @Operation(summary = "View syllabus list", description = "Allows admission staff to view all syllabi")
+    @Operation(summary = "View syllabus list", description = "Allows education staff to view all syllabi")
     public ResponseEntity<ResponseObject> viewSyllabusList() {
         return syllabusService.viewSyllabusList();
     }
