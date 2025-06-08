@@ -16,6 +16,8 @@ import ClassList from "./components/educationManager/ClassList.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
 import DashboardUI from "./components/ui/DashhboardUI.jsx";
+import SyllabusList from "./components/educationManager/SyllabusList.jsx";
+import LessonList from "./components/educationManager/LessonList.jsx";
 
 
 const router = createBrowserRouter([
@@ -83,6 +85,50 @@ const router = createBrowserRouter([
                                 <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Class Management</h3>
                                 <p style={{ color: '#666' }}>Manage student classes, enrollment, and class information.</p>
                             </div>
+                            <div style={{
+                                padding: '20px',
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{color: '#1976d2', marginBottom: '12px'}}>Syllabus Management</h3>
+                                <p style={{color: '#666'}}>Organize and manage educational syllabus and lessons</p>
+                                <a href="/education/syllabus">
+                                    <button style={{
+                                        marginTop: '12px',
+                                        padding: '8px 16px',
+                                        background: '#1976d2',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}>
+                                        Go to Syllabus
+                                    </button>
+                                </a>
+                            </div>
+                            <div style={{
+                                padding: '20px',
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{color: '#1976d2', marginBottom: '12px'}}>Lessons Management</h3>
+                                <p style={{color: '#666'}}>Plan and manage lessons.</p>
+                                <a href="/education/lessons">
+                                    <button style={{
+                                        marginTop: '12px',
+                                        padding: '8px 16px',
+                                        background: '#1976d2',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}>
+                                        Go to Lessons
+                                    </button>
+                                </a>
+                            </div>
                             <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
                                 <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Activity Management</h3>
                                 <p style={{ color: '#666' }}>Organize and manage educational activities and events.</p>
@@ -98,6 +144,14 @@ const router = createBrowserRouter([
             {
                 path: 'classes',
                 element: <ClassList/>
+            },
+            {
+                path: 'syllabus',
+                element: <SyllabusList/>
+            },
+            {
+                path: 'lessons',
+                element: <LessonList/>
             },
             {
                 path: 'activities',

@@ -10,6 +10,16 @@ function EducationLayout() {
             icon: <School />,
         },
         {
+            segment: 'education/syllabus',
+            title: 'Syllabus Management',
+            icon: <Book />,
+        },
+        {
+            segment: 'education/lessons',
+            title: 'Lessons Management',
+            icon: <PlayLesson />,
+        }
+        {
             segment: 'education/activities',
             title: 'Activity Management',
             icon: <Event />,
