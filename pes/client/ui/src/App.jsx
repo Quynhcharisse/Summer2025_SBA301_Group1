@@ -11,6 +11,10 @@ import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
+import EducationLayout from "./layouts/EducationLayout.jsx";
+import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
+import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
+import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
 
 
 const router = createBrowserRouter([
@@ -23,7 +27,9 @@ const router = createBrowserRouter([
         element: <HomePage/>
     },
     {
-        path: "/admission",
+        path: "/",
+        element: <Navigate to="/home"/>
+    },    {        path: "/admission",
         element: (
             <ProtectRoute allowedRoles={["ADMISSION"]}>
                 <AdmissionLayout/>
@@ -39,10 +45,7 @@ const router = createBrowserRouter([
                 element: <ProcessForm/>
             }
         ]
-    },
-
-    {
-        path: "/parent",
+    },    {        path: "/parent",
         element: (
             <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
@@ -56,6 +59,27 @@ const router = createBrowserRouter([
             {
                 path: 'form',
                 element: <AdmissionForm/>
+            }
+        ]
+    },    
+    {        
+        path: "/education",
+        element: (
+            <ProtectRoute allowedRoles={["EDUCATION"]}>
+                <EducationLayout/>
+            </ProtectRoute>
+        ),        children: [
+            {
+                index: true,
+                element: <EducationDashboard />
+            },
+            {
+                path: 'activities',
+                element: <ActivityManagement/>
+            },
+            {
+                path: 'schedules',
+                element: <ScheduleManagement/>
             }
         ]
     },

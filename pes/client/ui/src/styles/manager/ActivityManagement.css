@@ -1,0 +1,485 @@
+/* Activity Management Styles */
+
+/* CSS Variables for consistent colors */
+:root {
+    --primary-color: #1976d2;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #d32f2f;
+    --edit-color: #f57c00;
+    --delete-color: #d32f2f;
+    --background-light: #f8f9fa;
+    --white: #ffffff;
+    --border-light: #e0e0e0;
+    --text-primary: #333;
+    --text-secondary: #666;
+}
+
+.activity-management-container {
+    padding: 24px;
+    background: var(--background-light);
+    min-height: 100vh;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.activity-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin: 0;
+}
+
+.activity-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.create-activity-btn {
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: var(--white);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.create-activity-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.bulk-create-btn {
+    background: linear-gradient(135deg, var(--warning-color), var(--edit-color));
+    color: var(--white);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bulk-create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.3);
+}
+
+.activity-table-container {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.activity-table-header {
+    background: linear-gradient(135deg, var(--success-color), #45a049);
+    color: var(--white);
+    padding: 16px;
+}
+
+.activity-type-chip {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-lesson { background: #e3f2fd; color: var(--primary-color); }
+.type-exercise { background: #f3e5f5; color: #7b1fa2; }
+.type-project { background: #e0f2f1; color: #00796b; }
+.type-assessment { background: #fff3e0; color: var(--edit-color); }
+.type-discussion { background: #e8f5e8; color: #388e3c; }
+.type-presentation { background: #ffebee; color: var(--error-color); }
+
+.difficulty-chip {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.difficulty-easy { background: #e8f5e8; color: #2e7d32; }
+.difficulty-medium { background: #fff3e0; color: #ef6c00; }
+.difficulty-hard { background: #ffebee; color: #c62828; }
+
+.activity-actions-cell {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.activity-action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.activity-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit {
+    background: #fff3e0;
+    color: var(--edit-color);
+    border-color: var(--edit-color);
+}
+
+.btn-delete {
+    background: #ffebee;
+    color: var(--delete-color);
+    border-color: var(--delete-color);
+}
+
+/* Modal Styles */
+.activity-modal {
+    backdrop-filter: blur(5px);
+}
+
+.activity-form {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.form-section {
+    margin-bottom: 24px;
+}
+
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-input {
+    margin-bottom: 16px;
+}
+
+.form-textarea {
+    margin-bottom: 16px;
+}
+
+.form-textarea textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Bulk Creation Styles */
+.bulk-form-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.bulk-class-selector {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--background-light);
+    border-radius: 8px;
+    border: 2px solid var(--border-light);
+}
+
+.bulk-activity-card {
+    margin-bottom: 16px;
+    padding: 20px;
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.bulk-activity-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.bulk-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.bulk-activity-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.remove-activity-btn {
+    background: #ffebee;
+    color: var(--delete-color);
+    border: 1px solid var(--delete-color);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.remove-activity-btn:hover {
+    background: var(--delete-color);
+    color: var(--white);
+}
+
+.add-activity-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--background-light);
+    color: var(--text-secondary);
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.add-activity-btn:hover {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    color: #2196f3;
+}
+
+/* Form Validation Styles */
+.form-error {
+    border-color: var(--error-color) !important;
+}
+
+.error-text {
+    color: var(--error-color);
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* Loading States */
+.activity-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: var(--text-secondary);
+}
+
+.activity-loading .spinner {
+    margin-right: 12px;
+}
+
+/* Empty States */
+.activity-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.activity-empty-icon {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 16px;
+}
+
+.activity-empty-text {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.activity-empty-subtext {
+    font-size: 0.875rem;
+    color: #999;
+}
+
+/* Success States */
+.success-message {
+    padding: 12px 16px;
+    background: #e8f5e8;
+    color: #2e7d32;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.success-icon {
+    color: var(--success-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .activity-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .activity-actions {
+        flex-direction: column;
+    }
+    
+    .activity-actions-cell {
+        flex-direction: column;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bulk-activity-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Material-UI Button Icon Color Fix - More Specific Selectors */
+.MuiButton-root .MuiSvgIcon-root {
+    color: inherit !important;
+}
+
+.MuiButton-startIcon .MuiSvgIcon-root,
+.MuiButton-endIcon .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+/* DataGrid Action Button Styles */
+.MuiDataGrid-cell .MuiButton-outlined {
+    border-width: 1px;
+    transition: all 0.2s ease;
+}
+
+.MuiDataGrid-cell .MuiButton-outlined:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Edit Button Styling - More Specific */
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) {
+    color: var(--edit-color) !important;
+    border-color: var(--edit-color) !important;
+    background-color: rgba(245, 124, 0, 0.08) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError):hover {
+    background-color: rgba(245, 124, 0, 0.12) !important;
+    border-color: var(--edit-color) !important;
+    color: var(--edit-color) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) .MuiSvgIcon-root {
+    color: var(--edit-color) !important;
+}
+
+.activity-actions-container .MuiButton-outlined:not(.MuiButton-colorError) .MuiButton-startIcon .MuiSvgIcon-root {
+    color: var(--edit-color) !important;
+}
+
+/* Delete Button Styling - More Specific */
+.activity-actions-container .MuiButton-colorError {
+    color: var(--delete-color) !important;
+    border-color: var(--delete-color) !important;
+    background-color: rgba(211, 47, 47, 0.08) !important;
+}
+
+.activity-actions-container .MuiButton-colorError:hover {
+    background-color: rgba(211, 47, 47, 0.12) !important;
+    border-color: var(--delete-color) !important;
+    color: var(--delete-color) !important;
+}
+
+.activity-actions-container .MuiButton-colorError .MuiSvgIcon-root {
+    color: var(--delete-color) !important;
+}
+
+.activity-actions-container .MuiButton-colorError .MuiButton-startIcon .MuiSvgIcon-root {
+    color: var(--delete-color) !important;
+}
+
+/* Force icon colors in all MUI button states */
+.activity-actions-container .MuiButton-root .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+.activity-actions-container .MuiButton-root:hover .MuiSvgIcon-root {
+    color: currentColor !important;
+}
+
+/* Additional action button container styling */
+.activity-actions-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.activity-actions-container .MuiButton-root {
+    min-width: auto;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
