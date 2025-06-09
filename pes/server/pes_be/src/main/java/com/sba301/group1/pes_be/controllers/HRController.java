@@ -38,4 +38,10 @@ public class HRController {
     public ResponseEntity<ResponseObject> deleteParent(@RequestBody int id, HttpServletRequest httpRequest) {
         return hrService.deleteParent(id, httpRequest);
     }
+
+    @GetMapping("/parents")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> getAllParents(HttpServletRequest request) {
+        return hrService.getAllParents(request);
+    }
 }

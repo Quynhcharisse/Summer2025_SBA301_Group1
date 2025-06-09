@@ -390,4 +390,63 @@ public class ParentServiceImpl implements ParentService {
                         .data(childData)
                         .build());
     }
+
+    @Override
+    public ResponseEntity<ResponseObject> getChildById(int childId, HttpServletRequest request) {
+        Account acc = jwtService.extractAccountFromCookie(request);
+        if (acc == null || !acc.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(403).body(
+                    ResponseObject.builder()
+                            .message("Access denied: Only parents can view their children.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("Parent not found.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        Student child = studentRepo.findById(childId).orElse(null);
+        if(child == null){
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("Child not found.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        if (!child.getParent().getId().equals(parent.getId())) {
+            return ResponseEntity.status(403).body(
+                    ResponseObject.builder()
+                            .message("Access denied.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        Map<String, Object> childData = new HashMap<>();
+        childData.put("id", child.getId());
+        childData.put("name", child.getName());
+        childData.put("gender", child.getGender());
+        childData.put("dateOfBirth", child.getDateOfBirth());
+        childData.put("placeOfBirth", child.getPlaceOfBirth());
+        childData.put("profileImage", child.getProfileImage());
+        childData.put("isStudent", child.isStudent());
+        childData.put("parentId", parent.getId());
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Child retrieved successfully.")
+                        .success(true)
+                        .data(childData)
+                        .build()
+        );
+    }
 }

@@ -11,4 +11,7 @@ public interface HRService {
     ResponseEntity<ResponseObject> updateParent(ParentRequest request, HttpServletRequest httpRequest);
 
     ResponseEntity<ResponseObject> deleteParent(int id, HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> getAllParents(HttpServletRequest request);
+
 }

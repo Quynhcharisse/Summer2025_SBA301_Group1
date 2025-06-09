@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -123,5 +124,56 @@ public class HRServiceImpl implements HRService {
                         .success(true)
                         .data(null)
                         .build());
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllParents(HttpServletRequest request) {
+        Account acc = jwtService.extractAccountFromCookie(request);
+        if (acc == null || !acc.getRole().equals(Role.HR)) { //check Role can view all parents
+            return ResponseEntity.status(403).body(
+                    ResponseObject.builder()
+                            .message("Access denied: Only managers can view all parents.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        List<Parent> parents = parentRepo.findAll();
+        if (parents.isEmpty()) {
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("No parents found.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        List<Map<String, Object>> parentData = parents.stream().map(
+                parent -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", parent.getId());
+                    data.put("email", parent.getAccount().getEmail());
+                    data.put("password", parent.getAccount().getPassword());
+                    data.put("name", parent.getAccount().getName());
+                    data.put("job", parent.getJob());
+                    data.put("dateOfBirth", parent.getDayOfBirth());
+                    data.put("relationship", parent.getRelationshipToChild());
+                    data.put("gender", parent.getAccount().getGender());
+                    data.put("identityNumber", parent.getAccount().getIdentityNumber());
+                    data.put("createdAt", parent.getAccount().getCreatedAt());
+                    data.put("status", parent.getAccount().getStatus());
+                    data.put("role", parent.getAccount().getRole().name());
+                    data.put("address", parent.getAddress());
+                    data.put("phoneNumber", parent.getAccount().getPhone());
+                    return data;
+                }
+        ).toList();
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Parents retrieved successfully.")
+                        .success(true)
+                        .data(parentData)
+                        .build()
+        );
     }
 }
