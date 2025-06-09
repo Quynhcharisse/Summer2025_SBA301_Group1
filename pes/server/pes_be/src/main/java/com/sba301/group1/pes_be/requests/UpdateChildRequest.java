@@ -1,5 +1,10 @@
 package com.sba301.group1.pes_be.requests;
-import lombok.*;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
@@ -9,17 +14,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ChildRequest {
+public class UpdateChildRequest {
     int id;
     String name;
     String gender;
     LocalDate dateOfBirth;
     String placeOfBirth;
-    String profileImage;
-    String householdRegistrationAddress;
-    String householdRegistrationImg;
-    String birthCertificateImg;
-    String commitmentImg;
-    boolean isStudent;
-    int parentId;
 }

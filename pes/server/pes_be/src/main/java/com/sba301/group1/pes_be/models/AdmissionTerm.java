@@ -2,7 +2,6 @@
 package com.sba301.group1.pes_be.models;
 
 import com.sba301.group1.pes_be.enums.Grade;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +21,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -41,10 +40,10 @@ public class AdmissionTerm {
     String name;
 
     @Column(name = "`start_date`")
-    LocalDate startDate;
+    LocalDateTime startDate; //theo ngày + h
 
     @Column(name = "`end_date`")
-    LocalDate endDate;
+    LocalDateTime endDate; //theo ngày + h
 
     int year;
 

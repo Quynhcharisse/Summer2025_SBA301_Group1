@@ -3,6 +3,7 @@
     display: flex;
     flex-direction: column;
 }
+
 p {
     margin: 0 !important;
 }
@@ -15,9 +16,6 @@ p {
 
 .css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiSvgIcon-root {
     background-color: white !important;
-}
-
-.css-1umw9bq-MuiSvgIcon-root {
 }
 
 tiêu đề chữ
@@ -41,13 +39,12 @@ tiêu đề chữ
 }
 
 .css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root,
-.css-njufkc-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root
-{
+.css-njufkc-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root {
     color: #2c3e50 !important;
 }
 
 .css-njufkc-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root,
-.css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root{
+.css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiTypography-root {
 
 }
 
@@ -60,14 +57,22 @@ tiêu đề chữ
 }
 
 
-.status-color-green{
+.status-color-green {
     color: green !important;
 }
 
-.status-color-red{
+.status-color-red {
     color: red !important;
 }
 
-.status-color-blue{
+.status-color-blue {
     color: blue !important;
 }
+
+.button-container {
+    display: flex !important;
+    justify-content: flex-end !important; /* canh trái */
+    margin-left: 60vw !important;
+    margin-bottom: 3vw !important;
+}
+

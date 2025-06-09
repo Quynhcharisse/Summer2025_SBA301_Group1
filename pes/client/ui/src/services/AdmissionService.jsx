@@ -9,7 +9,7 @@ export const getFormTracking = async () => {
 export const processAdmissionForm = async (id, isApproved, reason)  => {
     const response = await axiosClient.put("/admission/form/process", {
         id: id,
-        isApproved: isApproved,
+        approved: isApproved,
         reason: reason,
     })
     return response ? response.data : null

@@ -59,17 +59,12 @@ public class Account implements UserDetails {
     @Column(name = "`identity_number`")
     String identityNumber;
 
-    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "account") //chú ý fetch
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     Parent parent;
 
-    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    Manager manager;
-
-    @OneToOne(mappedBy = "teacher", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "teacher") //chú ý fetch
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     Classes classes;

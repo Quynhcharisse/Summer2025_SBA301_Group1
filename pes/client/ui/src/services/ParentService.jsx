@@ -1,20 +1,12 @@
-import axiosClient from '../config/APIConfig.jsx'
+import axiosClient from "../config/APIConfig.jsx";
 
-export const getForms = async () => {
+export const getFormInformation = async () => {
     const response = await axiosClient.get("/parent/form/list")
     return response ? response.data : null
 }
 
-export const getChildren = async () => {
-    const response = await axiosClient.get("/parent/children")
-    return response ? response.data : null
-}
-
-export const submittedAdmission = async (
-    name,
-    gender,
-    dateOfBirth,
-    placeOfBirth,
+export const submittedForm = async (
+    studentId,
     householdRegistrationAddress,
     profileImage,
     birthCertificateImg,
@@ -22,23 +14,22 @@ export const submittedAdmission = async (
     commitmentImg,
     note) => {
     const response = await axiosClient.post("/parent/form/submit", {
-        name: name,
-        gender: gender,
-        dateOfBirth: dateOfBirth,
-        placeOfBirth: placeOfBirth,
+        studentId: studentId,
         householdRegistrationAddress: householdRegistrationAddress,
         profileImage: profileImage,
         birthCertificateImg: birthCertificateImg,
         householdRegistrationImg: householdRegistrationImg,
         commitmentImg: commitmentImg,
-        note: note,
+        note: note
     })
     return response ? response.data : null
 }
 
+// thêm headers : Content-Type: application/json bắt buộc để Spring hiểu đây là raw JSON
+// nếu ko co headers : nó bị sai định dạng gây lỗi null..
 export const cancelAdmission = async (id) => {
-    const response = await axiosClient.put("/parent/form/cancel", {
-        id: id
-    })
-    return response ? response.data : null
-}
+    const response = await axiosClient.put("/parent/form/cancel", id, {
+       id: id
+    });
+    return response ? response.data : null;
+};
