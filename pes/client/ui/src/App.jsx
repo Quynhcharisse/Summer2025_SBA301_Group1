@@ -6,10 +6,10 @@ import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ParentLayout from "./layouts/ParentLayout.jsx";
 import ProtectRoute from "./config/ProtectRoute.jsx";
-import AdmissionForm from "./components/parent/Form.jsx";
+import AdmissionForm from "./components/parent/AdmissionForm.jsx";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
-import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
+import ProcessForm from "./components/admissionManager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";

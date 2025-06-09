@@ -1,8 +1,10 @@
 package com.sba301.group1.pes_be.controllers;
 
+import com.sba301.group1.pes_be.requests.AddChildRequest;
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.requests.ChildRequest;
 import com.sba301.group1.pes_be.requests.ParentRequest;
+import com.sba301.group1.pes_be.requests.UpdateChildRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.SaveDraftAdmissionFormRequest;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
@@ -39,23 +41,18 @@ public class ParentController {
     }
 
                                     //------- Child Management ---------//
-
-    @GetMapping("/children")
-    @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getChildren(HttpServletRequest request) {
-        return parentService.getChildren(request);
-    }
+    // gôp getChild + submit vô chung tránh gọi API quá nhiều lần
 
     @PostMapping
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> addChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
-        return parentService.addChild(childRequest, request);
+    public ResponseEntity<ResponseObject> addChild(@RequestBody AddChildRequest request, HttpServletRequest httpRequest) {
+        return parentService.addChild(request, httpRequest);
     }
 
     @PutMapping
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> updateChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
-        return parentService.updateChild(childRequest, request);
+    public ResponseEntity<ResponseObject> updateChild(@RequestBody UpdateChildRequest request, HttpServletRequest httpRequest) {
+        return parentService.updateChild(request, httpRequest);
     }
 
 }

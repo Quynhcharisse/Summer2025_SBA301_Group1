@@ -5,13 +5,9 @@ import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
-import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Classes;
 import com.sba301.group1.pes_be.models.Lesson;
-import com.sba301.group1.pes_be.models.Manager;
-import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Schedule;
-import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
@@ -20,7 +16,6 @@ import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
-import com.sba301.group1.pes_be.repositories.ManagerRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
@@ -47,8 +42,6 @@ public class PesBeApplication {
     private final StudentRepo studentRepo;
 
     private final AdmissionTermRepo admissionTermRepo;
-
-    private final ManagerRepo managerRepo;
 
     private final SyllabusRepo syllabusRepo;
 
@@ -143,129 +136,60 @@ public class PesBeApplication {
     }
 
     @Bean
-    public CommandLineRunner initAdmissionManager() {
+    public CommandLineRunner initSystemAccounts() {
         return args -> {
-            //init admission manager
-            String emailManager = "admission@gmail.com";
-            if (!accountRepo.existsByEmail(emailManager)) {
-                Account admissionsManager = Account.builder()
-                        .email(emailManager)
-                        .password("manager@123")
-                        .role(Role.ADMISSION)
-                        .name("Ms.Tu Nguyen")
-                        .phone("0909152078")
-                        .identityNumber("070432000089")
-                        .gender("male")
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
-                        .createdAt(LocalDate.now())
-                        .build();
-                accountRepo.save(admissionsManager);
-
-                Manager manager = Manager.builder()
-                        .account(admissionsManager)
-                        .department("Admission Manager")
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
-                        .passwordChanged(false)
-                        .build();
-                managerRepo.save(manager);
-
-                System.out.println("Created Admission Manager: " + emailManager);
-
-                //Init Admission Term once
-                int termYear = 2025;
-                if (!admissionTermRepo.existsByYear(termYear)) {
-                    AdmissionTerm term = AdmissionTerm.builder()
-                            .name("Fall Term " + termYear)
-                            .startDate(LocalDate.of(2025, 4, 1))
-                            .endDate(LocalDate.of(2025, 6, 1))
-                            .year(termYear)
-                            .maxNumberRegistration(200)
-                            .grade(Grade.BUD) // Or Grade.MAM_NON etc.
-                            .status(Status.LOCKED_TERM.getValue())
-                            .build();
-                    admissionTermRepo.save(term);
-                    System.out.println("Created Admission Term for year: " + termYear);
-                }
-
-                // Init Parents
-                for (int i = 1; i <= 3; i++) {
-                    String emailParent = "parent" + i + "@gmail.com";
-
-                    if (!accountRepo.existsByEmail(emailParent)) {
-                        Account parentAccount = Account.builder()
-                                .email(emailParent)
-                                .password("123456")
-                                .role(Role.PARENT)
-                                .name("Parent" + i)
-                                .gender(Math.random() < 0.5 ? "male" : "female")
-                                .phone(generateRandomPhone())
-                                .identityNumber(generateRandomCCCD())
-                                .status(Status.ACCOUNT_ACTIVE.getValue())
-                                .createdAt(LocalDate.now())
-                                .build();
-                        accountRepo.save(parentAccount);
-
-                        Parent parent = Parent.builder()
-                                .account(parentAccount)
-                                .address(generateRandomAddress())
-                                .job("Job" + i)
-                                .relationshipToChild(Math.random() < 0.5 ? "father" : "mother")
-                                .build();
-                        parentRepo.save(parent);
-
-                        int numberOfChildren = (int) (Math.random() * 2) + 2; // 2 đến 3 đứa trẻ
-                        for (int j = 1; j <= numberOfChildren; j++) {
-                            Student child = Student.builder()
-                                    .name(generateRandomName())
-                                    .gender(Math.random() < 0.5 ? "male" : "female")
-                                    .dateOfBirth(generateRandomBirthDateForChild())
-                                    .placeOfBirth(generateRandomBirthHospital())
-                                    .parent(parent)
-                                    .build();
-                            studentRepo.save(child);
-                        }
-
-                        System.out.println("Created Parent: " + emailParent + " with " + numberOfChildren + " children.");
-                    }
-                }
-            }
-        };
-    }
-
-    @Bean
-    public CommandLineRunner initEducationStaff() {
-        return args -> {
-            String emailEducation = "education@gmail.com";
-            if (!accountRepo.existsByEmail(emailEducation)) {
-                Account educationAccount = Account.builder()
-                        .email(emailEducation)
-                        .password("education@123")
-                        .role(Role.EDUCATION)
-                        .name("Ms. Education Staff")
+            // === Account 1: ADMISSION ===
+            if (!accountRepo.existsByEmail("admission@gmail.com")) {
+                Account admission = Account.builder()
+                        .email("admission@gmail.com")
+                        .password("admission@123")
+                        .name("Ms. Admission")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("female")
+                        .role(Role.ADMISSION)
                         .status(Status.ACCOUNT_ACTIVE.getValue())
                         .createdAt(LocalDate.now())
                         .build();
-                accountRepo.save(educationAccount);
+                accountRepo.save(admission);
+                System.out.println("Created account: admission@gmail.com (ADMISSION)");
+            }
 
-                Manager educationManager = Manager.builder()
-                        .account(educationAccount)
-                        .department("Education Manager")
+            // === Account 2: EDUCATION ===
+            if (!accountRepo.existsByEmail("education@gmail.com")) {
+                Account education = Account.builder()
+                        .email("education@gmail.com")
+                        .password("education@123")
+                        .name("Mr. Education")
+                        .phone(generateRandomPhone())
+                        .identityNumber(generateRandomCCCD())
+                        .gender("male")
+                        .role(Role.EDUCATION)
                         .status(Status.ACCOUNT_ACTIVE.getValue())
-                        .passwordChanged(false)
+                        .createdAt(LocalDate.now())
                         .build();
-                managerRepo.save(educationManager);
+                accountRepo.save(education);
+                System.out.println("Created account: education@gmail.com (EDUCATION)");
+            }
 
-                System.out.println("Created Education Staff: " + emailEducation);
-                System.out.println("Education Account Details - Email: " + educationAccount.getEmail() + ", Role: " + educationAccount.getRole() + ", Status: " + educationAccount.getStatus());
-            } else {
-                System.out.println("Education Staff already exists: " + emailEducation);
+            // === Account 3: HR ===
+            if (!accountRepo.existsByEmail("hr@gmail.com")) {
+                Account hr = Account.builder()
+                        .email("hr@gmail.com")
+                        .password("hr@123")
+                        .name("Ms. HR")
+                        .phone(generateRandomPhone())
+                        .identityNumber(generateRandomCCCD())
+                        .gender("female")
+                        .role(Role.HR)
+                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .createdAt(LocalDate.now())
+                        .build();
+                accountRepo.save(hr);
+                System.out.println("Created account: hr@gmail.com (HR)");
             }
         };
     }
-
     @Bean
     public CommandLineRunner initEducationData() {
         return args -> {

@@ -82,3 +82,8 @@ p {
 .css-14f5o8w-MuiTableContainer-root {
     height: 48vh !important;
 }
+
+.css-mpaqru-MuiTypography-root {
+    margin: 0 !important;
+   padding: 2vh !important;
+}

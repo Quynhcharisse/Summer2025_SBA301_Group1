@@ -4,34 +4,43 @@ import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
+import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
-import com.sba301.group1.pes_be.requests.AdmissionTermRequest;
+import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.UpdateAdmissionTermRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
+import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
+import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdmissionServiceImpl implements AdmissionService {
 
-    private final AdmissionTermRepo admissionTermRepo;
-
+    private final StudentRepo studentRepo;
     private final AdmissionFormRepo admissionFormRepo;
+    private final AdmissionTermRepo admissionTermRepo;
+    private final MailService mailService;
 
     @Override
-    public ResponseEntity<ResponseObject> createAdmissionTerm(AdmissionTermRequest request) {
+    public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
 
-        String error = AdmissionTermValidation.validate(request);
+        String error = AdmissionTermValidation.createTermValidate(request);
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -58,17 +67,18 @@ public class AdmissionServiceImpl implements AdmissionService {
                 ResponseObject.builder()
                         .message("Create term successfully")
                         .success(true)
-                        .data(term)
+                        .data(null)
                         .build()
         );
     }
 
+
     @Override
-    public ResponseEntity<ResponseObject> viewAdmissionTerm() {
+    public ResponseEntity<ResponseObject> viewAdmissionTerm(int year) {
 
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
-        LocalDate today = LocalDate.now();
+        LocalDateTime today = LocalDateTime.now();
 
         for (AdmissionTerm term : terms) {
             String updateStatus = updateTermStatus(term, today);
@@ -78,7 +88,21 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
         admissionTermRepo.saveAll(terms);
 
+        // thống kê số form đã đc nôpj và số form đã được duyệt
+        Map<Long, Long> formCountMap = admissionFormRepo.countFormsByTerm().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        Map<Long, Long> approvedCountMap = admissionFormRepo.countApprovedFormsByTerm().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
         List<Map<String, Object>> result = terms.stream()
+                .filter(term -> term.getYear() == year)
                 .map(
                         term -> {
                             Map<String, Object> data = new HashMap<>();
@@ -90,6 +114,8 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
                             data.put("grade", term.getGrade().toString());
                             data.put("status", term.getStatus());
+                            data.put("formCount", formCountMap.getOrDefault(term.getId().longValue(), 0L));
+                            data.put("approvedCount", approvedCountMap.getOrDefault(term.getId().longValue(), 0L));
                             return data;
                         }
                 )
@@ -104,7 +130,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         );
     }
 
-    private String updateTermStatus(AdmissionTerm term, LocalDate today) {
+    private String updateTermStatus(AdmissionTerm term, LocalDateTime today) {
         if (today.isBefore(term.getStartDate())) {
             return Status.INACTIVE_TERM.getValue();
         } else if (!today.isAfter(term.getEndDate())) {
@@ -115,9 +141,9 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> updateAdmissionTerm(AdmissionTermRequest request) {
+    public ResponseEntity<ResponseObject> updateAdmissionTerm(UpdateAdmissionTermRequest request) {
 
-        String error = AdmissionTermValidation.validate(request);
+        String error = AdmissionTermValidation.updateTermValidate(request);
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -133,7 +159,17 @@ public class AdmissionServiceImpl implements AdmissionService {
         if (term == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message(error)
+                            .message("Term not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        if (!term.getStatus().equals(Status.INACTIVE_TERM.getValue())) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Only inactive terms can be updated")
                             .success(false)
                             .data(null)
                             .build()
@@ -152,7 +188,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                 ResponseObject.builder()
                         .message("Update term successfully")
                         .success(true)
-                        .data(term)
+                        .data(null)
                         .build()
         );
     }
@@ -160,18 +196,16 @@ public class AdmissionServiceImpl implements AdmissionService {
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList() {
-
         List<Map<String, Object>> formList = admissionFormRepo.findAll().stream()
-                .filter(form -> form.getAdmissionTerm() != null
-                        && form.getAdmissionTerm().getYear() == LocalDate.now().getYear())
-                .map(
-                        form -> {
+                .sorted(Comparator.comparing(AdmissionForm::getSubmittedDate).reversed()) // sort form theo ngày chỉnh sửa mới nhất
+                .map(form -> {
                             Map<String, Object> data = new HashMap<>();
                             data.put("id", form.getId());
-                            data.put("childName", form.getChildName());
-                            data.put("childGender", form.getChildGender());
-                            data.put("dateOfBirth", form.getDateOfBirth());
-                            data.put("placeOfBirth", form.getPlaceOfBirth());
+                            data.put("studentId", form.getStudent().getId());
+                            data.put("studentName", form.getStudent().getName());
+                            data.put("studentGender", form.getStudent().getGender());
+                            data.put("studentDateOfBirth", form.getStudent().getDateOfBirth());
+                            data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
                             data.put("profileImage", form.getProfileImage());
                             data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
                             data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
@@ -181,12 +215,6 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("cancelReason", form.getCancelReason());
                             data.put("note", form.getNote());
                             data.put("status", form.getStatus());
-
-                            Map<String, Object> admissionTermData = new HashMap<>();
-                            if (form.getAdmissionTerm() != null) {
-                                admissionTermData.put("admissionTermStatus", form.getAdmissionTerm().getStatus());
-                            }
-                            data.put("admissionTerm", admissionTermData);
                             return data;
                         }
                 )
@@ -203,7 +231,7 @@ public class AdmissionServiceImpl implements AdmissionService {
 
     @Override
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {
-        String error = AdmissionTermValidation.processFormByManagerValidate(request, admissionFormRepo);
+        String error = ProcessAdmissionFormValidation.processFormByManagerValidate(request, admissionFormRepo);
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -215,6 +243,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
+
         if (form == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -225,28 +254,13 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        AdmissionTerm term = form.getAdmissionTerm();
-        if (term == null) {
+        //lấy email ph từ account
+        String parentEmail = form.getParent().getAccount().getEmail();//account phải có email
+
+        if (form.getStudent() == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("Admission term is missing")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        //Cập nhật lại trạng thái term real-time
-        String updatedStatus = updateTermStatus(term, LocalDate.now());
-        if (!term.getStatus().equals(updatedStatus)) {
-            term.setStatus(updatedStatus);
-            admissionTermRepo.save(term);
-        }
-
-        if (!updatedStatus.equals(Status.LOCKED_TERM.getValue())) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("You can only approve or reject forms after the admission term is locked.")
+                            .message("Form has no associated student.")
                             .success(false)
                             .data(null)
                             .build()
@@ -255,9 +269,29 @@ public class AdmissionServiceImpl implements AdmissionService {
 
         if (request.isApproved()) {
             form.setStatus(Status.APPROVED.getValue());
+
+            Student student = form.getStudent();
+            student.setStudent(true);// Đánh dấu đã trở thành học sinh chính thức
+            studentRepo.save(student);
+
+            //gửi email thành công
+            mailService.sendMail(
+                    parentEmail,
+                    "Admission Approved",
+                    "Congratulations!\n\nThe admission form for " + form.getStudent().getName() +
+                            " has been approved.\nWe look forward to seeing you at our school!"
+            );
         } else {
             form.setStatus(Status.REJECTED.getValue());
             form.setCancelReason(request.getReason());
+
+            //gửi email từ chối
+            mailService.sendMail(
+                    parentEmail,
+                    "Admission Rejected",
+                    "We're sorry.\n\nThe admission form for " + form.getStudent().getName() +
+                            " has been rejected.\nReason: " + request.getReason()
+            );
         }
 
         admissionFormRepo.save(form);

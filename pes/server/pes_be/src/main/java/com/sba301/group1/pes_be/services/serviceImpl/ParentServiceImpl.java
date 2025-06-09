@@ -4,19 +4,19 @@ import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.AdmissionForm;
-import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.requests.AddChildRequest;
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.ChildRequest;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.UpdateChildRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.ParentService;
+import com.sba301.group1.pes_be.validations.ParentValidation.ChildValidation;
 import com.sba301.group1.pes_be.validations.ParentValidation.FormByParentValidation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,6 @@ public class ParentServiceImpl implements ParentService {
 
     private final AdmissionFormRepo admissionFormRepo;
 
-    private final AdmissionTermRepo admissionTermRepo;
-
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
@@ -46,9 +44,9 @@ public class ParentServiceImpl implements ParentService {
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList(HttpServletRequest request) {
 
-        Account acc = jwtService.extractAccountFromCookie(request);
-
-        if (acc == null) {
+        //xac thuc nguoi dung
+        Account account = jwtService.extractAccountFromCookie(request);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Get list failed")
@@ -58,18 +56,37 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        List<Map<String, Object>> admissionForms = admissionFormRepo.findAll().stream()
-                .filter(form -> form.getParent() != null && acc.getParent() != null &&
-                        form.getParent().getId().equals(acc.getParent().getId()))
+        List<Map<String, Object>> admissionFormList = admissionFormRepo.findAll().stream()
+                .filter(form -> form.getParent().getId().equals(account.getParent().getId())) //Crash tại form.getParent().getId() ==> trước khi tạo form phải save parent
+                .filter(form -> form.getStudent() != null) // bỏ qua các AdmissionForm không có học sinh ==> tránh bị lỗi null
                 .sorted(Comparator.comparing(AdmissionForm::getSubmittedDate).reversed()) // sort form theo ngày chỉnh sửa mới nhất
                 .map(this::getFormDetail)
                 .toList();
+
+        List<Map<String, Object>> studentList = studentRepo.findAllByParent_Id(account.getParent().getId()).stream()
+                .map(student -> {
+                    Map<String, Object> studentDetail = new HashMap<>();
+                    studentDetail.put("id", student.getId());
+                    studentDetail.put("name", student.getName());
+                    studentDetail.put("gender", student.getGender());
+                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
+                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+                    studentDetail.put("isStudent", student.isStudent());
+                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());//trong từng học sinh check đã tạo form chưa
+                    return studentDetail;
+                })
+                .toList();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("admissionFormList", admissionFormList);
+        data.put("studentList", studentList);
+
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("")
                         .success(true)
-                        .data(admissionForms)
+                        .data(data)
                         .build()
         );
     }
@@ -77,10 +94,11 @@ public class ParentServiceImpl implements ParentService {
     private Map<String, Object> getFormDetail(AdmissionForm form) {
         Map<String, Object> data = new HashMap<>();
         data.put("id", form.getId());
-        data.put("childName", form.getChildName());
-        data.put("childGender", form.getChildGender());
-        data.put("dateOfBirth", form.getDateOfBirth());
-        data.put("placeOfBirth", form.getPlaceOfBirth());
+        data.put("studentId", form.getStudent().getId());
+        data.put("studentName", form.getStudent().getName());
+        data.put("studentGender", form.getStudent().getGender());
+        data.put("studentDateOfBirth", form.getStudent().getDateOfBirth());
+        data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
         data.put("profileImage", form.getProfileImage());
         data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
         data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
@@ -93,58 +111,13 @@ public class ParentServiceImpl implements ParentService {
         return data;
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> cancelAdmissionForm(CancelAdmissionForm request, HttpServletRequest httpRequest) {
-
-        Account acc = jwtService.extractAccountFromCookie(httpRequest);
-        if (acc == null) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Cancelled admission form failed")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        String error = FormByParentValidation.canceledValidate(request, acc, admissionFormRepo);
-
-        if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message(error)
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
-        assert form != null;
-
-        form.setStatus(Status.CANCELLED.getValue());
-        admissionFormRepo.save(form);
-
-        return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                        .message("Successfully cancelled")
-                        .success(true)
-                        .data(getIdOfForm(form))
-                        .build()
-        );
-    }
-
-    private Map<String, Object> getIdOfForm(AdmissionForm form) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("id", form.getId());
-        return data;
-    }
-
+    //submit form
     @Override
     public ResponseEntity<ResponseObject> submitAdmissionForm(SubmitAdmissionFormRequest request, HttpServletRequest httpRequest) {
 
+        // 1. Lấy account từ cookie
         Account account = jwtService.extractAccountFromCookie(httpRequest);
-        if (account == null) {
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Submitted admission form failed")
@@ -166,7 +139,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        List<AdmissionForm> formList = admissionFormRepo.findAllByParent_IdAndChildName(account.getParent().getId(), request.getName());
+        List<AdmissionForm> formList = admissionFormRepo.findAllByParent_IdAndStudent_Id(account.getParent().getId(), request.getStudentId());
 
         if (!formList.isEmpty()) {
             return ResponseEntity.ok().body(
@@ -178,36 +151,21 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        AdmissionTerm term = admissionTermRepo.findByYear(LocalDate.now().getYear()).orElse(null);
-
-        if (term == null || !(term.getStatus().equalsIgnoreCase(Status.ACTIVE_TERM.getValue()))) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Invalid term")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
         admissionFormRepo.save(
                 AdmissionForm.builder()
-                        .childName(request.getName())
-                        .childGender(request.getGender())
-                        .dateOfBirth(request.getDateOfBirth())
-                        .placeOfBirth(request.getPlaceOfBirth())
+                        .parent(account.getParent()) // tránh lỗi bị crash null
+                        .student(studentRepo.findById(request.getStudentId()).orElse(null)) //mỗi form phải gắn với đúng Student để biết phiếu đó là của ai
                         .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
                         .profileImage(request.getProfileImage())
-                        .birthCertificateImg(request.getBirthCertificateImg())
                         .householdRegistrationImg(request.getHouseholdRegistrationImg())
+                        .birthCertificateImg(request.getBirthCertificateImg())
                         .commitmentImg(request.getCommitmentImg())
                         .note(request.getNote())
                         .submittedDate(LocalDate.now())
                         .status(Status.PENDING_APPROVAL.getValue())
-                        .admissionTerm(term)
-                        .parent(account.getParent()) //gán parent khi tạo form đăng kí
                         .build()
         );
+
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -218,73 +176,77 @@ public class ParentServiceImpl implements ParentService {
         );
     }
 
+    // cancel form
     @Override
-    public ResponseEntity<ResponseObject> getChildren(HttpServletRequest httpRequest) {
-        Account acc = jwtService.extractAccountFromCookie(httpRequest);
+    public ResponseEntity<ResponseObject> cancelAdmissionForm(CancelAdmissionForm request, HttpServletRequest httpRequest) {
 
-        if (acc == null || !acc.getRole().equals(Role.PARENT)) {
+        // 1. Lấy account từ cookie
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("Only parents can access the list of children.")
+                            .message("Cancelled admission form failed")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
-        if (parent == null) {
+
+        String error = FormByParentValidation.canceledValidate(request, account, admissionFormRepo);
+
+        if (!error.isEmpty()) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
+
+        if (form == null) {
             return ResponseEntity.ok(
                     ResponseObject.builder()
-                            .message("Access denied: You are not allowed to view children of this parent.")
                             .success(false)
+                            .message("Admission form not found")
                             .data(null)
                             .build()
             );
         }
 
-        List<Student> children = studentRepo.findAllByParent_Id(parent.getId());
+        form.setStatus(Status.CANCELLED.getValue());
+        admissionFormRepo.save(form);
 
-        if (children == null) {
-            return ResponseEntity.ok(
-                    ResponseObject.builder()
-                            .message("No children found for this parent.")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        List<Map<String, Object>> childrenData = children.stream().map(
-                        child -> {
-                            Map<String, Object> data = new HashMap<>();
-                            data.put("id", child.getId());
-                            data.put("name", child.getName());
-                            data.put("gender", child.getGender());
-                            data.put("dateOfBirth", child.getDateOfBirth());
-                            data.put("placeOfBirth", child.getPlaceOfBirth());
-                            return data;
-                        }
-                )
-                .toList();
-
-
-        return ResponseEntity.ok(
+        return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Children retrieved successfully.")
+                        .message("Successfully cancelled")
                         .success(true)
-                        .data(childrenData)
+                        .data(null) //ko cần thiết trả về chỉ quan tâm là thông báo thành công hay thất bại
                         .build()
         );
     }
 
+
     @Override
-    public ResponseEntity<ResponseObject> addChild(ChildRequest childRequest, HttpServletRequest request) {
-        Account acc = jwtService.extractAccountFromCookie(request);
+    public ResponseEntity<ResponseObject> addChild(AddChildRequest request, HttpServletRequest httpRequest) {
+        Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Add child failed: Unauthorized")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        String error = ChildValidation.addChildValidate(request);
+        if (!error.isEmpty()) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(error)
                             .success(false)
                             .data(null)
                             .build());
@@ -300,17 +262,17 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        Student student = Student.builder()
-                .name(childRequest.getName())
-                .gender(childRequest.getGender())
-                .dateOfBirth(childRequest.getDateOfBirth())
-                .placeOfBirth(childRequest.getPlaceOfBirth())
-                .profileImage(childRequest.getProfileImage())
-                .isStudent(false)
-                .parent(parent)
-                .build();
+        Student student = studentRepo.save(
+                Student.builder()
+                .name(request.getName())
+                .gender(request.getGender())
+                .dateOfBirth(request.getDateOfBirth())
+                .placeOfBirth(request.getPlaceOfBirth())
+                .isStudent(false)         // mặc định là chưa chính thức
+                .parent(parent)           // gán cha mẹ
+                .build());
 
-        studentRepo.save(student);
+
 
         Map<String, Object> childData = new HashMap<>();
         childData.put("id", student.getId());
@@ -318,21 +280,21 @@ public class ParentServiceImpl implements ParentService {
         childData.put("gender", student.getGender());
         childData.put("dateOfBirth", student.getDateOfBirth());
         childData.put("placeOfBirth", student.getPlaceOfBirth());
-        childData.put("profileImage", student.getProfileImage());
         childData.put("isStudent", student.isStudent());
-        childData.put("parentId", parent.getId());
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("Child added successfully")
                         .success(true)
-                        .data(childData)
-                        .build());
+                        .data(null)
+                        .build()
+        );
+
     }
 
     @Override
-    public ResponseEntity<ResponseObject> updateChild(ChildRequest childRequest, HttpServletRequest request) {
-        Account acc = jwtService.extractAccountFromCookie(request);
+    public ResponseEntity<ResponseObject> updateChild(UpdateChildRequest request, HttpServletRequest httpRequest) {
+        Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -341,6 +303,17 @@ public class ParentServiceImpl implements ParentService {
                             .data(null)
                             .build());
         }
+
+        String error = ChildValidation.updateChildValidate(request);
+        if (!error.isEmpty()) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
 
         // Tìm parent từ account
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
@@ -353,8 +326,8 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Tìm student theo id và parent
-        Student student = studentRepo.findById(childRequest.getId()).orElse(null);
+        // KHÔNG cho update nếu đã là học sinh chính thức
+        Student student = studentRepo.findById(request.getId()).orElse(null);
         if (student == null || !student.getParent().getId().equals(parent.getId())) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -364,12 +337,20 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Cập nhật thông tin
-        student.setName(childRequest.getName());
-        student.setGender(childRequest.getGender());
-        student.setDateOfBirth(childRequest.getDateOfBirth());
-        student.setPlaceOfBirth(childRequest.getPlaceOfBirth());
-        // Thêm các trường khác nếu có
+        if(student.isStudent()) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Cannot update child info after submitting admission form")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        // Cập nhật thông tin nếu chưa là học sinh
+        student.setName(request.getName());
+        student.setGender(request.getGender());
+        student.setDateOfBirth(request.getDateOfBirth());
+        student.setPlaceOfBirth(request.getPlaceOfBirth());
 
         studentRepo.save(student);
 
@@ -379,9 +360,6 @@ public class ParentServiceImpl implements ParentService {
         childData.put("gender", student.getGender());
         childData.put("dateOfBirth", student.getDateOfBirth());
         childData.put("placeOfBirth", student.getPlaceOfBirth());
-        childData.put("profileImage", student.getProfileImage());
-        childData.put("isStudent", student.isStudent());
-        childData.put("parentId", parent.getId());
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
