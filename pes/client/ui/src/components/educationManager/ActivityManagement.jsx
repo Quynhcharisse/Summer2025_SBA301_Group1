@@ -26,16 +26,14 @@ import {
     InputAdornment
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add, Edit, Delete, Assignment, PostAdd, Search } from '@mui/icons-material';
+import { Edit, Delete, Assignment, Search } from '@mui/icons-material';
 import {
     getAllActivities,
     getActivitiesByClassId,
     getActivitiesByLessonId,
-    createActivity,
     updateActivity,
     deleteActivity,
     checkActivityDeletionImpact,
-    bulkCreateActivities,
     getAllClasses,
     getAllLessons,
     getAllSchedules
@@ -54,7 +52,7 @@ function ActivityManagement() {
     
     const [modal, setModal] = useState({
         isOpen: false,
-        type: '' // 'create', 'edit', 'bulk', 'view', 'delete-confirm'
+        type: '' // 'edit', 'view', 'delete-confirm'
     });
 
     const [deleteConfirmData, setDeleteConfirmData] = useState({
@@ -71,20 +69,6 @@ function ActivityManagement() {
         endTime: '',
         lessonId: '',
         scheduleId: ''
-    });
-
-    const [bulkFormData, setBulkFormData] = useState({
-        scheduleId: '',
-        activities: [
-            {
-                topic: '',
-                description: '',
-                dayOfWeek: '',
-                startTime: '',
-                endTime: '',
-                lessonId: ''
-            }
-        ]
     });
 
     const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
@@ -138,18 +122,6 @@ function ActivityManagement() {
         }
     };
 
-    const handleCreateActivity = () => {
-        setFormData({
-            topic: '',
-            description: '',
-            dayOfWeek: '',
-            startTime: '',
-            endTime: '',
-            lessonId: '',
-            scheduleId: ''
-        });
-        setModal({ isOpen: true, type: 'create' });
-    };
 
     const handleEditActivity = (activity) => {
         setSelectedActivity(activity);
@@ -252,29 +224,21 @@ function ActivityManagement() {
             };
 
             let response;
-            if (modal.type === 'create') {
-                response = await createActivity(activityData);
-            } else if (modal.type === 'edit') {
+            if (modal.type === 'edit') {
                 response = await updateActivity(selectedActivity.id, activityData);
             }
 
             if (response && response.success) {
-                enqueueSnackbar(
-                    `Activity ${modal.type === 'create' ? 'created' : 'updated'} successfully`,
-                    { variant: 'success' }
-                );
+                enqueueSnackbar('Activity updated successfully', { variant: 'success' });
                 handleCloseModal();
                 fetchInitialData();
             } else {
-                enqueueSnackbar(
-                    `Failed to ${modal.type} activity`,
-                    { variant: 'error' }
-                );
+                enqueueSnackbar('Failed to update activity', { variant: 'error' });
             }
         } catch (error) {
             console.error('Error submitting form:', error);
             
-            let errorMessage = `Error ${modal.type === 'create' ? 'creating' : 'updating'} activity`;
+            let errorMessage = 'Error updating activity';
             if (error.status === 401 || error.status === 403) {
                 errorMessage = 'Authentication failed. Please log in again to modify activities.';
             } else if (error.status === 400) {
@@ -287,94 +251,6 @@ function ActivityManagement() {
         }
     };
 
-    const handleBulkCreate = () => {
-        setBulkFormData({
-            scheduleId: '',
-            activities: [
-                {
-                    topic: '',
-                    description: '',
-                    dayOfWeek: '',
-                    startTime: '',
-                    endTime: '',
-                    lessonId: ''
-                }
-            ]
-        });
-        setModal({ isOpen: true, type: 'bulk' });
-    };
-
-    const addBulkActivity = () => {
-        setBulkFormData({
-            ...bulkFormData,
-            activities: [
-                ...bulkFormData.activities,
-                {
-                    topic: '',
-                    description: '',
-                    dayOfWeek: '',
-                    startTime: '',
-                    endTime: '',
-                    lessonId: ''
-                }
-            ]
-        });
-    };
-
-    const removeBulkActivity = (index) => {
-        const newActivities = bulkFormData.activities.filter((_, i) => i !== index);
-        setBulkFormData({
-            ...bulkFormData,
-            activities: newActivities
-        });
-    };
-
-    const updateBulkActivity = (index, field, value) => {
-        const newActivities = [...bulkFormData.activities];
-        newActivities[index][field] = value;
-        setBulkFormData({
-            ...bulkFormData,
-            activities: newActivities
-        });
-    };
-
-    const handleBulkSubmit = async () => {
-        try {
-            const bulkData = {
-                scheduleId: parseInt(bulkFormData.scheduleId),
-                activities: bulkFormData.activities.map(activity => ({
-                    topic: activity.topic,
-                    description: activity.description,
-                    dayOfWeek: activity.dayOfWeek,
-                    startTime: activity.startTime,
-                    endTime: activity.endTime,
-                    lessonId: activity.lessonId ? parseInt(activity.lessonId) : null
-                }))
-            };
-
-            const response = await bulkCreateActivities(bulkData);
-            if (response && response.success) {
-                enqueueSnackbar('Activities created successfully', { variant: 'success' });
-                handleCloseModal();
-                fetchInitialData();
-            } else {
-                enqueueSnackbar('Failed to create activities', { variant: 'error' });
-            }
-        } catch (error) {
-            console.error('Error creating bulk activities:', error);
-            
-            let errorMessage = 'Error creating activities';
-            if (error.status === 401 || error.status === 403) {
-                errorMessage = 'Authentication failed. Please log in again to create activities.';
-            } else if (error.status === 400) {
-                errorMessage = 'Invalid bulk activity data. Please check your inputs and try again.';
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            
-            enqueueSnackbar(errorMessage, { variant: 'error' });
-        }
-    };
 
     const handleCloseModal = () => {
         setModal({ isOpen: false, type: '' });
@@ -538,7 +414,7 @@ function ActivityManagement() {
     const renderFormModal = () => (
         <>
             <DialogTitle>
-                {modal.type === 'create' ? 'Create New Activity' : 'Edit Activity'}
+                Edit Activity
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={3} sx={{ mt: 2 }}>
@@ -634,151 +510,12 @@ function ActivityManagement() {
             <DialogActions>
                 <Button onClick={handleCloseModal}>Cancel</Button>
                 <Button onClick={handleFormSubmit} variant="contained">
-                    {modal.type === 'create' ? 'Create' : 'Update'}
+                    Update
                 </Button>
             </DialogActions>
         </>
     );
 
-    const renderBulkModal = () => (
-        <>
-            <DialogTitle>Bulk Create Activities</DialogTitle>
-            <DialogContent>
-                <Stack spacing={3} sx={{ mt: 2 }}>
-                    <FormControl fullWidth required>
-                        <InputLabel>Target Schedule</InputLabel>
-                        <Select
-                            value={bulkFormData.scheduleId}
-                            onChange={(e) => setBulkFormData({ ...bulkFormData, scheduleId: e.target.value })}
-                            label="Target Schedule"
-                        >
-                            {schedules.map((schedule) => (
-                                <MenuItem key={schedule.id} value={schedule.id}>
-                                    Week {schedule.weekNumber} - {schedule.className || 'Unknown Class'}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    {bulkFormData.activities.map((activity, index) => (
-                        <Card key={index} sx={{ p: 3, border: '1px solid #e0e0e0' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Typography variant="h6" color="primary">
-                                    Activity {index + 1}
-                                </Typography>
-                                {bulkFormData.activities.length > 1 && (
-                                    <Button
-                                        size="small"
-                                        color="error"
-                                        variant="outlined"
-                                        onClick={() => removeBulkActivity(index)}
-                                    >
-                                        Remove
-                                    </Button>
-                                )}
-                            </Box>
-                            
-                            <Stack spacing={2}>
-                                <TextField
-                                    fullWidth
-                                    label="Topic"
-                                    value={activity.topic}
-                                    onChange={(e) => updateBulkActivity(index, 'topic', e.target.value)}
-                                    required
-                                />
-                                
-                                <FormControl fullWidth required>
-                                    <InputLabel>Day of Week</InputLabel>
-                                    <Select
-                                        value={activity.dayOfWeek}
-                                        onChange={(e) => updateBulkActivity(index, 'dayOfWeek', e.target.value)}
-                                        label="Day of Week"
-                                    >
-                                        {daysOfWeek.map((day) => (
-                                            <MenuItem key={day} value={day}>{day}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                <TextField
-                                    fullWidth
-                                    label="Start Time"
-                                    type="time"
-                                    value={activity.startTime}
-                                    onChange={(e) => updateBulkActivity(index, 'startTime', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    required
-                                />
-
-                                <TextField
-                                    fullWidth
-                                    label="End Time"
-                                    type="time"
-                                    value={activity.endTime}
-                                    onChange={(e) => updateBulkActivity(index, 'endTime', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    required
-                                />
-
-                                <FormControl fullWidth>
-                                    <InputLabel>Lesson (Optional)</InputLabel>
-                                    <Select
-                                        value={activity.lessonId}
-                                        onChange={(e) => updateBulkActivity(index, 'lessonId', e.target.value)}
-                                        label="Lesson (Optional)"
-                                    >
-                                        <MenuItem value="">None</MenuItem>
-                                        {lessons.map((lesson) => (
-                                            <MenuItem key={lesson.id} value={lesson.id}>
-                                                {lesson.topic}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                <TextField
-                                    fullWidth
-                                    label="Description"
-                                    multiline
-                                    rows={2}
-                                    value={activity.description}
-                                    onChange={(e) => updateBulkActivity(index, 'description', e.target.value)}
-                                    placeholder="Enter activity description..."
-                                />
-                            </Stack>
-                        </Card>
-                    ))}
-
-                    <Button
-                        fullWidth
-                        variant="outlined"
-                        startIcon={<Add />}
-                        onClick={addBulkActivity}
-                        sx={{
-                            mt: 2,
-                            py: 2,
-                            borderStyle: 'dashed',
-                            '&:hover': {
-                                borderStyle: 'solid'
-                            }
-                        }}
-                    >
-                        Add Another Activity
-                    </Button>
-                </Stack>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleCloseModal}>Cancel</Button>
-                <Button onClick={handleBulkSubmit} variant="contained">
-                    Create All Activities
-                </Button>
-            </DialogActions>
-        </>
-    );
 
     const renderDeleteConfirmModal = () => (
         <>
@@ -851,22 +588,6 @@ function ActivityManagement() {
                 <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                     Activity Management
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={handleCreateActivity}
-                    >
-                        Create Activity
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<PostAdd />}
-                        onClick={handleBulkCreate}
-                    >
-                        Bulk Create
-                    </Button>
-                </Box>
             </Box>
 
             {/* Search Bar */}
@@ -916,8 +637,7 @@ function ActivityManagement() {
                 maxWidth="md"
                 fullWidth
             >
-                {modal.type === 'bulk' ? renderBulkModal() :
-                 modal.type === 'delete-confirm' ? renderDeleteConfirmModal() :
+                {modal.type === 'delete-confirm' ? renderDeleteConfirmModal() :
                  renderFormModal()}
             </Dialog>
         </Box>
