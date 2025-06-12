@@ -57,7 +57,8 @@ public class ParentServiceImpl implements ParentService {
         }
 
         List<Map<String, Object>> admissionFormList = admissionFormRepo.findAll().stream()
-                .filter(form -> form.getParent().getId().equals(account.getParent().getId())) //Crash tại form.getParent().getId() ==> trước khi tạo form phải save parent
+                //kiểm tra, nếu form ko cos thì vẫn hiện, chứ ko bị crash, //Crash tại form.getParent().getId() ==> trước khi tạo form phải save parent
+                .filter(form -> form.getParent() != null && form.getParent().getId().equals(account.getParent().getId()))
                 .filter(form -> form.getStudent() != null) // bỏ qua các AdmissionForm không có học sinh ==> tránh bị lỗi null
                 .sorted(Comparator.comparing(AdmissionForm::getSubmittedDate).reversed()) // sort form theo ngày chỉnh sửa mới nhất
                 .map(this::getFormDetail)
@@ -279,7 +280,7 @@ public class ParentServiceImpl implements ParentService {
         childData.put("gender", student.getGender());
         childData.put("dateOfBirth", student.getDateOfBirth());
         childData.put("placeOfBirth", student.getPlaceOfBirth());
-        childData.put("isStudent", student.isStudent());
+        childData.put("isStudent", student.isStudent()); //nhớ hiển thị trên UI: child status : processing / approved
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()

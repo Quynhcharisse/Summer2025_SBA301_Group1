@@ -10,13 +10,14 @@ import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateAdmissionTermRequest;
+import com.sba301.group1.pes_be.requests.CloneAdmissionTermRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +27,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +39,9 @@ public class AdmissionServiceImpl implements AdmissionService {
 
     @Override
     public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
-
         String error = AdmissionTermValidation.createTermValidate(request);
         if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)
@@ -51,21 +50,20 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        AdmissionTerm term = admissionTermRepo.save(
+        admissionTermRepo.save(
                 AdmissionTerm.builder()
-                        .name(request.getName())
-                        .grade(Grade.valueOf(request.getGrade()))
+                        .grade(Grade.valueOf(request.getGrade().toUpperCase()))
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
-                        .year(request.getYear())
+                        .year(LocalDateTime.now().getYear())
                         .maxNumberRegistration(request.getMaxNumberRegistration())
                         .status(Status.INACTIVE_TERM.getValue())
                         .build()
         );
 
-        return ResponseEntity.ok().body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
-                        .message("Create term successfully")
+                        .message("Create term and fee successfully")
                         .success(true)
                         .data(null)
                         .build()
@@ -74,7 +72,7 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     @Override
-    public ResponseEntity<ResponseObject> viewAdmissionTerm(int year) {
+    public ResponseEntity<ResponseObject> viewAdmissionTerm() {
 
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
@@ -84,48 +82,31 @@ public class AdmissionServiceImpl implements AdmissionService {
             String updateStatus = updateTermStatus(term, today);
             if (!term.getStatus().equals(updateStatus)) {
                 term.setStatus(updateStatus);
+                admissionTermRepo.save(term);
             }
         }
-        admissionTermRepo.saveAll(terms);
 
-        // thống kê số form đã đc nôpj và số form đã được duyệt
-        Map<Long, Long> formCountMap = admissionFormRepo.countFormsByTerm().stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-
-        Map<Long, Long> approvedCountMap = admissionFormRepo.countApprovedFormsByTerm().stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (Long) row[1]
-                ));
-
-        List<Map<String, Object>> result = terms.stream()
-                .filter(term -> term.getYear() == year)
-                .map(
-                        term -> {
+        List<Map<String, Object>> termList = terms.stream()
+                .map(term -> {
                             Map<String, Object> data = new HashMap<>();
                             data.put("id", term.getId());
-                            data.put("name", term.getName());
                             data.put("startDate", term.getStartDate());
                             data.put("endDate", term.getEndDate());
-                            data.put("year", term.getYear());
+                            data.put("year", LocalDate.now().getYear());
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
-                            data.put("grade", term.getGrade().toString());
+                            data.put("grade", term.getGrade());
                             data.put("status", term.getStatus());
-                            data.put("formCount", formCountMap.getOrDefault(term.getId().longValue(), 0L));
-                            data.put("approvedCount", approvedCountMap.getOrDefault(term.getId().longValue(), 0L));
+
                             return data;
                         }
                 )
                 .toList();
 
-        return ResponseEntity.ok().body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
                         .message("")
                         .success(true)
-                        .data(result)
+                        .data(termList)
                         .build()
         );
     }
@@ -140,57 +121,10 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
     }
 
+
     @Override
-    public ResponseEntity<ResponseObject> updateAdmissionTerm(UpdateAdmissionTermRequest request) {
-
-        String error = AdmissionTermValidation.updateTermValidate(request);
-        if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message(error)
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        AdmissionTerm term = admissionTermRepo.findById(request.getId()).orElse(null);
-
-        if (term == null) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Term not found")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        if (!term.getStatus().equals(Status.INACTIVE_TERM.getValue())) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Only inactive terms can be updated")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        term.setName(request.getName());
-        term.setStartDate(request.getStartDate());
-        term.setEndDate(request.getEndDate());
-        term.setYear(request.getYear());
-        term.setMaxNumberRegistration(request.getMaxNumberRegistration());
-        term.setGrade(Grade.valueOf(request.getGrade().toLowerCase()));
-        admissionTermRepo.save(term);
-
-        return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                        .message("Update term successfully")
-                        .success(true)
-                        .data(null)
-                        .build()
-        );
+    public ResponseEntity<ResponseObject> cloneAdmissionTerm(CloneAdmissionTermRequest request) {
+        return null;
     }
 
 

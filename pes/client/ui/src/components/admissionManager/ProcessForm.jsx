@@ -136,13 +136,16 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
         reason: ''
     });
 
+    //tạo state để hiển thị ảnh
+    const [openImage, setOpenImage] = useState(false);
+    const [selectedImage, setSelectedImage] = useState('');
 
     async function HandleProcessForm(isApproved, reason) {
         const response = await processAdmissionForm(selectedForm.id, isApproved, reason)
 
         console.log("API Response: ", response.success);
 
-        if(response && response.success) {
+        if (response && response.success) {
             enqueueSnackbar(
                 isApproved ? "Approved successfully" : "Rejected successfully",
                 {variant: "success"})
@@ -153,7 +156,7 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                 {variant: "error"}
             )
         }
-         handleClosePopUp()
+        handleClosePopUp()
     }
 
     return (
@@ -232,10 +235,22 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                         ].map((item, idx) => (
                             <Paper key={idx} elevation={2} sx={{p: 2, borderRadius: 2, width: 200}}>
                                 <Typography variant="body2" fontWeight="bold" sx={{mb: 1}}>{item.label}</Typography>
-                                <a href={item.src} target="_blank" rel="noopener noreferrer">
-                                    <img src={item.src} alt={item.label}
-                                         style={{width: '100%', borderRadius: 8, cursor: 'pointer'}}/>
-                                </a>
+
+                                {/*thay vì click="ảnh" redirect sang link khác*/}
+                                {/*vì giải quyết vấn đề hiện model thôi*/}
+                                <img
+                                    src={item.src}
+                                    alt={item.label}
+                                    style={{width: '100%', borderRadius: 8, cursor: 'pointer'}}
+                                    onClick={() => {
+                                        setSelectedImage(item.src);
+                                        setOpenImage(true);
+                                    }}
+                                />
+
+                                <Dialog open={openImage} onClose={() => setOpenImage(false)} maxWidth="md">
+                                    <img src={selectedImage} style={{width: '100%'}} alt="Zoom"/>
+                                </Dialog>
                             </Paper>
                         ))}
                     </Stack>
@@ -256,27 +271,37 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                             Close
                         </Button>
 
-                        <Button sx={{width: '8%', height: '5vh'}}
-                                variant="contained"
-                                color="success"
-                                onClick={() => setConfirmDialog({ open: true, type: 'approve', reason: '' })}>
-                            Approve
-                        </Button>
-                        <Button sx={{width: '8%', height: '5vh'}}
-                                variant="contained"
-                                color="error"
-                                onClick={() => setConfirmDialog({ open: true, type: 'reject', reason: '' })}>
-                            Reject
-                        </Button>
+                        {selectedForm.status === "pending approval" && (
+                            <>
+                                <Button
+                                    sx={{width: '8%', height: '5vh'}}
+                                    variant="contained"
+                                    color="success"
+                                    onClick={() => setConfirmDialog({open: true, type: 'approve', reason: ''})}
+                                >
+                                    Approve
+                                </Button>
+                                <Button
+                                    sx={{width: '8%', height: '5vh'}}
+                                    variant="contained"
+                                    color="error"
+                                    onClick={() => setConfirmDialog({open: true, type: 'reject', reason: ''})}
+                                >
+                                    Reject
+                                </Button>
+                            </>
+                        )}
+
                     </Stack>
-                    <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, type: '', reason: '' })}>
+                    <Dialog open={confirmDialog.open}
+                            onClose={() => setConfirmDialog({open: false, type: '', reason: ''})}>
                         <Box p={3} width={500}>
                             <Stack spacing={3}>
                                 <Typography variant="h6" fontWeight="bold">
                                     {confirmDialog.type === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
                                 </Typography>
 
-                                <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                                <Typography variant="body2" sx={{whiteSpace: 'pre-line'}}>
                                     {confirmDialog.type === 'approve'
                                         ? 'Are you sure you want to approve this admission form?\nThis action cannot be undone.'
                                         : 'Are you sure you want to reject this form?\nPlease enter a reason below.'}
@@ -291,13 +316,13 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                                         fullWidth
                                         value={confirmDialog.reason}
                                         onChange={(e) =>
-                                            setConfirmDialog(prev => ({ ...prev, reason: e.target.value }))
+                                            setConfirmDialog(prev => ({...prev, reason: e.target.value}))
                                         }
                                     />
                                 )}
 
                                 <Stack direction="row" spacing={2} justifyContent="flex-end">
-                                    <Button onClick={() => setConfirmDialog({ open: false, type: '', reason: '' })}>
+                                    <Button onClick={() => setConfirmDialog({open: false, type: '', reason: ''})}>
                                         Cancel
                                     </Button>
                                     <Button
@@ -315,8 +340,8 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                                             }
 
                                             //Nếu là reject mà ko có lys do chỉ cảnh báo
-                                            if(!isApproved && reason === '') {
-                                                enqueueSnackbar("Please enter a reason for rejection.", { variant: "warning" });
+                                            if (!isApproved && reason === '') {
+                                                enqueueSnackbar("Please enter a reason for rejection.", {variant: "warning"});
                                                 return;
                                             }
                                             //ktr lỗi
@@ -335,7 +360,7 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
     )
 }
 
-function RenderPage({openDetailPopUpFunc, forms, HandleSelectedForm})   {
+function RenderPage({openDetailPopUpFunc, forms, HandleSelectedForm}) {
 
     return (
         <div className="container">
