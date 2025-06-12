@@ -20,12 +20,12 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Info, Visibility, Assignment } from '@mui/icons-material';
-import { 
-    getAllClasses, 
-    getSyllabusByClassId, 
+import {
+    getAllClasses,
+    getSyllabusByClassId,
     getLessonsByClassId,
-    createActivitiesFromLessons 
-} from '../../services/ManagerService.jsx';
+    createActivitiesFromLessons
+} from '../../services/EducationService.jsx';
 import { enqueueSnackbar } from 'notistack';
 
 function ClassList() {
