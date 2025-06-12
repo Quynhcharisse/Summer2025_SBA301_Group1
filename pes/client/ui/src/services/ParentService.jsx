@@ -33,3 +33,26 @@ export const cancelAdmission = async (id) => {
     });
     return response ? response.data : null;
 };
+
+export const getChildrenList = async () => {
+    const response = await axiosClient.get("/parent/children");
+    console.log("Response from getChildrenList:", response);
+    
+    return response ? response.data : null;
+};
+
+export const addChild = async (child) => {
+    const response = await axiosClient.post("/parent", child);
+    console.log("Response from addChild:", response);
+
+    return response ? response.data : null;
+}
+
+export const updateChild = async (child) => {
+    console.log("Updating child with ID:", child.id || child.studentId);
+    
+    const response = await axiosClient.put("/parent", child);
+    console.log("Response from updateChild:", response);
+
+    return response ? response.data : null;
+}

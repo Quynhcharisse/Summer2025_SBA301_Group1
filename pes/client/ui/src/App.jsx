@@ -15,6 +15,7 @@ import EducationLayout from "./layouts/EducationLayout.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
+import ChildrenList from "./components/parent/ChildrenList.jsx";
 
 
 const router = createBrowserRouter([
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
             {
                 path: 'form',
                 element: <AdmissionForm/>
+            },
+            {
+                path: 'children',
+                element: <ChildrenList/>
             }
         ]
     },    
