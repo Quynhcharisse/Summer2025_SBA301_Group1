@@ -1,4 +1,20 @@
 /* Schedule Management Styles */
+
+/* CSS Variables for consistent colors */
+:root {
+    --primary-color: #1976d2;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #d32f2f;
+    --edit-color: #f57c00;
+    --delete-color: #d32f2f;
+    --background-light: #f8f9fa;
+    --white: #ffffff;
+    --border-light: #e0e0e0;
+    --text-primary: #333;
+    --text-secondary: #666;
+}
+
 .schedule-management-container {
     padding: 24px;
     background: #f8f9fa;

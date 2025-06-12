@@ -6,16 +6,18 @@ import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ParentLayout from "./layouts/ParentLayout.jsx";
 import ProtectRoute from "./config/ProtectRoute.jsx";
-import AdmissionForm from "./components/parent/Form.jsx";
+import AdmissionForm from "./components/parent/AdmissionForm.jsx";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
-import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
+import ProcessForm from "./components/admissionManager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
 import ClassList from "./components/educationManager/ClassList.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
-import DashboardUI from "./components/ui/DashhboardUI.jsx";
+import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
+import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
+import ChildrenList from "./components/parent/ChildrenList.jsx";
 import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
 
@@ -46,6 +48,10 @@ const router = createBrowserRouter([
             {
                 path: 'process/form',
                 element: <ProcessForm/>
+            },
+            {
+                path: 'term',
+                element: <AdmissionTerm/>
             }
         ]
     },    {        path: "/parent",
@@ -62,9 +68,15 @@ const router = createBrowserRouter([
             {
                 path: 'form',
                 element: <AdmissionForm/>
+            },
+            {
+                path: 'children',
+                element: <ChildrenList/>
             }
         ]
-    },    {        path: "/education",
+    },
+    {
+        path: "/education",
         element: (
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>
@@ -72,74 +84,7 @@ const router = createBrowserRouter([
         ),        children: [
             {
                 index: true,
-                element: (
-                    <div style={{ padding: '24px' }}>
-                        <h1 style={{ marginBottom: '16px', color: '#1976d2' }}>
-                            Education Management Dashboard
-                        </h1>
-                        <p style={{ marginBottom: '24px', color: '#666', fontSize: '16px' }}>
-                            Welcome to the Education Management System. Use the navigation menu to access different features.
-                        </p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '32px' }}>
-                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
-                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Class Management</h3>
-                                <p style={{ color: '#666' }}>Manage student classes, enrollment, and class information.</p>
-                            </div>
-                            <div style={{
-                                padding: '20px',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <h3 style={{color: '#1976d2', marginBottom: '12px'}}>Syllabus Management</h3>
-                                <p style={{color: '#666'}}>Organize and manage educational syllabus and lessons</p>
-                                <a href="/education/syllabus">
-                                    <button style={{
-                                        marginTop: '12px',
-                                        padding: '8px 16px',
-                                        background: '#1976d2',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}>
-                                        Go to Syllabus
-                                    </button>
-                                </a>
-                            </div>
-                            <div style={{
-                                padding: '20px',
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                textAlign: 'center'
-                            }}>
-                                <h3 style={{color: '#1976d2', marginBottom: '12px'}}>Lessons Management</h3>
-                                <p style={{color: '#666'}}>Plan and manage lessons.</p>
-                                <a href="/education/lessons">
-                                    <button style={{
-                                        marginTop: '12px',
-                                        padding: '8px 16px',
-                                        background: '#1976d2',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}>
-                                        Go to Lessons
-                                    </button>
-                                </a>
-                            </div>
-                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
-                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Activity Management</h3>
-                                <p style={{ color: '#666' }}>Organize and manage educational activities and events.</p>
-                            </div>
-                            <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
-                                <h3 style={{ color: '#1976d2', marginBottom: '12px' }}>Schedule Management</h3>
-                                <p style={{ color: '#666' }}>Plan and manage class schedules and timetables.</p>
-                            </div>
-                        </div>
-                    </div>
-                )
+                element: <EducationDashboard />
             },
             {
                 path: 'classes',

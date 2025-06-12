@@ -1,34 +1,28 @@
 package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
-import com.sba301.group1.pes_be.models.AdmissionForm;
-import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.requests.AdmissionTermRequest;
-import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.requests.CloneAdmissionTermRequest;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class AdmissionTermValidation {
-    public static String validate(AdmissionTermRequest request) {
-        if (request.getName().trim().isEmpty()) {
-            return "Name is required";
-        }
+    public static String createTermValidate(CreateAdmissionTermRequest request) {
 
         if (request.getStartDate() == null || request.getEndDate() == null) {
             return "Start date is required or end date is required";
         }
 
         //end date ko dc qua nam tuyen sinh
-        if (request.getEndDate().getYear() ==  LocalDate.now().getYear()) {
-            return "End date must be in year " + LocalDate.now().getYear();
+        //Tránh trường hợp tạo đợt tuyển sinh cho năm 2026
+        // nhưng lại kết thúc trong 2025 hoặc 2027 — điều này sẽ gây mâu thuẫn trong hệ thống
+        if (request.getEndDate().getYear() !=  LocalDateTime.now().getYear()) {
+            return "End date must be in year";
         }
 
         if (!request.getStartDate().isBefore(request.getEndDate())) {
             return "Start date must be before end date";
         }
 
-        if (request.getYear() <= LocalDate.now().getYear()) {// 2026
-            return "Year must be greater than " + LocalDate.now().getYear();
-        }
 
         if (request.getMaxNumberRegistration() <= 0 || request.getMaxNumberRegistration() > 1000) {
             return "Max number registration must be greater than 0 and less than 1000";
@@ -40,24 +34,31 @@ public class AdmissionTermValidation {
         return "";
     }
 
-    public static String processFormByManagerValidate(ProcessAdmissionFormRequest request, AdmissionFormRepo admissionFormRepo) {
+    public static String updateTermValidate(CloneAdmissionTermRequest request) {
 
-        AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
-
-        if(form == null) {
-            return "Form not found";
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            return "Start date is required or end date is required";
         }
 
-        //Khi approved == false → nghĩa là đơn bị từ chối
-        //bắt buộc phải nhap reason
-        if(!request.isApproved()) {
-            if(request.getReason().trim().isEmpty()) {
-                return "Reject reason is required when form is approved";
-            }
+        //end date ko dc qua nam tuyen sinh
+        //Tránh trường hợp tạo đợt tuyển sinh cho năm 2026
+        // nhưng lại kết thúc trong 2025 hoặc 2027 — điều này sẽ gây mâu thuẫn trong hệ thống
+        if (request.getEndDate().getYear() != LocalDateTime.now().getYear()) {
+            return "End date must be in year";
+        }
 
-            if (request.getReason().length() > 100) {
-                return "Reject reason must not exceed 100 characters";
-            }
+        if (!request.getStartDate().isBefore(request.getEndDate())) {
+            return "Start date must be before end date";
+        }
+
+
+
+        if (request.getMaxNumberRegistration() <= 0 || request.getMaxNumberRegistration() > 1000) {
+            return "Max number registration must be greater than 0 and less than 1000";
+        }
+
+        if (request.getGrade().trim().isEmpty()) {
+            return "Grade is required";
         }
         return "";
     }

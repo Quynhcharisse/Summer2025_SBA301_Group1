@@ -1,10 +1,15 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.response.ActivityResponse;
+import com.sba301.group1.pes_be.response.ScheduleResponse;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.models.*;
 import com.sba301.group1.pes_be.repositories.*;
 import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.ClassesResponse;
+import com.sba301.group1.pes_be.response.LessonResponse;
+import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;
@@ -12,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +33,21 @@ public class EducationServiceImpl implements EducationService {
     private final LessonRepo lessonRepo;
     private final ScheduleRepo scheduleRepo;
     private final SyllabusRepo syllabusRepo;
+
+    // Private helper method to convert Activity entity to Response
+    private ActivityResponse convertToResponse(Activity activity) {
+        return ActivityResponse.fromEntity(activity);
+    }
+
+    // Private helper method to convert list of Activity entities to Responses
+    private List<ActivityResponse> convertToResponse(List<Activity> activities) {
+        return ActivityResponse.fromEntityList(activities);
+    }
+
+    // Private helper method to convert list of Schedule entities to Responses
+    private List<ScheduleResponse> convertScheduleToResponse(List<Schedule> schedules) {
+        return ScheduleResponse.fromEntityList(schedules);
+    }
 
     // Activity Service Methods
     @Override
@@ -72,11 +93,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity savedActivity = activityRepo.save(activity);
+            ActivityResponse activityResponse = convertToResponse(savedActivity);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activity created successfully")
                     .success(true)
-                    .data(savedActivity)
+                    .data(activityResponse)
                     .build()
             );
 
@@ -128,11 +150,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity updatedActivity = activityRepo.save(activity);
+            ActivityResponse activityResponse = convertToResponse(updatedActivity);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity updated successfully")
                     .success(true)
-                    .data(updatedActivity)
+                    .data(activityResponse)
                     .build()
             );
 
@@ -161,11 +184,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ActivityResponse activityResponse = convertToResponse(activityOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity retrieved successfully")
                     .success(true)
-                    .data(activityOpt.get())
+                    .data(activityResponse)
                     .build()
             );
 
@@ -184,11 +208,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByScheduleId(Integer scheduleId) {
         try {
             List<Activity> activities = activityRepo.findByScheduleIdOrderByDayAndTime(scheduleId);
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -207,11 +232,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByClassId(Integer classId) {
         try {
             List<Activity> activities = activityRepo.findByClassId(classId);
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -230,11 +256,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllActivities() {
         try {
             List<Activity> activities = activityRepo.findAll();
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -250,6 +277,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> deleteActivity(Integer activityId) {
         try {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
@@ -263,10 +291,40 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
-            activityRepo.deleteById(activityId);
+            Activity activity = activityOpt.get();
+            
+            // Check if activity is part of a schedule and gather information for response
+            String scheduleInfo = "";
+            Schedule schedule = null;
+            if (activity.getSchedule() != null) {
+                schedule = activity.getSchedule();
+                scheduleInfo = String.format(" (was part of Week %d schedule for class %s)",
+                    schedule.getWeekNumber(),
+                    schedule.getClasses() != null ? schedule.getClasses().getName() : "Unknown");
+            }
+
+            // Proper bidirectional relationship cleanup for orphanRemoval
+            if (schedule != null) {
+                // Fetch the full schedule with activities to ensure the collection is loaded
+                Schedule managedSchedule = scheduleRepo.findById(schedule.getId()).orElse(null);
+                if (managedSchedule != null && managedSchedule.getActivities() != null) {
+                    // Remove the activity from the schedule's collection
+                    // This will trigger orphanRemoval and delete the activity automatically
+                    managedSchedule.getActivities().removeIf(a -> a.getId().equals(activityId));
+                    scheduleRepo.save(managedSchedule);
+                } else {
+                    // If schedule is not managed or has no activities, delete directly
+                    activityRepo.deleteById(activityId);
+                }
+            } else {
+                // Activity has no schedule, safe to delete directly
+                activityRepo.deleteById(activityId);
+            }
+            
+            String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                    .message("Activity deleted successfully")
+                    .message(successMessage)
                     .success(true)
                     .data(null)
                     .build()
@@ -276,6 +334,63 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error deleting activity: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> checkActivityDeletionImpact(Integer activityId) {
+        try {
+            Optional<Activity> activityOpt = activityRepo.findById(activityId);
+            if (activityOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Activity not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            Activity activity = activityOpt.get();
+            
+            // Build impact information
+            java.util.Map<String, Object> impactInfo = new java.util.HashMap<>();
+            impactInfo.put("activityId", activityId);
+            impactInfo.put("activityTopic", activity.getTopic());
+            impactInfo.put("hasScheduleImpact", activity.getSchedule() != null);
+            
+            if (activity.getSchedule() != null) {
+                Schedule schedule = activity.getSchedule();
+                impactInfo.put("scheduleId", schedule.getId());
+                impactInfo.put("weekNumber", schedule.getWeekNumber());
+                
+                if (schedule.getClasses() != null) {
+                    impactInfo.put("className", schedule.getClasses().getName());
+                    impactInfo.put("classId", schedule.getClasses().getId());
+                }
+                
+                // Count other activities in the same schedule
+                List<Activity> scheduleActivities = activityRepo.findByScheduleId(schedule.getId());
+                impactInfo.put("totalActivitiesInSchedule", scheduleActivities.size());
+                impactInfo.put("isLastActivityInSchedule", scheduleActivities.size() == 1);
+            }
+            
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Activity deletion impact analysis completed")
+                    .success(true)
+                    .data(impactInfo)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error analyzing activity deletion impact: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()
@@ -330,12 +445,13 @@ public class EducationServiceImpl implements EducationService {
             Activity activity = activityOpt.get();
             activity.setSchedule(schedule);
             Activity updatedActivity = activityRepo.save(activity);
+            ActivityResponse activityResponse = convertToResponse(updatedActivity);
 
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity assigned to class successfully")
                     .success(true)
-                    .data(updatedActivity)
+                    .data(activityResponse)
                     .build()
             );
 
@@ -354,11 +470,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getActivitiesByClassAndDay(Integer classId, String dayOfWeek) {
         try {
             List<Activity> activities = activityRepo.findByClassIdAndDayOfWeek(classId, dayOfWeek);
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -420,11 +537,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> savedActivities = activityRepo.saveAll(activities);
+            List<ActivityResponse> activityResponses = convertToResponse(savedActivities);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activities created successfully")
                     .success(true)
-                    .data(savedActivities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -484,11 +602,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> savedActivities = activityRepo.saveAll(activities);
+            List<ActivityResponse> activityResponses = convertToResponse(savedActivities);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Activities created from lessons successfully")
                     .success(true)
-                    .data(savedActivities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -517,11 +636,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Activity> activities = activityRepo.findByLessonId(lessonId);
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activities retrieved successfully")
                     .success(true)
-                    .data(activities)
+                    .data(activityResponses)
                     .build()
             );
 
@@ -541,11 +661,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllClasses() {
         try {
             List<Classes> classes = classesRepo.findAll();
+            List<ClassesResponse> classesResponses = ClassesResponse.fromEntityList(classes);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All classes retrieved successfully")
                     .success(true)
-                    .data(classes)
+                    .data(classesResponses)
                     .build()
             );
         } catch (Exception e) {
@@ -573,11 +694,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ClassesResponse classResponse = ClassesResponse.fromEntity(classOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Class retrieved successfully")
                     .success(true)
-                    .data(classOpt.get())
+                    .data(classResponse)
                     .build()
             );
         } catch (Exception e) {
@@ -615,11 +737,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Syllabus retrieved successfully")
                     .success(true)
-                    .data(syllabus)
+                    .data(syllabusResponse)
                     .build()
             );
         } catch (Exception e) {
@@ -647,11 +770,12 @@ public class EducationServiceImpl implements EducationService {
             }
 
             List<Lesson> lessons = lessonRepo.findByClassId(classId);
+            List<LessonResponse> lessonResponses = LessonResponse.fromEntityList(lessons);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Lessons retrieved successfully")
                     .success(true)
-                    .data(lessons)
+                    .data(lessonResponses)
                     .build()
             );
         } catch (Exception e) {
@@ -749,11 +873,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllLessons() {
         try {
             List<Lesson> lessons = lessonRepo.findAll();
+            List<LessonResponse> lessonResponses = LessonResponse.fromEntityList(lessons);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All lessons retrieved successfully")
                     .success(true)
-                    .data(lessons)
+                    .data(lessonResponses)
                     .build()
             );
         } catch (Exception e) {
@@ -781,11 +906,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            LessonResponse lessonResponse = LessonResponse.fromEntity(lessonOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Lesson retrieved successfully")
                     .success(true)
-                    .data(lessonOpt.get())
+                    .data(lessonResponse)
                     .build()
             );
         } catch (Exception e) {
@@ -920,11 +1046,12 @@ public class EducationServiceImpl implements EducationService {
             schedule.setNote(request.getNote());
 
             Schedule updatedSchedule = scheduleRepo.save(schedule);
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(updatedSchedule);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedule updated successfully")
                     .success(true)
-                    .data(updatedSchedule)
+                    .data(scheduleResponse)
                     .build()
             );
 
@@ -1029,6 +1156,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> deleteSchedule(Integer scheduleId) {
         try {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);
@@ -1065,12 +1193,13 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllSchedules() {
         try {
-            List<Schedule> schedules = scheduleRepo.findAll();
+            List<Schedule> schedules = scheduleRepo.findAllWithActivitiesAndClasses();
+            List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All schedules retrieved successfully")
                     .success(true)
-                    .data(schedules)
+                    .data(scheduleResponses)
                     .build()
             );
 
@@ -1090,11 +1219,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllSyllabi() {
         try {
             List<Syllabus> syllabi = syllabusRepo.findAll();
+            List<SyllabusResponse> syllabusResponses = SyllabusResponse.fromEntityList(syllabi);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All syllabi retrieved successfully")
                     .success(true)
-                    .data(syllabi)
+                    .data(syllabusResponses)
                     .build()
             );
         } catch (Exception e) {
@@ -1122,11 +1252,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabusOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Syllabus retrieved successfully")
                     .success(true)
-                    .data(syllabusOpt.get())
+                    .data(syllabusResponse)
                     .build()
             );
         } catch (Exception e) {

@@ -68,6 +68,13 @@ public interface EducationService {
     ResponseEntity<ResponseObject> deleteActivity(Integer activityId);
     
     /**
+     * Checks if an activity deletion will affect schedules and returns impact information
+     * @param activityId the ID of the activity to check
+     * @return ResponseEntity containing the impact analysis
+     */
+    ResponseEntity<ResponseObject> checkActivityDeletionImpact(Integer activityId);
+    
+    /**
      * Assigns an activity to a class
      * @param request the assignment request
      * @return ResponseEntity containing the operation result

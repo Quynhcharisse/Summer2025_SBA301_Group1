@@ -19,4 +19,7 @@ public interface ScheduleRepo extends JpaRepository<Schedule, Integer> {
     
     @Query("SELECT s FROM Schedule s WHERE s.classes.id = :classId ORDER BY s.weekNumber")
     List<Schedule> findByClassesIdOrderByWeekNumber(@Param("classId") Integer classId);
+    
+    @Query("SELECT DISTINCT s FROM Schedule s LEFT JOIN FETCH s.activities LEFT JOIN FETCH s.classes")
+    List<Schedule> findAllWithActivitiesAndClasses();
 }

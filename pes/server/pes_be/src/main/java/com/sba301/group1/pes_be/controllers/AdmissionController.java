@@ -1,7 +1,8 @@
 package com.sba301.group1.pes_be.controllers;
 
-import com.sba301.group1.pes_be.requests.AdmissionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.CloneAdmissionTermRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +24,14 @@ public class AdmissionController {
 
     @PostMapping("/term")
     @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> createAdmissionTerm(@RequestBody AdmissionTermRequest request) {
+    public ResponseEntity<ResponseObject> createAdmissionTerm(@RequestBody CreateAdmissionTermRequest request) {
         return admissionService.createAdmissionTerm(request);
     }
 
     @PutMapping("/term")
     @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> updateAdmissionTerm(@RequestBody AdmissionTermRequest request) {
-        return admissionService.updateAdmissionTerm(request);
+    public ResponseEntity<ResponseObject> cloneAdmissionTerm(@RequestBody CloneAdmissionTermRequest request) {
+        return admissionService.cloneAdmissionTerm(request);
     }
 
     @GetMapping("/term")
