@@ -142,7 +142,7 @@ function ClassList() {
             align: 'center'
         },
         {
-            field: 'className',
+            field: 'name',
             headerName: 'Class Name',
             width: 200,
             headerAlign: 'center'
@@ -169,14 +169,20 @@ function ClassList() {
             )
         },
         {
-            field: 'teacherId',
-            headerName: 'Teacher ID',
-            width: 120,
+            field: 'teacher',
+            headerName: 'Teacher',
+            width: 150,
             headerAlign: 'center',
-            align: 'center'
+            align: 'center',
+            valueGetter: (params) => {
+                if (params.row.teacher) {
+                    return `${params.row.teacher.firstName}${params.row.teacher.lastName ? ' ' + params.row.teacher.lastName : ''}`;
+                }
+                return 'No Teacher';
+            }
         },
         {
-            field: 'capacity',
+            field: 'numberStudent',
             headerName: 'Capacity',
             width: 100,
             headerAlign: 'center',
@@ -233,7 +239,7 @@ function ClassList() {
                                         <Grid container spacing={2}>
                                             <Grid item xs={6}>
                                                 <Typography variant="subtitle2">Class Name:</Typography>
-                                                <Typography variant="body1">{selectedClass.className}</Typography>
+                                                <Typography variant="body1">{selectedClass.name}</Typography>
                                             </Grid>
                                             <Grid item xs={6}>
                                                 <Typography variant="subtitle2">Grade:</Typography>
@@ -248,12 +254,17 @@ function ClassList() {
                                                 />
                                             </Grid>
                                             <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Teacher ID:</Typography>
-                                                <Typography variant="body1">{selectedClass.teacherId}</Typography>
+                                                <Typography variant="subtitle2">Teacher:</Typography>
+                                                <Typography variant="body1">
+                                                    {selectedClass.teacher
+                                                        ? `${selectedClass.teacher.firstName}${selectedClass.teacher.lastName ? ' ' + selectedClass.teacher.lastName : ''}`
+                                                        : 'No Teacher'
+                                                    }
+                                                </Typography>
                                             </Grid>
                                             <Grid item xs={6}>
                                                 <Typography variant="subtitle2">Capacity:</Typography>
-                                                <Typography variant="body1">{selectedClass.capacity}</Typography>
+                                                <Typography variant="body1">{selectedClass.numberStudent}</Typography>
                                             </Grid>
                                             {selectedClass.description && (
                                                 <Grid item xs={12}>
