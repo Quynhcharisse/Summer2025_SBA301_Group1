@@ -41,6 +41,20 @@ function EducationDashboard() {
             icon: <CalendarToday />,
             color: '#f57c00',
             stats: 'Scheduled Sessions'
+        },
+        {
+            title: 'Syllabus Management',
+            description: 'Create and manage syllabi for different classes and subjects.',
+            icon: <Assignment />,
+            color: '#4caf50',
+            stats: 'Active Syllabi'
+        },
+        {
+            title: 'Lessons Management',
+            description: 'Plan, organize, and manage lessons effectively.',
+            icon: <Dashboard />,
+            color: '#3f51b5',
+            stats: 'Total Lessons'
         }
     ];
 
