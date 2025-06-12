@@ -17,26 +17,18 @@ public class LessonResponse {
     private Integer id;
     private String topic;
     private String description;
-    private List<SimpleSyllabusResponse> syllabuses;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class SimpleSyllabusResponse {
-        private Integer id;
-        private String title;
-        private String description;
-    }
+    private Integer duration;
+    private String materials;
+    private List<SyllabusResponse> syllabuses;
 
     public static LessonResponse fromEntity(Lesson lesson) {
         if (lesson == null) return null;
 
-        List<SimpleSyllabusResponse> syllabusResponses = null;
+        List<SyllabusResponse> syllabusResponses = null;
         if (lesson.getSyllabusLessonList() != null) {
             syllabusResponses = lesson.getSyllabusLessonList().stream()
                 .filter(sl -> sl.getSyllabus() != null)
-                .map(sl -> SimpleSyllabusResponse.builder()
+                .map(sl -> SyllabusResponse.builder()
                     .id(sl.getSyllabus().getId())
                     .title(sl.getSyllabus().getTitle())
                     .description(sl.getSyllabus().getDescription())
@@ -49,6 +41,8 @@ public class LessonResponse {
             .topic(lesson.getTopic())
             .description(lesson.getDescription())
             .syllabuses(syllabusResponses)
+            .duration(lesson.getDuration())
+            .materials(lesson.getMaterials())
             .build();
     }
 
