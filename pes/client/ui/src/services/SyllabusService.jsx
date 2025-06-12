@@ -1,4 +1,3 @@
-// frontend/src/services/SyllabusService.jsx
 import api from '../config/APIConfig.jsx';
 
 const SyllabusService = {

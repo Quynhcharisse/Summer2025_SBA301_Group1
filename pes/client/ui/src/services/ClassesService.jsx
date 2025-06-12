@@ -1,4 +1,3 @@
-// frontend/src/services/ClassesService.jsx
 import api from '../config/APIConfig.jsx'
 
 const ClassesService = {

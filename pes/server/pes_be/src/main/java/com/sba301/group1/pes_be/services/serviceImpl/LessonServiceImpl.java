@@ -90,7 +90,7 @@ public class LessonServiceImpl implements LessonService {
                 ResponseObject.builder()
                         .message("View all lessons successfully")
                         .success(true)
-                        .data(LessonResponse.fromEntities(lessonRepo.findAll()))
+                        .data(LessonResponse.fromEntityList(lessonRepo.findAll()))
                         .build()
         );
     }

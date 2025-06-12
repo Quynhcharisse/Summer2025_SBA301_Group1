@@ -1,4 +1,3 @@
-// frontend/src/services/LessonService.jsx
 import api from '../config/APIConfig.jsx';
 
 const LessonService = {

@@ -19,16 +19,16 @@ public class LessonResponse {
     private String description;
     private Integer duration;
     private String materials;
-    private List<SimpleSyllabusResponse> syllabuses;
+    private List<SyllabusResponse> syllabuses;
 
     public static LessonResponse fromEntity(Lesson lesson) {
         if (lesson == null) return null;
 
-        List<SimpleSyllabusResponse> syllabusResponses = null;
+        List<SyllabusResponse> syllabusResponses = null;
         if (lesson.getSyllabusLessonList() != null) {
             syllabusResponses = lesson.getSyllabusLessonList().stream()
                 .filter(sl -> sl.getSyllabus() != null)
-                .map(sl -> SimpleSyllabusResponse.builder()
+                .map(sl -> SyllabusResponse.builder()
                     .id(sl.getSyllabus().getId())
                     .title(sl.getSyllabus().getTitle())
                     .description(sl.getSyllabus().getDescription())

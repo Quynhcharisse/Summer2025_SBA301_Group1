@@ -8,6 +8,7 @@ import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.SyllabusLessonResponse;
 import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.SyllabusService;
 import lombok.RequiredArgsConstructor;
@@ -84,22 +85,19 @@ public class SyllabusServiceImpl implements SyllabusService {
                 ResponseObject.builder()
                         .message("Syllabus list retrieved successfully")
                         .success(true)
-                        .data(SyllabusResponse.fromEntities(syllabi))
+                        .data(SyllabusResponse.fromEntityList(syllabi))
                         .build()
         );
     }
 
     @Transactional
     protected void updateSyllabusLessons(SyllabusRequest request, Syllabus syllabus) {
-        // First save the syllabus if it's new
         syllabusRepo.save(syllabus);
 
-        // Delete existing syllabus lessons
         if (syllabus.getId() != null) {
             syllabusLessonRepo.deleteSyllabusLessonBySyllabus(syllabus);
         }
 
-        // Create new syllabus lessons
         if (request.getLessons() != null) {
             List<SyllabusLesson> syllabusLessons = new ArrayList<>();
 
@@ -116,13 +114,10 @@ public class SyllabusServiceImpl implements SyllabusService {
                 syllabusLessons.add(syllabusLesson);
             }
 
-            // Save all new lessons
             syllabusLessonRepo.saveAll(syllabusLessons);
 
-            // Update the association in memory
             syllabus.setSyllabusLessonList(syllabusLessons);
         } else {
-            // If no lessons are provided, set an empty list
             syllabus.setSyllabusLessonList(new ArrayList<>());
         }
     }
