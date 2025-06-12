@@ -6,15 +6,20 @@ import './styles/App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ParentLayout from "./layouts/ParentLayout.jsx";
 import ProtectRoute from "./config/ProtectRoute.jsx";
-import AdmissionForm from "./components/parent/Form.jsx";
+import AdmissionForm from "./components/parent/AdmissionForm.jsx";
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
-import ProcessForm from "./components/admissionMannager/ProcessForm.jsx";
+import ProcessForm from "./components/admissionManager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
+import ClassList from "./components/educationManager/ClassList.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
+import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
+import ChildrenList from "./components/parent/ChildrenList.jsx";
+import SyllabusList from "./components/educationManager/SyllabusList.jsx";
+import LessonList from "./components/educationManager/LessonList.jsx";
 
 
 const router = createBrowserRouter([
@@ -43,6 +48,10 @@ const router = createBrowserRouter([
             {
                 path: 'process/form',
                 element: <ProcessForm/>
+            },
+            {
+                path: 'term',
+                element: <AdmissionTerm/>
             }
         ]
     },    {        path: "/parent",
@@ -59,10 +68,14 @@ const router = createBrowserRouter([
             {
                 path: 'form',
                 element: <AdmissionForm/>
+            },
+            {
+                path: 'children',
+                element: <ChildrenList/>
             }
         ]
-    },    
-    {        
+    },
+    {
         path: "/education",
         element: (
             <ProtectRoute allowedRoles={["EDUCATION"]}>
@@ -72,6 +85,18 @@ const router = createBrowserRouter([
             {
                 index: true,
                 element: <EducationDashboard />
+            },
+            {
+                path: 'classes',
+                element: <ClassList/>
+            },
+            {
+                path: 'syllabus',
+                element: <SyllabusList/>
+            },
+            {
+                path: 'lessons',
+                element: <LessonList/>
             },
             {
                 path: 'activities',

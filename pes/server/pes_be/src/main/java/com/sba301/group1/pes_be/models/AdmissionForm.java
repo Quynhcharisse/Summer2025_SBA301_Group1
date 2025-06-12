@@ -32,18 +32,6 @@ public class AdmissionForm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @Column(name = "`child_name`")
-    String childName;
-
-    @Column(name = "`child_gender`")
-    String childGender;
-
-    @Column(name = "`date_of_birth`")
-    LocalDate dateOfBirth;
-
-    @Column(name = "`place_of_birth`")
-    String placeOfBirth;
-
     @Column(name = "`profile_image`")
     String profileImage;
 
@@ -72,6 +60,10 @@ public class AdmissionForm {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`parent_id`")
     Parent parent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`student_id`")
+    Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`admission_term_id`")

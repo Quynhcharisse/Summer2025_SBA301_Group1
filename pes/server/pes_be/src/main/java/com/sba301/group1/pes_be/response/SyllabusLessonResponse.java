@@ -27,6 +27,9 @@ public class SyllabusLessonResponse {
         private Integer id;
         private String title;
         private String description;
+        private String note;
+        private SimpleSyllabusResponse syllabus;
+        private SimpleLessonResponse lesson;
     }
 
     @Data

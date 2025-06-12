@@ -1,17 +1,21 @@
 package com.sba301.group1.pes_be.controllers;
 
+import com.sba301.group1.pes_be.requests.AddChildRequest;
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.ChildRequest;
-import com.sba301.group1.pes_be.requests.ParentRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.requests.SaveDraftAdmissionFormRequest;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.ParentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1/parent")
@@ -39,23 +43,23 @@ public class ParentController {
     }
 
                                     //------- Child Management ---------//
+    // gôp getChild + submit vô chung tránh gọi API quá nhiều lần
+
+    @PostMapping("/child")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> addChild(@RequestBody AddChildRequest request, HttpServletRequest httpRequest) {
+        return parentService.addChild(request, httpRequest);
+    }
+
+    @PutMapping("/child")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> updateChild(@RequestBody UpdateChildRequest request, HttpServletRequest httpRequest) {
+        return parentService.updateChild(request, httpRequest);
+    }
 
     @GetMapping("/children")
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getChildren(HttpServletRequest request) {
-        return parentService.getChildren(request);
+    public ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request) {
+        return parentService.getChildrenByParentId(request);
     }
-
-    @PostMapping
-    @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> addChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
-        return parentService.addChild(childRequest, request);
-    }
-
-    @PutMapping
-    @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> updateChild(@RequestBody ChildRequest childRequest, HttpServletRequest request) {
-        return parentService.updateChild(childRequest, request);
-    }
-
 }

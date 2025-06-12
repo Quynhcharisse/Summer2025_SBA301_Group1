@@ -36,6 +36,10 @@ public class Lesson {
 
     String description;
 
+    Integer duration;
+
+    String materials;
+
     @OneToMany(mappedBy = "lesson", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude

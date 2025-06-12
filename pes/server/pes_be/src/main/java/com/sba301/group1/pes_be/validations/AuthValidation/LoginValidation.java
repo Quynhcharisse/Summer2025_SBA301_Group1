@@ -10,19 +10,19 @@ public class LoginValidation {
         Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
 
         if (account == null) {
-            return "Account not available";
+            return "Email or password is in correct";
         }
 
         if (account.getStatus().equals(Status.ACCOUNT_BAN.getValue())) {
-            return "Account is banned";
+            return "Email or password is in correct";
         }
 
         if (!account.getEmail().equals(request.getEmail())) {
-            return "Email is incorrect";
+            return "Email or password is in correct";
         }
 
         if (!account.getPassword().equals(request.getPassword())) {
-            return "Password is incorrect";
+            return "Email or password is in correct";
         }
         return "";
     }
