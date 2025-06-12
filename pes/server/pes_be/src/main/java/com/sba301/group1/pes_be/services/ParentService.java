@@ -19,4 +19,6 @@ public interface ParentService {
     ResponseEntity<ResponseObject> addChild(AddChildRequest request, HttpServletRequest httpRequest);
 
     ResponseEntity<ResponseObject> updateChild(UpdateChildRequest request, HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request);
 }

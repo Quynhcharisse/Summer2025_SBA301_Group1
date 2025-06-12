@@ -234,7 +234,7 @@ public class ParentServiceImpl implements ParentService {
     public ResponseEntity<ResponseObject> addChild(AddChildRequest request, HttpServletRequest httpRequest) {
         Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(401).body(
                     ResponseObject.builder()
                             .message("Add child failed: Unauthorized")
                             .success(false)
@@ -244,7 +244,7 @@ public class ParentServiceImpl implements ParentService {
 
         String error = ChildValidation.addChildValidate(request);
         if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(400).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)
@@ -254,7 +254,7 @@ public class ParentServiceImpl implements ParentService {
 
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         if (parent == null) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(404).body(
                     ResponseObject.builder()
                             .message("Parent not found")
                             .success(false)
@@ -264,14 +264,13 @@ public class ParentServiceImpl implements ParentService {
 
         Student student = studentRepo.save(
                 Student.builder()
-                .name(request.getName())
-                .gender(request.getGender())
-                .dateOfBirth(request.getDateOfBirth())
-                .placeOfBirth(request.getPlaceOfBirth())
-                .isStudent(false)         // mặc định là chưa chính thức
-                .parent(parent)           // gán cha mẹ
-                .build());
-
+                        .name(request.getName())
+                        .gender(request.getGender())
+                        .dateOfBirth(request.getDateOfBirth())
+                        .placeOfBirth(request.getPlaceOfBirth())
+                        .isStudent(false)         // mặc định là chưa chính thức
+                        .parent(parent)           // gán cha mẹ
+                        .build());
 
 
         Map<String, Object> childData = new HashMap<>();
@@ -286,7 +285,7 @@ public class ParentServiceImpl implements ParentService {
                 ResponseObject.builder()
                         .message("Child added successfully")
                         .success(true)
-                        .data(null)
+                        .data(childData)
                         .build()
         );
 
@@ -296,7 +295,7 @@ public class ParentServiceImpl implements ParentService {
     public ResponseEntity<ResponseObject> updateChild(UpdateChildRequest request, HttpServletRequest httpRequest) {
         Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(401).body(
                     ResponseObject.builder()
                             .message("Update child failed: Unauthorized")
                             .success(false)
@@ -306,7 +305,7 @@ public class ParentServiceImpl implements ParentService {
 
         String error = ChildValidation.updateChildValidate(request);
         if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(400).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)
@@ -318,7 +317,7 @@ public class ParentServiceImpl implements ParentService {
         // Tìm parent từ account
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         if (parent == null) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(404).body(
                     ResponseObject.builder()
                             .message("Parent not found")
                             .success(false)
@@ -328,8 +327,9 @@ public class ParentServiceImpl implements ParentService {
 
         // KHÔNG cho update nếu đã là học sinh chính thức
         Student student = studentRepo.findById(request.getId()).orElse(null);
+        System.out.println(request);
         if (student == null || !student.getParent().getId().equals(parent.getId())) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(400).body(
                     ResponseObject.builder()
                             .message("Child not found or access denied")
                             .success(false)
@@ -337,8 +337,8 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        if(student.isStudent()) {
-            return ResponseEntity.ok().body(
+        if (student.isStudent()) {
+            return ResponseEntity.status(400).body(
                     ResponseObject.builder()
                             .message("Cannot update child info after submitting admission form")
                             .success(false)
@@ -368,4 +368,57 @@ public class ParentServiceImpl implements ParentService {
                         .data(childData)
                         .build());
     }
+
+    @Override
+    public ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request) {
+        Account account = jwtService.extractAccountFromCookie(request);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(401).body(
+                    ResponseObject.builder()
+                            .message("Unauthorized access")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("Parent not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        List<Map<String, Object>> childrenList = studentRepo.findAllByParent_Id(parent.getId())
+                .stream()
+                .map(student -> {
+                    Map<String, Object> studentDetail = new HashMap<>();
+                    studentDetail.put("id", student.getId());
+                    studentDetail.put("name", student.getName());
+                    studentDetail.put("gender", student.getGender());
+                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
+                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+                    studentDetail.put("isStudent", student.isStudent());
+                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
+                    return studentDetail;
+                })
+                .toList();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("studentList", childrenList); // giống key trong viewAdmissionFormList
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Children retrieved successfully")
+                        .success(true)
+                        .data(data)
+                        .build()
+        );
+    }
+
 }
+
