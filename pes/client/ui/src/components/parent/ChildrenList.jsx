@@ -13,7 +13,8 @@ import {
 } from "@mui/material";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Snackbar, Alert, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import axiosClient from "../../config/APIConfig";
+import { addChild, updateChild } from "../../services/ParentService";
+import axiosClient from "../../config/APIConfig.jsx";
 
 const ChildrenList = () => {
   const [children, setChildren] = useState([]);
@@ -35,36 +36,73 @@ const ChildrenList = () => {
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // Add function to add a child
+  // // Add function to add a child
+  // const add = async (child) => {
+  //   try {
+  //     const response = await axiosClient.post("/parent", child);
+  //     const newChild = response.data?.data || response.data;
+  //     setChildren(prev => [...prev, newChild]);
+  //     setSnackbar({ open: true, message: "Add child successfully!", severity: "success" });
+  //     handleClose();
+  //   } catch (error) {
+  //     setSnackbar({ open: true, message: error.response?.data?.message || "Add child failed!", severity: "error" });
+  //   }
+  // };
+
   const add = async (child) => {
     try {
-      const response = await axiosClient.post("/parent", child);
-      const newChild = response.data?.data || response.data;
+      const response = await addChild(child);
+      const newChild = response?.data || response;
       setChildren(prev => [...prev, newChild]);
       setSnackbar({ open: true, message: "Add child successfully!", severity: "success" });
       handleClose();
     } catch (error) {
-      setSnackbar({ open: true, message: error.response?.data?.message || "Add child failed!", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Add child failed!",
+        severity: "error"
+      });
     }
   };
+  //
+  // const update = async (child) => {
+  //   console.log(child);
+  //
+  //   try {
+  //     const response = await axiosClient.put(`/parent`, child);
+  //     console.log("Response from updateChild:", response);
+  //
+  //     const updatedChild = response.data?.data || response.data;
+  //     setChildren(prev =>
+  //       prev.map(c =>
+  //         (c.id || c.studentId) === editId ? { ...c, ...updatedChild } : c
+  //       )
+  //     );
+  //     setSnackbar({ open: true, message: "Update child successfully!", severity: "success" });
+  //     handleClose();
+  //   } catch (error) {
+  //     setSnackbar({ open: true, message: error.response?.data?.message || "Update child failed!", severity: "error" });
+  //   }
+  // };
 
   const update = async (child) => {
-    console.log(child);
-    
     try {
-      const response = await axiosClient.put(`/parent`, child);
-      console.log("Response from updateChild:", response);
-      
-      const updatedChild = response.data?.data || response.data;
+      const response = await updateChild(child);
+      const updatedChild = response?.data || response;
+
       setChildren(prev =>
-        prev.map(c =>
-          (c.id || c.studentId) === editId ? { ...c, ...updatedChild } : c
-        )
+          prev.map(c =>
+              (c.id || c.studentId) === editId ? { ...c, ...updatedChild } : c
+          )
       );
       setSnackbar({ open: true, message: "Update child successfully!", severity: "success" });
       handleClose();
-    } catch (error) {      
-      setSnackbar({ open: true, message: error.response?.data?.message || "Update child failed!", severity: "error" });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || "Update child failed!",
+        severity: "error"
+      });
     }
   };
 
