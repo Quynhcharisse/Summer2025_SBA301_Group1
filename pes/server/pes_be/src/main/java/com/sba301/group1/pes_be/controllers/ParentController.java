@@ -45,13 +45,13 @@ public class ParentController {
                                     //------- Child Management ---------//
     // gôp getChild + submit vô chung tránh gọi API quá nhiều lần
 
-    @PostMapping
+    @PostMapping("/child")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> addChild(@RequestBody AddChildRequest request, HttpServletRequest httpRequest) {
         return parentService.addChild(request, httpRequest);
     }
 
-    @PutMapping
+    @PutMapping("/child")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> updateChild(@RequestBody UpdateChildRequest request, HttpServletRequest httpRequest) {
         return parentService.updateChild(request, httpRequest);

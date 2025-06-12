@@ -42,7 +42,7 @@ export const getChildrenList = async () => {
 };
 
 export const addChild = async (child) => {
-    const response = await axiosClient.post("/parent", child);
+    const response = await axiosClient.post("/parent/child", child);
     console.log("Response from addChild:", response);
 
     return response ? response.data : null;
@@ -51,7 +51,7 @@ export const addChild = async (child) => {
 export const updateChild = async (child) => {
     console.log("Updating child with ID:", child.id || child.studentId);
     
-    const response = await axiosClient.put("/parent", child);
+    const response = await axiosClient.put("/parent/child", child);
     console.log("Response from updateChild:", response);
 
     return response ? response.data : null;

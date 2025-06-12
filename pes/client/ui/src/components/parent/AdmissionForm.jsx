@@ -74,7 +74,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                     <TableHead>
                         <TableRow>
                             <TableCell align={"center"}>No</TableCell>
-                            <TableCell align={"center"}>Child ID</TableCell>
+                            <TableCell align={"center"}>Child Name</TableCell>
                             <TableCell align={"center"}>Submit Date</TableCell>
                             <TableCell align={"center"}>Cancel Reason</TableCell>
                             <TableCell align={"center"}>Status</TableCell>
@@ -84,15 +84,22 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                     </TableHead>
 
                     <TableBody>
-                        {forms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                            .map((form, index) => {
-                                return (
-                                    <TableRow key={index}>
-                                        <TableCell align={"center"}>{index + 1}</TableCell>
-                                        <TableCell align={"center"}>{form.studentId}</TableCell>
-                                        <TableCell align={"center"}>{form.submittedDate}</TableCell>
-                                        <TableCell align={"center"}>{form.cancelReason || "N/A"}</TableCell>
-                                        <TableCell align="center" sx={{
+                        {Array.isArray(forms) && forms.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} align="center">
+                                    No forms found
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
+                                <TableRow key={index}>
+                                    <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
+                                    <TableCell align="center">{form.studentName}</TableCell>
+                                    <TableCell align="center">{form.submittedDate}</TableCell>
+                                    <TableCell align="center">{form.cancelReason || "N/A"}</TableCell>
+                                    <TableCell
+                                        align="center"
+                                        sx={{
                                             color:
                                                 form.status === "approved"
                                                     ? "green"
@@ -101,30 +108,27 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                                                         : form.status === "pending approval"
                                                             ? "#052c65"
                                                             : "black",
-                                            fontWeight: "bold"
-                                        }}>
-                                            {form.status}
-                                        </TableCell>
-                                        <TableCell align={"center"}>{form.note}</TableCell>
-                                        <TableCell align={"center"}>
-                                            <IconButton color="primary"
-                                                        onClick={() => handleDetailClick(form)}
-                                            >
-                                                <Info sx={{color: '#2c3e50'}}/>
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })
-                        }
-
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        {form.status}
+                                    </TableCell>
+                                    <TableCell align="center">{form.note}</TableCell>
+                                    <TableCell align="center">
+                                        <IconButton color="primary" onClick={() => handleDetailClick(form)}>
+                                            <Info sx={{color: '#2c3e50'}}/>
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>
             <TablePagination
                 component="div"
                 rowsPerPageOptions={[5, 10, 15]}
-                count={forms?.length} //phân trang có bn dòng
+                count={Array.isArray(forms) ? forms.length : 0} //phân trang có bn dòng
                 page={page}
                 onPageChange={handleChangePage}
                 rowsPerPage={rowsPerPage}
@@ -140,9 +144,13 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
 
     const handleOpenConfirm = () => setOpenConfirm(true);
 
-    {/*handleCloseConfirm sẽ đặt lại openConfirm = false để đóng dialog khi người dùng nhấn Disagree hoặc đóng hộp thoại*/
-    }
+    /*handleCloseConfirm sẽ đặt lại openConfirm = false để đóng dialog khi người dùng nhấn Disagree hoặc đóng hộp thoại*/
     const handleCloseConfirm = () => setOpenConfirm(false);
+
+    //tạo state để hiển thị ảnh
+    const [openImage, setOpenImage] = useState(false);
+    const [selectedImage, setSelectedImage] = useState('');
+
 
     async function HandleCancel() {
         const response = await cancelAdmission(selectedForm.id)
@@ -231,10 +239,21 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                         ].map((item, idx) => (
                             <Paper key={idx} elevation={2} sx={{p: 2, borderRadius: 2, width: 200}}>
                                 <Typography variant="body2" fontWeight="bold" sx={{mb: 1}}>{item.label}</Typography>
-                                <a href={item.src} target="_blank" rel="noopener noreferrer">
-                                    <img src={item.src} alt={item.label}
-                                         style={{width: '100%', borderRadius: 8, cursor: 'pointer'}}/>
-                                </a>
+                                {/*thay vì click="ảnh" redirect sang link khác*/}
+                                {/*vì giải quyết vấn đề hiện model thôi*/}
+                                <img
+                                    src={item.src}
+                                    alt={item.label}
+                                    style={{width: '100%', borderRadius: 8, cursor: 'pointer'}}
+                                    onClick={() => {
+                                        setSelectedImage(item.src);
+                                        setOpenImage(true);
+                                    }}
+                                />
+
+                                <Dialog open={openImage} onClose={() => setOpenImage(false)} maxWidth="md">
+                                    <img src={selectedImage} style={{width: '100%'}} alt="Zoom"/>
+                                </Dialog>
                             </Paper>
                         ))}
                     </Stack>
@@ -261,6 +280,8 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                         </Button>
 
                         {/*button cancel*/}
+                        {/*xét điều kiện, nếu cancel rồi thì ẩn nút cancel đó, ko cho hiện lại */}
+                        {selectedForm.status !== 'cancelled' && (
                         <Button
                             sx={{width: '10%', height: '5vh'}}
                             variant="contained"
@@ -269,6 +290,8 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                         >
                             Cancel
                         </Button>
+                        )}
+
                         {/* Dialog xác nhận cancel */}
                         <Dialog open={openConfirm} onClose={handleCloseConfirm}>
                             <DialogTitle>Cancel Admission Form</DialogTitle>
@@ -293,9 +316,11 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
     )
 }
 
-function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
+function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) {
     //mỗi lần select là lưu id student
-    const [selectedStudentId, setSelectedStudentId] = useState(students[0].id);
+    const [selectedStudentId, setSelectedStudentId] = useState(
+        studentList?.[0]?.id || ''
+    );
     //lam 1 useState de nhap input cho address + note
     const [input, setInput] = useState({
         address: '',
@@ -318,14 +343,24 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
         commitLink: ''
     });
 
+    const [isSubmit, setIsSubmit] = useState(false);// để chỉ báo rằng user đã bấm Submit ít nhất 1 lần
+
     async function HandleSubmit() {
-        console.log("Bắt đầu HandleSubmit");
+
+        setIsSubmit(true);//báo hiệu bấm submit
+
+        // Validate bắt buộc
+        if (!input.address.trim()) {
+            enqueueSnackbar("Please enter household registration address", {variant: "error"});
+            return;
+        }
+
         const uploadResult = await handleUploadImage()
         if (!uploadResult) {
             return;
         }
 
-        const selectedStudent = students.find(child => child.id === selectedStudentId);
+        const selectedStudent = studentList.find(child => child.id === selectedStudentId);
         console.log("Selected student:", selectedStudent);
 
         const response = await submittedForm(
@@ -372,11 +407,23 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
     }
 
     const handleUploadImage = async () => {
-        if (!uploadedFile.profile ||
-            !uploadedFile.houseAddress ||
-            !uploadedFile.birth ||
-            !uploadedFile.commit) {
-            enqueueSnackbar("Please upload all required documents.", {variant: "warning"})
+        if (!uploadedFile.profile) {
+            enqueueSnackbar("Please upload profile image.", {variant: "warning"});
+            return null;
+        }
+
+        if (!uploadedFile.houseAddress) {
+            enqueueSnackbar("Please upload household registration document.", {variant: "warning"});
+            return null;
+        }
+
+        if (!uploadedFile.birth) {
+            enqueueSnackbar("Please upload birth certificate.", {variant: "warning"});
+            return null;
+        }
+
+        if (!uploadedFile.commit) {
+            enqueueSnackbar("Please upload commitment form.", {variant: "warning"});
             return null;
         }
 
@@ -478,7 +525,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                     </Typography>
 
                     {/*check id co bi null */}
-                    {selectedStudentId != null && Array.isArray(students) && (
+                    {selectedStudentId != null && Array.isArray(studentList) && (
                         <Stack spacing={3}>
                             <Stack>
                                 <FormControl fullWidth>
@@ -490,7 +537,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                                         name="childName"
                                         variant={"outlined"}>
                                         {
-                                            students.filter(student => !student.hadForm).map((student, index) => (
+                                            studentList.filter(student => !student.hadForm).map((student, index) => (
                                                 <MenuItem key={index} value={student.id}>{student.name}</MenuItem>
                                             ))}
                                     </Select>
@@ -501,7 +548,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                                 <FormControl>
                                     <FormLabel sx={{color: 'black'}}>Gender</FormLabel>
                                     <RadioGroup row
-                                                value={students.find(child => child.id === selectedStudentId) ? students.find(child => child.id === selectedStudentId).gender : ''}>
+                                                value={studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).gender : ''}>
                                         <FormControlLabel value="female" control={<Radio/>} label="Female"
                                                           sx={{color: 'black'}} disabled/>
                                         <FormControlLabel value="male" control={<Radio/>} label="Male"
@@ -515,7 +562,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                                     sx={{fill: '#2c3e50'}}
                                     label="Date of birth"
                                     disabled
-                                    defaultValue={dayjs(students.find(child => child.id === selectedStudentId) ? students.find(child => child.id === selectedStudentId).dateOfBirth : null)}
+                                    defaultValue={dayjs(studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).dateOfBirth : null)}
                                     slotProps={{textField: {fullWidth: true}}}
                                 />
                             </Stack>
@@ -525,7 +572,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                                     fullWidth
                                     label="Place of birth"
                                     disabled
-                                    defaultValue={students.find(child => child.id === selectedStudentId) ? students.find(child => child.id === selectedStudentId).placeOfBirth : ''}
+                                    defaultValue={studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).placeOfBirth : ''}
                                     name="placeOfBirth"
                                 />
                             </Stack>
@@ -535,6 +582,8 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
                                            value={input.address}
                                            onChange={(e) => setInput({...input, address: e.target.value})}
                                            name="householdRegistrationAddress"
+                                           error={isSubmit && !input.address.trim()}
+                                           helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
                                 />
                             </Stack>
                             <Stack>
@@ -647,7 +696,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, students, GetForm}) {
     )
 }
 
-function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, students}) {
+function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList}) {
     return (
         <div className="container">
             {/*1.tiêu đề */}
@@ -663,17 +712,17 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelect
 
             {/*2. button create new form */}
             <Button className="button-container"
-                variant="contained"
-                endIcon={<Add/>}
-                sx={{
-                    width: '15%',
-                    height: '5vh',
-                    backgroundColor: '#2c3e50',
-                    borderRadius: '10px',
-                    marginRight: '3rem'
-                }}
-                onClick={openFormPopUpFunc}
-                disabled={students && students.filter(student => !student.hadForm).length === 0} // disable  - có student và filter trả về 1 list mới.length = 0 bị rỗng 
+                    variant="contained"
+                    endIcon={<Add/>}
+                    sx={{
+                        width: '15%',
+                        height: '5vh',
+                        backgroundColor: '#2c3e50',
+                        borderRadius: '10px',
+                        marginRight: '3rem'
+                    }}
+                    onClick={openFormPopUpFunc}
+                    disabled={studentList && studentList.filter(student => !student.hadForm).length === 0} // disable  - có student và filter trả về 1 list mới.length = 0 bị rỗng
             >
                 Create new form
             </Button>
@@ -697,8 +746,8 @@ export default function AdmissionForm() {
 
     //tạo useState data của BE để sài (dành cho form)
     const [data, setData] = useState({
-        admissionForms: [],
-        students: null
+        admissionFormList: [],
+        studentList: null
     })
 
     const [selectedForm, setSelectedForm] = useState(null) // tuong trung cho 1 cai selected
@@ -722,8 +771,8 @@ export default function AdmissionForm() {
         if (response && response.success) {
             setData({
                 ...data,
-                admissionForms: response.data.admissionForms,
-                students: response.data.students
+                admissionFormList: response.data.admissionFormList,
+                studentList: response.data.studentList
             })
         }
     }
@@ -737,18 +786,18 @@ export default function AdmissionForm() {
     return (
         <>
             <RenderPage
-                forms={data.admissionForms}
+                forms={data.admissionFormList}
                 openFormPopUpFunc={() => handleOpenPopUp('form')}
                 openDetailPopUpFunc={() => handleOpenPopUp('detail')}
                 HandleSelectedForm={HandleSelectedForm} // la 1 ham, truyen ham vao, để cập nhật form đã chọn
-                students={data.students}
+                studentList={data.studentList}
             />
             {
                 popUp.isOpen && popUp.type === 'form' &&
                 <RenderFormPopUp
-                    isPopUpOpen={popUp.isOpen && data.students && data.students.filter(student => !student.hadForm).length === 0} // mở được form thì hasForm khác 0
+                    isPopUpOpen={popUp.isOpen && data.studentList && data.studentList.filter(student => !student.hadForm).length !== 0} // mở được form thì hasForm khác 0
                     handleClosePopUp={handleClosePopUp}
-                    students={data.students}
+                    studentList={data.studentList}
                     GetForm={GetForm}
                 />
             },

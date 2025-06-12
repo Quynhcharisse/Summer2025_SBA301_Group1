@@ -7,7 +7,9 @@ import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
 import com.sba301.group1.pes_be.models.Classes;
 import com.sba301.group1.pes_be.models.Lesson;
+import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Schedule;
+import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
@@ -28,6 +30,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 @SpringBootApplication
 @RequiredArgsConstructor
@@ -190,6 +195,92 @@ public class PesBeApplication {
             }
         };
     }
+
+    @Bean
+    public CommandLineRunner initAccounts() {
+        return args -> {
+            // Names for children
+            List<String> usedNames = new ArrayList<>();
+            String[] childNames = {
+                    "An", "Bao", "Chi", "Dung", "Giang", "Hoa", "Khanh", "Linh", "Minh", "Nam",
+                    "Oanh", "Phuc", "Quang", "Trang", "Tuan", "Thao", "Uyen", "Van", "Xuan", "Yen"
+            };
+            Random random = new Random();
+
+            // Create Parent accounts + students
+            for (int i = 1; i <= 3; i++) {
+                String emailParent = "parent" + i + "@gmail.com";
+
+                Account parentAccount = accountRepo.findByEmail(emailParent).orElse(null);
+                if (parentAccount == null) {
+                    parentAccount = Account.builder()
+                            .email(emailParent)
+                            .password("123456")
+                            .role(Role.PARENT)
+                            .name("Parent " + i)
+                            .gender(random.nextBoolean() ? "male" : "female")
+                            .phone(generateRandomPhone())
+                            .identityNumber(generateRandomCCCD())
+                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .createdAt(LocalDate.now())
+                            .build();
+                    accountRepo.save(parentAccount);
+                    System.out.println("Created Parent Account: " + emailParent);
+                }
+
+                // Create Parent entity
+                Parent parent = parentRepo.findByAccount_Id(parentAccount.getId()).orElse(null);
+                if (parent == null) {
+                    String[] jobs = {"Office worker", "Teacher", "Factory worker", "Driver", "Freelancer"};
+                    String relationship = random.nextBoolean() ? "farther" : "mother";
+
+                    parent = Parent.builder()
+                            .account(parentAccount)
+                            .dayOfBirth(LocalDate.of(1980 + random.nextInt(15), 1 + random.nextInt(12), 1 + random.nextInt(28)))
+                            .address("No. " + (100 + random.nextInt(100)) + " ABC Street, District " + (1 + random.nextInt(12)) + ", Ho Chi Minh City")
+                            .job(jobs[random.nextInt(jobs.length)])
+                            .relationshipToChild(relationship)
+                            .build();
+
+                    parentRepo.save(parent);
+                }
+
+                if (studentRepo.findAll().isEmpty()) {
+                    // Generate 2–3 students
+                    int numChildren = 2 + random.nextInt(2); // 2–3
+                    for (int j = 0; j < numChildren; j++) {
+                        String childName;
+                        int year = 2019 + random.nextInt(4); // 2019–2022
+                        int month = 1 + random.nextInt(12);
+                        int maxDay = switch (month) {
+                            case 2 -> 28;
+                            case 4, 6, 9, 11 -> 30;
+                            default -> 31;
+                        };
+                        int day = 1 + random.nextInt(maxDay);
+                        LocalDate dob = LocalDate.of(year, month, day);
+
+                        do {
+                            childName = childNames[random.nextInt(childNames.length)];
+                        } while (usedNames.contains(childName));
+                        usedNames.add(childName);
+
+                        Student student = Student.builder()
+                                .name(childName)
+                                .gender(random.nextBoolean() ? "male" : "female")
+                                .dateOfBirth(dob)
+                                .placeOfBirth("Hồ Chí Minh")
+                                .isStudent(false)
+                                .parent(parent)
+                                .build();
+                        studentRepo.save(student);
+                        System.out.printf("Created Student %s for Parent %s%n", childName, parentAccount.getEmail());
+                    }
+                }
+            }
+        };
+    }
+
     @Bean
     public CommandLineRunner initEducationData() {
         return args -> {
@@ -199,7 +290,7 @@ public class PesBeApplication {
                     "teacher.bud@gmail.com",
                     "teacher.leaf@gmail.com"
             };
-            
+
             String[] teacherNames = {
                     "Ms. Sarah Johnson",
                     "Ms. Emily Chen",
@@ -207,7 +298,7 @@ public class PesBeApplication {
             };
 
             Account[] teachers = new Account[3];
-            
+
             for (int i = 0; i < teacherEmails.length; i++) {
                 if (!accountRepo.existsByEmail(teacherEmails[i])) {
                     teachers[i] = Account.builder()
@@ -236,12 +327,12 @@ public class PesBeApplication {
             };
 
             Syllabus[] syllabi = new Syllabus[3];
-            
+
             for (int i = 0; i < syllabusData.length; i++) {
                 String[] parts = syllabusData[i].split("\\|");
                 String title = parts[0];
                 String description = parts[1];
-                
+
                 if (syllabusRepo.findByTitleContaining(title).isEmpty()) {
                     syllabi[i] = Syllabus.builder()
                             .title(title)
@@ -269,12 +360,12 @@ public class PesBeApplication {
             };
 
             Lesson[] lessons = new Lesson[lessonData.length];
-            
+
             for (int i = 0; i < lessonData.length; i++) {
                 String[] parts = lessonData[i].split("\\|");
                 String topic = parts[0];
                 String description = parts[1];
-                
+
                 if (lessonRepo.findByTopicContaining(topic).isEmpty()) {
                     lessons[i] = Lesson.builder()
                             .topic(topic)
@@ -332,7 +423,7 @@ public class PesBeApplication {
             String[] classNames = {"Sunshine Seeds", "Growing Buds", "Learning Leaves"};
             Grade[] grades = {Grade.SEED, Grade.BUD, Grade.LEAF};
             String[] roomNumbers = {"Room A1", "Room B2", "Room C3"};
-            
+
             for (int i = 0; i < 3; i++) {
                 if (classesRepo.findByNameContaining(classNames[i]).isEmpty()) {
                     Classes newClass = Classes.builder()
@@ -360,7 +451,7 @@ public class PesBeApplication {
         return args -> {
             // Get all classes to create schedules for
             var allClasses = classesRepo.findAll();
-            
+
             if (allClasses.isEmpty()) {
                 System.out.println("No classes found, skipping schedule and activity initialization");
                 return;
@@ -368,7 +459,7 @@ public class PesBeApplication {
 
             // Get all lessons for creating activities
             var allLessons = lessonRepo.findAll();
-            
+
             for (Classes classEntity : allClasses) {
                 // Create schedules for 4 weeks for each class
                 for (int week = 1; week <= 4; week++) {
@@ -389,15 +480,15 @@ public class PesBeApplication {
 
                         for (int day = 0; day < daysOfWeek.length; day++) {
                             // Create 2-3 activities per day
-                            int activitiesPerDay = 2 + (int)(Math.random() * 2); // 2 or 3 activities
-                            
+                            int activitiesPerDay = 2 + (int) (Math.random() * 2); // 2 or 3 activities
+
                             for (int activityIndex = 0; activityIndex < activitiesPerDay && activityIndex < timeSlots.length; activityIndex++) {
                                 // Select a random lesson from available lessons
-                                Lesson selectedLesson = allLessons.get((int)(Math.random() * allLessons.size()));
-                                
+                                Lesson selectedLesson = allLessons.get((int) (Math.random() * allLessons.size()));
+
                                 // Create activity topic based on lesson and day
                                 String activityTopic = selectedLesson.getTopic() + " - " + daysOfWeek[day];
-                                
+
                                 Activity activity = Activity.builder()
                                         .topic(activityTopic)
                                         .description("Engaging " + selectedLesson.getTopic().toLowerCase() + " session for " + classEntity.getGrade() + " students")

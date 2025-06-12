@@ -14,13 +14,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UpdateAdmissionTermRequest {
+public class CloneAdmissionTermRequest {
     int id;
-    String name;
-    int year;
     LocalDateTime startDate;
     LocalDateTime endDate;
     int maxNumberRegistration;
     String grade;
-    String status;
 }
