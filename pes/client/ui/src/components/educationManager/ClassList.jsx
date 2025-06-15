@@ -149,7 +149,7 @@ function ClassList() {
             align: 'center',
             valueGetter: (params) => {
                 if (params && params.row && params.row.teacher) {
-                    return `${params.row.teacher.firstName}${params.row.teacher.lastName ? ' ' + params.row.teacher.lastName : ''}`;
+                    return params.row.teacher.name || 'No Teacher';
                 }
                 return 'No Teacher';
             }
@@ -230,8 +230,7 @@ function ClassList() {
             classItem.name?.toLowerCase().includes(searchLower) ||
             classItem.grade?.toLowerCase().includes(searchLower) ||
             classItem.status?.toLowerCase().includes(searchLower) ||
-            classItem.teacher?.firstName?.toLowerCase().includes(searchLower) ||
-            classItem.teacher?.lastName?.toLowerCase().includes(searchLower) ||
+            classItem.teacher?.name?.toLowerCase().includes(searchLower) ||
             classItem.numberStudent?.toString().includes(searchLower)
         );
     });

@@ -343,10 +343,7 @@ function ClassDetails() {
                         <Box>
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             <Typography variant="body1">
-                                {classData?.teacher ? 
-                                    `${classData.teacher.firstName} ${classData.teacher.lastName || ''}`.trim() : 
-                                    'Not assigned'
-                                }
+                                {classData?.teacher?.name || 'Not assigned'}
                             </Typography>
                         </Box>
                         <Box>
@@ -393,7 +390,7 @@ function ClassDetails() {
                     <Stack spacing={2}>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
-                            <Typography variant="body1">{syllabus.name || 'Untitled Syllabus'}</Typography>
+                            <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
                         </Box>
                         {syllabus.description && (
                             <Box>
