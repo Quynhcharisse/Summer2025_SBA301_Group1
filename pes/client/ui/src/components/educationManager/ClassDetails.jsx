@@ -598,9 +598,6 @@ function ClassDetails() {
 
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
-                                Schedules & Activities
-                            </Typography>
                             {renderSchedulesAndActivities()}
                         </CardContent>
                     </Card>

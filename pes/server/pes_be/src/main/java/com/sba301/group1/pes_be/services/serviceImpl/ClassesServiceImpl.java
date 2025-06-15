@@ -172,4 +172,29 @@ public class ClassesServiceImpl implements ClassesService {
                         .build()
         );
     }
+
+    @Override
+    public ResponseEntity<ResponseObject> deleteClass(Integer classId) {
+        return classRepo.findById(classId)
+                .map(classes -> {
+                    try {
+                        classRepo.delete(classes);
+                        return ResponseEntity.ok().body(
+                                ResponseObject.builder()
+                                        .message("Class deleted successfully")
+                                        .success(true)
+                                        .build()
+                        );
+                    } catch (Exception e) {
+                        // Handle cases where deletion fails due to foreign key constraints
+                        return ResponseEntity.status(409).body(
+                                ResponseObject.builder()
+                                        .message("Cannot delete class. It may have dependencies (students, activities, schedules, etc.)")
+                                        .success(false)
+                                        .build()
+                        );
+                    }
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

@@ -12,4 +12,6 @@ public interface ClassesService {
     ResponseEntity<ResponseObject> updateClass(Integer classId, ClassRequest request);
 
     ResponseEntity<ResponseObject> viewClassList();
+
+    ResponseEntity<ResponseObject> deleteClass(Integer classId);
 }

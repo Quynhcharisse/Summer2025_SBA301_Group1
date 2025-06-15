@@ -42,4 +42,10 @@ public class ClassesController {
     public ResponseEntity<ResponseObject> viewClassList() {
         return classService.viewClassList();
     }
+
+    @DeleteMapping("/{classId}")
+    @Operation(summary = "Delete a class", description = "Allows education staff to delete a class")
+    public ResponseEntity<ResponseObject> deleteClass(@PathVariable Integer classId) {
+        return classService.deleteClass(classId);
+    }
 }
