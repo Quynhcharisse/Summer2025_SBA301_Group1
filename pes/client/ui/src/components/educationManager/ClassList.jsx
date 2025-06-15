@@ -20,13 +20,13 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Info, Visibility, Assignment } from '@mui/icons-material';
-import { 
-    getAllClasses, 
-    getSyllabusByClassId, 
-    getLessonsByClassId,
-    createActivitiesFromLessons 
-} from '../../services/ManagerService.jsx';
+
 import { enqueueSnackbar } from 'notistack';
+import {
+    createActivitiesFromLessons, getAllClasses,
+    getLessonsByClassId,
+    getSyllabusByClassId
+} from "../../services/EducationService.jsx";
 
 function ClassList() {
     const [classes, setClasses] = useState([]);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
-import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import {
     Box,
     Button,
@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { Add } from '@mui/icons-material';
-import SyllabusService from '../../services/SyllabusService';
+import SyllabusService from '../../services/SyllabusService.jsx';
 
 // Memoized Lesson Item component to prevent unnecessary re-renders
 const LessonItem = memo(({
