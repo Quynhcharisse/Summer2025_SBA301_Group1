@@ -5,7 +5,7 @@ import {
     Box,
     Card,
     CardContent,
-    Grid2 as Grid,
+    Grid,
     Chip,
     List,
     ListItem,
@@ -300,61 +300,67 @@ function ClassDetails() {
     };
 
     const renderClassInformation = () => (
-        <Grid container spacing={3}>
-            <Grid xs={12} md={6}>
-                <Stack spacing={2}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <School sx={{ color: '#1976d2' }} />
-                        <Typography variant="h6" color="primary">
-                            Basic Information
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Class Name</Typography>
-                        <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Grade</Typography>
-                        <Chip label={classData?.grade || 'Not set'} color="primary" size="small" />
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Status</Typography>
-                        <Chip 
-                            label={classData?.status || 'Unknown'} 
-                            color={getStatusColor(classData?.status)} 
-                            size="small" 
-                        />
-                    </Box>
-                </Stack>
-            </Grid>
-            <Grid xs={12} md={6}>
-                <Stack spacing={2}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Person sx={{ color: '#1976d2' }} />
-                        <Typography variant="h6" color="primary">
-                            Details
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Teacher</Typography>
-                        <Typography variant="body1">
-                            {classData?.teacher ? 
-                                `${classData.teacher.firstName} ${classData.teacher.lastName || ''}`.trim() : 
-                                'Not assigned'
-                            }
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Room Number</Typography>
-                        <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Capacity</Typography>
-                        <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
-                    </Box>
-                </Stack>
-            </Grid>
-            <Grid xs={12}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: { xs: 'column', md: 'row' }, 
+                gap: 3 
+            }}>
+                <Box sx={{ flex: 1 }}>
+                    <Stack spacing={2}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <School sx={{ color: '#1976d2' }} />
+                            <Typography variant="h6" color="primary">
+                                Basic Information
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Class Name</Typography>
+                            <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Grade</Typography>
+                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small" />
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Status</Typography>
+                            <Chip 
+                                label={classData?.status || 'Unknown'} 
+                                color={getStatusColor(classData?.status)} 
+                                size="small" 
+                            />
+                        </Box>
+                    </Stack>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                    <Stack spacing={2}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Person sx={{ color: '#1976d2' }} />
+                            <Typography variant="h6" color="primary">
+                                Details
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Teacher</Typography>
+                            <Typography variant="body1">
+                                {classData?.teacher ? 
+                                    `${classData.teacher.firstName} ${classData.teacher.lastName || ''}`.trim() : 
+                                    'Not assigned'
+                                }
+                            </Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Room Number</Typography>
+                            <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
+                        </Box>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Capacity</Typography>
+                            <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
+                        </Box>
+                    </Stack>
+                </Box>
+            </Box>
+            <Box>
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <CalendarToday sx={{ color: '#1976d2' }} />
@@ -362,18 +368,18 @@ function ClassDetails() {
                         Schedule Period
                     </Typography>
                 </Box>
-                <Grid container spacing={2}>
-                    <Grid xs={6}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" color="text.secondary">Start Date</Typography>
                         <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                    </Grid>
-                    <Grid xs={6}>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" color="text.secondary">End Date</Typography>
                         <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Grid>
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
     );
 
     const renderSchedulesAndActivities = () => {
