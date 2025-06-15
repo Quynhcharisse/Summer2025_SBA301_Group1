@@ -17,12 +17,12 @@ function EducationLayout() {
         {
             segment: 'education/syllabus',
             title: 'Syllabus Management',
-            icon: <Book />,
+            icon: <Book sx={{ color: '#666' }} />,
         },
         {
             segment: 'education/lessons',
             title: 'Lessons Management',
-            icon: <PlayLesson />,
+            icon: <PlayLesson sx={{ color: '#666' }} />,
         },
         {
             segment: 'education/activities',

@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -32,9 +33,11 @@ public class SyllabusLesson {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`syllabus_id`")
+    @JsonIgnore
     Syllabus syllabus;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`lesson_id`")
+    @JsonIgnore
     Lesson lesson;
 }
