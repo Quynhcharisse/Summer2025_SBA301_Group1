@@ -379,6 +379,64 @@ function ClassDetails() {
                     </Box>
                 </Box>
             </Box>
+            
+            {/* Syllabus Section */}
+            <Box>
+                <Divider sx={{ my: 2 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Assignment sx={{ color: '#1976d2' }} />
+                    <Typography variant="h6" color="primary">
+                        Syllabus Information
+                    </Typography>
+                </Box>
+                {syllabus ? (
+                    <Stack spacing={2}>
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
+                            <Typography variant="body1">{syllabus.name || 'Untitled Syllabus'}</Typography>
+                        </Box>
+                        {syllabus.description && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">Description</Typography>
+                                <Typography variant="body1">{syllabus.description}</Typography>
+                            </Box>
+                        )}
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Grade Level</Typography>
+                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small" />
+                        </Box>
+                        {classLessons.length > 0 && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    Associated Lessons ({classLessons.length})
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    {classLessons.slice(0, 5).map((lesson) => (
+                                        <Chip
+                                            key={lesson.id}
+                                            label={lesson.topic}
+                                            size="small"
+                                            variant="outlined"
+                                            color="secondary"
+                                        />
+                                    ))}
+                                    {classLessons.length > 5 && (
+                                        <Chip
+                                            label={`+${classLessons.length - 5} more`}
+                                            size="small"
+                                            variant="outlined"
+                                        />
+                                    )}
+                                </Box>
+                            </Box>
+                        )}
+                    </Stack>
+                ) : (
+                    <Alert severity="info">
+                        No syllabus assigned to this class yet.
+                    </Alert>
+                )}
+            </Box>
         </Box>
     );
 
@@ -502,64 +560,6 @@ function ClassDetails() {
         );
     };
 
-    const renderSyllabusInformation = () => (
-        <>
-            {syllabus ? (
-                <Stack spacing={2}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Assignment sx={{ color: '#1976d2' }} />
-                        <Typography variant="h6" color="primary">
-                            Syllabus Details
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Name</Typography>
-                        <Typography variant="h6">{syllabus.name || 'Untitled Syllabus'}</Typography>
-                    </Box>
-                    {syllabus.description && (
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Description</Typography>
-                            <Typography variant="body1">{syllabus.description}</Typography>
-                        </Box>
-                    )}
-                    <Box>
-                        <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                        <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small" />
-                    </Box>
-                    {classLessons.length > 0 && (
-                        <Box>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                Associated Lessons ({classLessons.length})
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                {classLessons.slice(0, 5).map((lesson) => (
-                                    <Chip
-                                        key={lesson.id}
-                                        label={lesson.topic}
-                                        size="small"
-                                        variant="outlined"
-                                        color="secondary"
-                                    />
-                                ))}
-                                {classLessons.length > 5 && (
-                                    <Chip
-                                        label={`+${classLessons.length - 5} more`}
-                                        size="small"
-                                        variant="outlined"
-                                    />
-                                )}
-                            </Box>
-                        </Box>
-                    )}
-                </Stack>
-            ) : (
-                <Alert severity="info">
-                    No syllabus assigned to this class yet.
-                </Alert>
-            )}
-        </>
-    );
-
     return (
         <Box sx={{ p: 3 }}>
             {/* Header with Back Button */}
@@ -605,15 +605,6 @@ function ClassDetails() {
                                 Schedules & Activities
                             </Typography>
                             {renderSchedulesAndActivities()}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
-                                Syllabus Information
-                            </Typography>
-                            {renderSyllabusInformation()}
                         </CardContent>
                     </Card>
                 </Stack>
