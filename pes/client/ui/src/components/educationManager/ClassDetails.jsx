@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Button,
     Typography,
     Box,
     Card,
     CardContent,
-    Grid,
+    Grid2 as Grid,
     Chip,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
     List,
     ListItem,
     ListItemText,
@@ -22,7 +19,6 @@ import {
     Tooltip
 } from '@mui/material';
 import {
-    ExpandMore,
     ArrowBack,
     School,
     Event,
@@ -65,21 +61,13 @@ function ClassDetails() {
     const [allLessons, setAllLessons] = useState([]);
     const [allClasses] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [expandedAccordion, setExpandedAccordion] = useState('class-info');
     
     // Schedule form modal state
     const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
     const [scheduleFormMode, setScheduleFormMode] = useState('create');
     const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-    useEffect(() => {
-        if (classId) {
-            fetchClassDetails();
-            fetchAllLessons();
-        }
-    }, [classId]);
-
-    const fetchAllLessons = async () => {
+    const fetchAllLessons = useCallback(async () => {
         try {
             const response = await getAllLessons();
             if (response && response.success) {
@@ -88,13 +76,9 @@ function ClassDetails() {
         } catch (error) {
             console.error('Error fetching lessons:', error);
         }
-    };
+    }, []);
 
-    const handleBackToClasses = () => {
-        navigate('/education/classes');
-    };
-
-    const fetchClassDetails = async () => {
+    const fetchClassDetails = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -139,10 +123,21 @@ function ClassDetails() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [classId]);
 
-    const handleAccordionChange = (panel) => (event, isExpanded) => {
-        setExpandedAccordion(isExpanded ? panel : false);
+    useEffect(() => {
+        const fetchData = async () => {
+            if (classId) {
+                await fetchClassDetails();
+                await fetchAllLessons();
+            }
+        };
+        
+        fetchData();
+    }, [classId, fetchClassDetails, fetchAllLessons]);
+
+    const handleBackToClasses = () => {
+        navigate('/education/classes');
     };
 
     const getStatusColor = (status) => {
@@ -305,84 +300,80 @@ function ClassDetails() {
     };
 
     const renderClassInformation = () => (
-        <Card>
-            <CardContent>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={2}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <School sx={{ color: '#1976d2' }} />
-                                <Typography variant="h6" color="primary">
-                                    Basic Information
-                                </Typography>
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Class Name</Typography>
-                                <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Grade</Typography>
-                                <Chip label={classData?.grade || 'Not set'} color="primary" size="small" />
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Status</Typography>
-                                <Chip 
-                                    label={classData?.status || 'Unknown'} 
-                                    color={getStatusColor(classData?.status)} 
-                                    size="small" 
-                                />
-                            </Box>
-                        </Stack>
+        <Grid container spacing={3}>
+            <Grid xs={12} md={6}>
+                <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <School sx={{ color: '#1976d2' }} />
+                        <Typography variant="h6" color="primary">
+                            Basic Information
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Class Name</Typography>
+                        <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Grade</Typography>
+                        <Chip label={classData?.grade || 'Not set'} color="primary" size="small" />
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Status</Typography>
+                        <Chip 
+                            label={classData?.status || 'Unknown'} 
+                            color={getStatusColor(classData?.status)} 
+                            size="small" 
+                        />
+                    </Box>
+                </Stack>
+            </Grid>
+            <Grid xs={12} md={6}>
+                <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Person sx={{ color: '#1976d2' }} />
+                        <Typography variant="h6" color="primary">
+                            Details
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Teacher</Typography>
+                        <Typography variant="body1">
+                            {classData?.teacher ? 
+                                `${classData.teacher.firstName} ${classData.teacher.lastName || ''}`.trim() : 
+                                'Not assigned'
+                            }
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Room Number</Typography>
+                        <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Capacity</Typography>
+                        <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
+                    </Box>
+                </Stack>
+            </Grid>
+            <Grid xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <CalendarToday sx={{ color: '#1976d2' }} />
+                    <Typography variant="h6" color="primary">
+                        Schedule Period
+                    </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                    <Grid xs={6}>
+                        <Typography variant="body2" color="text.secondary">Start Date</Typography>
+                        <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
                     </Grid>
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={2}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Person sx={{ color: '#1976d2' }} />
-                                <Typography variant="h6" color="primary">
-                                    Details
-                                </Typography>
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Teacher</Typography>
-                                <Typography variant="body1">
-                                    {classData?.teacher ? 
-                                        `${classData.teacher.firstName} ${classData.teacher.lastName || ''}`.trim() : 
-                                        'Not assigned'
-                                    }
-                                </Typography>
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Room Number</Typography>
-                                <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
-                            </Box>
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Capacity</Typography>
-                                <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
-                            </Box>
-                        </Stack>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Divider sx={{ my: 2 }} />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <CalendarToday sx={{ color: '#1976d2' }} />
-                            <Typography variant="h6" color="primary">
-                                Schedule Period
-                            </Typography>
-                        </Box>
-                        <Grid container spacing={2}>
-                            <Grid item xs={6}>
-                                <Typography variant="body2" color="text.secondary">Start Date</Typography>
-                                <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                                <Typography variant="body2" color="text.secondary">End Date</Typography>
-                                <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
-                            </Grid>
-                        </Grid>
+                    <Grid xs={6}>
+                        <Typography variant="body2" color="text.secondary">End Date</Typography>
+                        <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
                     </Grid>
                 </Grid>
-            </CardContent>
-        </Card>
+            </Grid>
+        </Grid>
     );
 
     const renderSchedulesAndActivities = () => {
@@ -475,17 +466,18 @@ function ClassDetails() {
                                                     <ListItemText
                                                         primary={activity.topic}
                                                         secondary={
-                                                            <Box>
-                                                                <Typography variant="caption" display="block">
-                                                                    {activity.dayOfWeek} • {activity.startTime} - {activity.endTime}
-                                                                </Typography>
+                                                            <>
+                                                                {activity.dayOfWeek} • {activity.startTime} - {activity.endTime}
                                                                 {activity.description && (
-                                                                    <Typography variant="caption" display="block" color="text.secondary">
-                                                                        {activity.description}
-                                                                    </Typography>
+                                                                    <br/>
                                                                 )}
-                                                            </Box>
+                                                                {activity.description}
+                                                            </>
                                                         }
+                                                        secondaryTypographyProps={{
+                                                            variant: 'caption',
+                                                            color: 'text.secondary'
+                                                        }}
                                                     />
                                                 </ListItem>
                                             ))}
@@ -505,63 +497,61 @@ function ClassDetails() {
     };
 
     const renderSyllabusInformation = () => (
-        <Card>
-            <CardContent>
-                {syllabus ? (
-                    <Stack spacing={2}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Assignment sx={{ color: '#1976d2' }} />
-                            <Typography variant="h6" color="primary">
-                                Syllabus Details
+        <>
+            {syllabus ? (
+                <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Assignment sx={{ color: '#1976d2' }} />
+                        <Typography variant="h6" color="primary">
+                            Syllabus Details
+                        </Typography>
+                    </Box>
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Name</Typography>
+                        <Typography variant="h6">{syllabus.name || 'Untitled Syllabus'}</Typography>
+                    </Box>
+                    {syllabus.description && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary">Description</Typography>
+                            <Typography variant="body1">{syllabus.description}</Typography>
+                        </Box>
+                    )}
+                    <Box>
+                        <Typography variant="body2" color="text.secondary">Grade Level</Typography>
+                        <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small" />
+                    </Box>
+                    {classLessons.length > 0 && (
+                        <Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                Associated Lessons ({classLessons.length})
                             </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Name</Typography>
-                            <Typography variant="h6">{syllabus.name || 'Untitled Syllabus'}</Typography>
-                        </Box>
-                        {syllabus.description && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Description</Typography>
-                                <Typography variant="body1">{syllabus.description}</Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {classLessons.slice(0, 5).map((lesson) => (
+                                    <Chip
+                                        key={lesson.id}
+                                        label={lesson.topic}
+                                        size="small"
+                                        variant="outlined"
+                                        color="secondary"
+                                    />
+                                ))}
+                                {classLessons.length > 5 && (
+                                    <Chip
+                                        label={`+${classLessons.length - 5} more`}
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                )}
                             </Box>
-                        )}
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small" />
                         </Box>
-                        {classLessons.length > 0 && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                    Associated Lessons ({classLessons.length})
-                                </Typography>
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                    {classLessons.slice(0, 5).map((lesson) => (
-                                        <Chip
-                                            key={lesson.id}
-                                            label={lesson.topic}
-                                            size="small"
-                                            variant="outlined"
-                                            color="secondary"
-                                        />
-                                    ))}
-                                    {classLessons.length > 5 && (
-                                        <Chip
-                                            label={`+${classLessons.length - 5} more`}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    </Stack>
-                ) : (
-                    <Alert severity="info">
-                        No syllabus assigned to this class yet.
-                    </Alert>
-                )}
-            </CardContent>
-        </Card>
+                    )}
+                </Stack>
+            ) : (
+                <Alert severity="info">
+                    No syllabus assigned to this class yet.
+                </Alert>
+            )}
+        </>
     );
 
     return (
@@ -594,47 +584,32 @@ function ClassDetails() {
                 </Box>
             ) : (
                 <Stack spacing={3}>
-                    <Accordion
-                        expanded={expandedAccordion === 'class-info'}
-                        onChange={handleAccordionChange('class-info')}
-                    >
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                            <Typography variant="h6" color="primary">
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
                                 Class Information
                             </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
                             {renderClassInformation()}
-                        </AccordionDetails>
-                    </Accordion>
+                        </CardContent>
+                    </Card>
 
-                    <Accordion
-                        expanded={expandedAccordion === 'schedules'}
-                        onChange={handleAccordionChange('schedules')}
-                    >
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                            <Typography variant="h6" color="primary">
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
                                 Schedules & Activities
                             </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
                             {renderSchedulesAndActivities()}
-                        </AccordionDetails>
-                    </Accordion>
+                        </CardContent>
+                    </Card>
 
-                    <Accordion
-                        expanded={expandedAccordion === 'syllabus'}
-                        onChange={handleAccordionChange('syllabus')}
-                    >
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                            <Typography variant="h6" color="primary">
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
                                 Syllabus Information
                             </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
                             {renderSyllabusInformation()}
-                        </AccordionDetails>
-                    </Accordion>
+                        </CardContent>
+                    </Card>
                 </Stack>
             )}
 

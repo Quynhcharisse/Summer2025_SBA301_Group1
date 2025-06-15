@@ -6,17 +6,20 @@ import {
     Button,
     TextField,
     InputAdornment,
-    Chip
+    Chip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Info, Visibility, Assignment, Search, Add } from '@mui/icons-material';
+import { Info, Delete, Search, Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import {
-    getAllClasses,
-    getSyllabusByClassId,
-    getLessonsByClassId,
-    createActivitiesFromLessons
+    getAllClasses
 } from '../../services/EducationService.jsx';
+import ClassesService from '../../services/ClassesService.jsx';
 import { enqueueSnackbar } from 'notistack';
 import '../../styles/manager/ActivityManagement.css';
 
@@ -25,6 +28,8 @@ function ClassList() {
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [classToDelete, setClassToDelete] = useState(null);
 
     useEffect(() => {
         fetchClasses();
@@ -57,54 +62,39 @@ function ClassList() {
         navigate(`/education/classes/${classData.id}`);
     };
 
-    const handleViewSyllabus = async (classData) => {
+    const handleDeleteClick = (classData) => {
+        setClassToDelete(classData);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!classToDelete) return;
+
         try {
-            const syllabusResponse = await getSyllabusByClassId(classData.id);
-            if (syllabusResponse && syllabusResponse.success) {
-                enqueueSnackbar(`Syllabus loaded for ${classData.name}`, { variant: 'success' });
-                // Placeholder for future implementation
+            const response = await ClassesService.remove(classToDelete.id);
+            if (response && response.success) {
+                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, { variant: 'success' });
+                // Refresh the class list
+                fetchClasses();
             } else {
-                enqueueSnackbar('No syllabus found for this class', { variant: 'warning' });
+                enqueueSnackbar('Failed to delete class', { variant: 'error' });
             }
         } catch (error) {
-            console.error('Error fetching syllabus:', error);
-            enqueueSnackbar('Error fetching syllabus', { variant: 'error' });
+            console.error('Error deleting class:', error);
+            if (error.response?.status === 409) {
+                enqueueSnackbar('Cannot delete class. It may have dependencies (students, activities, etc.)', { variant: 'error' });
+            } else {
+                enqueueSnackbar('Error deleting class', { variant: 'error' });
+            }
+        } finally {
+            setDeleteDialogOpen(false);
+            setClassToDelete(null);
         }
     };
 
-    const handleViewLessons = async (classData) => {
-        try {
-            const lessonsResponse = await getLessonsByClassId(classData.id);
-            if (lessonsResponse && lessonsResponse.success) {
-                const lessons = lessonsResponse.data || [];
-                if (lessons.length > 0) {
-                    // Ask if user wants to create activities from lessons
-                    const confirm = window.confirm(`Found ${lessons.length} lessons for ${classData.name}. Would you like to create activities from these lessons?`);
-                    if (confirm) {
-                        const requestData = {
-                            classId: classData.id,
-                            lessonIds: lessons.map(lesson => lesson.id)
-                        };
-                        
-                        const response = await createActivitiesFromLessons(requestData);
-                        if (response && response.success) {
-                            enqueueSnackbar('Activities created successfully from lessons', { variant: 'success' });
-                        } else {
-                            enqueueSnackbar('Failed to create activities from lessons', { variant: 'error' });
-                        }
-                    } else {
-                        enqueueSnackbar(`Found ${lessons.length} lessons for ${classData.name}`, { variant: 'info' });
-                    }
-                } else {
-                    enqueueSnackbar('No lessons found for this class', { variant: 'warning' });
-                }
-            } else {
-                enqueueSnackbar('Failed to fetch lessons', { variant: 'error' });
-            }
-        } catch (error) {
-            console.error('Error fetching lessons:', error);
-            enqueueSnackbar('Error fetching lessons', { variant: 'error' });
-        }
+    const handleDeleteCancel = () => {
+        setDeleteDialogOpen(false);
+        setClassToDelete(null);
     };
 
     const getStatusColor = (status) => {
@@ -174,25 +164,34 @@ function ClassList() {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 350,
+            width: 200,
             headerAlign: 'center',
             align: 'center',
             sortable: false,
             renderCell: (params) => (
-                <Box className="activity-actions-container">
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%'
+                    }}
+                >
                     <Button
                         size="small"
-                        variant="outlined"
-                        startIcon={<Info sx={{ color: '#1976d2' }} />}
+                        variant="contained"
+                        startIcon={<Info />}
                         onClick={() => params?.row && handleViewInfo(params.row)}
                         disabled={!params?.row}
                         sx={{
-                            color: '#1976d2',
-                            borderColor: '#1976d2',
-                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                            backgroundColor: '#1976d2',
+                            color: 'white',
                             '&:hover': {
-                                backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                                borderColor: '#1976d2',
+                                backgroundColor: '#1565c0',
+                            },
+                            '&:disabled': {
+                                backgroundColor: '#ccc',
                             }
                         }}
                     >
@@ -200,39 +199,22 @@ function ClassList() {
                     </Button>
                     <Button
                         size="small"
-                        variant="outlined"
-                        startIcon={<Visibility sx={{ color: '#4caf50' }} />}
-                        onClick={() => params?.row && handleViewSyllabus(params.row)}
+                        variant="contained"
+                        startIcon={<Delete />}
+                        onClick={() => params?.row && handleDeleteClick(params.row)}
                         disabled={!params?.row}
                         sx={{
-                            color: '#4caf50',
-                            borderColor: '#4caf50',
-                            backgroundColor: 'rgba(76, 175, 80, 0.08)',
+                            backgroundColor: '#f44336',
+                            color: 'white',
                             '&:hover': {
-                                backgroundColor: 'rgba(76, 175, 80, 0.12)',
-                                borderColor: '#4caf50',
+                                backgroundColor: '#d32f2f',
+                            },
+                            '&:disabled': {
+                                backgroundColor: '#ccc',
                             }
                         }}
                     >
-                        Syllabus
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Assignment sx={{ color: '#ff9800' }} />}
-                        onClick={() => params?.row && handleViewLessons(params.row)}
-                        disabled={!params?.row}
-                        sx={{
-                            color: '#ff9800',
-                            borderColor: '#ff9800',
-                            backgroundColor: 'rgba(255, 152, 0, 0.08)',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 152, 0, 0.12)',
-                                borderColor: '#ff9800',
-                            }
-                        }}
-                    >
-                        Lessons
+                        Delete
                     </Button>
                 </Box>
             )
@@ -312,10 +294,49 @@ function ClassList() {
                         '& .MuiDataGrid-header': {
                             backgroundColor: '#f5f5f5',
                             fontWeight: 'bold'
+                        },
+                        '& .MuiDataGrid-cell': {
+                            display: 'flex',
+                            alignItems: 'center'
                         }
                     }}
                 />
             </Paper>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={handleDeleteCancel}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
+            >
+                <DialogTitle id="delete-dialog-title">
+                    Confirm Delete
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="delete-dialog-description">
+                        Are you sure you want to delete the class "{classToDelete?.name}"?
+                        This action cannot be undone and may affect related data such as students, activities, and schedules.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={handleDeleteCancel}
+                        color="primary"
+                        variant="outlined"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        color="error"
+                        variant="contained"
+                        autoFocus
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }
