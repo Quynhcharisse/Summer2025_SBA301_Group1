@@ -67,7 +67,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                     <TableHead>
                         <TableRow>
                             <TableCell align={"center"}>No</TableCell>
-                            <TableCell align={"center"}>Child ID</TableCell>
+                            <TableCell align={"center"}>Child Name</TableCell>
                             <TableCell align={"center"}>Submit Date</TableCell>
                             <TableCell align={"center"}>Cancel Reason</TableCell>
                             <TableCell align={"center"}>Status</TableCell>
@@ -83,7 +83,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                                 return (
                                     <TableRow key={index}>
                                         <TableCell align={"center"}>{index + 1}</TableCell>
-                                        <TableCell align={"center"}>{form.id}</TableCell>
+                                        <TableCell align={"center"}>{form.studentName}</TableCell>
                                         <TableCell align={"center"}>{form.submittedDate}</TableCell>
                                         <TableCell align={"center"}>{form.cancelReason || "N/A"}</TableCell>
                                         <TableCell align="center" sx={{
