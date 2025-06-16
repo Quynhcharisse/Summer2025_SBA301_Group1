@@ -1,93 +1,93 @@
 import '../../styles/home/AboutUs.css'
 
-
 export default function AboutUs() {
     return (
         <div className="about-us-section" id="about">
             <div className="about-us-container">
-                {/* Tiêu đề + icon ngôi sao */}
+                {/* Title + star icon */}
                 <div className="about-title-wrapper">
-                    <h2 className="about-title">VỀ CHÚNG TÔI</h2>
+                    <h2 className="about-title">ABOUT US</h2>
                 </div>
 
-                <p className="about-subtitle">MerryStar – Mầm non song ngữ cho khởi đầu vững chắc</p>
+                <p className="about-subtitle">MerryStar – A bilingual kindergarten for a strong foundation</p>
 
-                {/* Nội dung chính */}
+                {/* Main content */}
                 <div className="about-text">
                     <p>
-                        MerryStar Kindergarten được hình thành từ trăn trở của những nhà giáo dục dành hết tâm huyết cho
-                        giáo dục Mầm non – “độ tuổi vàng” hình thành nền móng, tạo ra nhân sinh quan đầu tiên cho cả
-                        cuộc đời của một người trưởng thành.
+                        MerryStar Kindergarten was born from the deep concern of educators who dedicate their hearts to
+                        Early Childhood Education — the "golden age" for laying the foundation and forming the first
+                        worldview for a future adult.
                     </p>
                     <p>
-                        Mỗi em bé sinh ra đã là “một kỳ quan cuộc sống”, mang những tố chất của một cá nhân tuyệt vời và
-                        luôn hạnh phúc. Vì vậy, nhiệm vụ của giáo dục mầm non là tạo ra sự phát triển cân bằng, giúp trẻ
-                        phát huy tối đa năng lực: thể chất, tâm hồn, trí tuệ – những giá trị cốt lõi của hạnh phúc và
-                        thành công trong tương lai.
+                        Every child is a "wonder of life," possessing the qualities of a wonderful individual and
+                        naturally happy. Therefore, early childhood education must create balanced development, helping
+                        children maximize their potential in physical, emotional, and intellectual domains — the core
+                        values of future happiness and success.
                     </p>
                     <p>
-                        Những nhà sáng lập của MerryStar Kindergarten – những người đã từng là nhà lãnh đạo, dẫn dắt và
-                        trải nghiệm các chương trình, phương pháp giáo dục mầm non tiên tiến trên thế giới như Reggio
-                        Emilia, Montessori, IPC… tại những hệ thống giáo dục mầm non uy tín nhất tại Việt Nam và thế
-                        giới đã đúc kết những tư tưởng giáo dục tiên phong trên thế giới và lựa chọn triết lý Thân – Tâm
-                        – Tuệ chính là giá trị cốt lõi để đem lại hạnh phúc và thành công của mỗi con người.
+                        The founders of MerryStar Kindergarten — leaders who have guided and experienced advanced early
+                        education philosophies such as Reggio Emilia, Montessori, IPC... in prestigious preschool
+                        systems in Vietnam and around the world — have distilled pioneering educational ideologies and
+                        chosen the philosophy of Body – Mind – Wisdom as the core value to bring happiness and success
+                        to every individual.
                     </p>
                 </div>
 
-                {/* TẦM NHÌN */}
+                {/* Vision */}
                 <div className="about-block">
                     <div className="about-text-side">
-                        <h3 className="about-heading">TẦM NHÌN</h3>
+                        <h3 className="about-heading">VISION</h3>
                         <div className="heading-underline"></div>
                         <p>
-                            Hệ thống Mầm non Song ngữ MerryStar định hướng trở thành tổ chức giáo dục mầm non —
-                            Nơi mỗi con trẻ là Trái tim lan tỏa hạnh phúc cho toàn gia đình,
-                            từ đó trở thành “nơi lan tỏa hạnh phúc” cho xã hội.
+                            MerryStar Bilingual Kindergarten aims to become a preschool education organization —
+                            A place where every child is the heart that spreads happiness to the whole family,
+                            thus becoming a "happiness spreading center" for society.
                         </p>
                     </div>
                     <div className="about-image-side">
-                        <img src="/487216724_970330175277156_3252495190011527878_n.jpg" alt="Tầm nhìn"/>
+                        <img src="/487216724_970330175277156_3252495190011527878_n.jpg" alt="Vision"/>
                     </div>
                 </div>
 
-                {/* SỨ MỆNH */}
+                {/* Mission */}
                 <div className="about-block reverse">
                     <div className="about-text-side">
-                        <h3 className="about-heading">SỨ MỆNH</h3>
+                        <h3 className="about-heading">MISSION</h3>
                         <div className="heading-underline"></div>
                         <p>
-                            Sứ mệnh của chúng tôi là nuôi dưỡng thế hệ trẻ em hạnh phúc và thành công trong tương lai
-                            với triết lý giáo dục Thân – Tâm – Tuệ.
+                            Our mission is to nurture a future generation of happy and successful children through the
+                            educational philosophy of Body – Mind – Wisdom.
                         </p>
                     </div>
                     <div className="about-image-side">
-                        <img src="/486791182_970330155277158_3848753021387074753_n.jpg" alt="Sứ mệnh"/>
+                        <img src="/486791182_970330155277158_3848753021387074753_n.jpg" alt="Mission"/>
                     </div>
                 </div>
 
-                {/* Giá trị cốt lõi */}
+                {/* Core Values */}
                 <div className="about-core-values">
                     <div className="core-value-item core-blue">
-                        <img src="/486637140_968708965439277_3585836273710347498_n.jpg" alt="Thân icon" />
-                        <h4>Thân</h4>
+                        <img src="/486637140_968708965439277_3585836273710347498_n.jpg" alt="Body icon"/>
+                        <h4>Body</h4>
                         <p>
-                            Học sinh MerryStar Khỏe mạnh – Kháng bệnh tốt – Tràn đầy năng lượng.
+                            MerryStar students are healthy – resilient – full of energy.
                         </p>
                     </div>
 
                     <div className="core-value-item core-pink">
-                        <img src="/487207558_968708952105945_5733640689784949425_n.jpg" alt="Tâm icon" />
-                        <h4>Tâm</h4>
+                        <img src="/487207558_968708952105945_5733640689784949425_n.jpg" alt="Mind icon"/>
+                        <h4>Mind</h4>
                         <p>
-                            Học sinh MerryStar biết yêu thương và lan tỏa tình yêu thương với những biểu hiện cụ thể.
+                            MerryStar students know how to love and spread love through meaningful actions.
                         </p>
                     </div>
 
                     <div className="core-value-item core-yellow">
-                        <img src="/486159745_967920775518096_5981093204083660212_n.jpg" alt="Tuệ icon" />
-                        <h4>Tuệ</h4>
+                        <img src="/486159745_967920775518096_5981093204083660212_n.jpg" alt="Wisdom icon"/>
+                        <h4>Wisdom</h4>
                         <p>
-                            Học sinh MerryStar làm chủ ngôn ngữ tiếng Anh và tiếng Việt, có tư duy lựa chọn độc lập và sáng tạo để thành công.
+                            MerryStar students master both English and Vietnamese, with independent and creative
+                            thinking to achieve success.
                         </p>
                     </div>
                 </div>

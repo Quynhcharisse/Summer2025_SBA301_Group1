@@ -16,11 +16,28 @@ import {
   FormControlLabel,
   Radio,
   Box,
-  CircularProgress
+  CircularProgress,
+  Stack,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  MenuItem,
+  Snackbar,
+  Alert,
+  IconButton,
+  AppBar,
+  Toolbar
 } from "@mui/material";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Snackbar, Alert, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import { addChild, updateChild } from "../../services/ParentService";
+import axios from "axios";
 
 const ChildrenList = () => {
   const [children, setChildren] = useState([]);
@@ -36,12 +53,26 @@ const ChildrenList = () => {
     name: "",
     gender: "",
     dateOfBirth: "",
-    placeOfBirth: ""
+    placeOfBirth: "",
+    // Form information
+    householdRegistrationAddress: "",
+    profileImage: "",
+    birthCertificateImg: "",
+    householdRegistrationImg: "",
+    commitmentImg: ""
   });
   const [editId, setEditId] = useState(null);
 
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  // Add state for file uploads
+  const [uploadedFiles, setUploadedFiles] = useState({
+    profile: null,
+    birth: null,
+    household: null,
+    commitment: null
+  });
 
   const add = async (child) => {
     try {
@@ -82,7 +113,7 @@ const ChildrenList = () => {
 
   const handleOpen = () => {
     setEditId(null);
-    setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "" });
+    setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "", householdRegistrationAddress: "", profileImage: "", birthCertificateImg: "", householdRegistrationImg: "", commitmentImg: "" });
     setOpen(true);
   };
   
@@ -95,14 +126,19 @@ const ChildrenList = () => {
       name: child.name,
       gender: child.gender,
       dateOfBirth: child.dateOfBirth,
-      placeOfBirth: child.placeOfBirth
+      placeOfBirth: child.placeOfBirth,
+      householdRegistrationAddress: child.householdRegistrationAddress,
+      profileImage: child.profileImage,
+      birthCertificateImg: child.birthCertificateImg,
+      householdRegistrationImg: child.householdRegistrationImg,
+      commitmentImg: child.commitmentImg
     });
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "" });
+    setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "", householdRegistrationAddress: "", profileImage: "", birthCertificateImg: "", householdRegistrationImg: "", commitmentImg: "" });
     setEditId(null);
   };
 
@@ -114,17 +150,76 @@ const ChildrenList = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // Handle file upload
+  const handleFileUpload = async (file, type) => {
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "pes_swd");
+    formData.append("api_key", "837117616828593");
+
+    try {
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" }
+        }
+      );
+
+      if (response.status === 200) {
+        setForm(prev => ({
+          ...prev,
+          [type]: response.data.url
+        }));
+        setUploadedFiles(prev => ({
+          ...prev,
+          [type.replace("Img", "").replace("Image", "")]: file
+        }));
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to upload image",
+        severity: "error"
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.name && form.gender && form.dateOfBirth && form.placeOfBirth) {
+      // Check if any form field is provided, all must be provided
+      const hasAnyFormField = form.profileImage || form.householdRegistrationAddress || 
+                            form.birthCertificateImg || form.householdRegistrationImg || 
+                            form.commitmentImg;
+
+      const hasAllFormFields = form.profileImage && form.householdRegistrationAddress && 
+                             form.birthCertificateImg && form.householdRegistrationImg && 
+                             form.commitmentImg;
+
+      if (hasAnyFormField && !hasAllFormFields) {
+        setSnackbar({
+          open: true,
+          message: "Please provide all form fields or none",
+          severity: "error"
+        });
+        return;
+      }
+
       if (editId) {
-        console.log(form);
         update(form);
       } else {
         add(form);
       }
     } else {
-      setSnackbar({ open: true, message: "Please fill in all fields!", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Please fill in all required fields!",
+        severity: "error"
+      });
     }
   };
 
@@ -188,17 +283,201 @@ const ChildrenList = () => {
 
   console.log(form)
   return (
-    <>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{editId ? "Edit Child" : "Add Child"}</DialogTitle>
+    <Box sx={{ p: 3, maxWidth: '1400px', mx: 'auto' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 4,
+        mt: 2
+      }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            flex: 1,
+            textAlign: 'center',
+            color: 'rgb(51, 62, 77)',
+            fontWeight: 'bold',
+            fontSize: '32px',
+            mb: 1
+          }}
+        >
+          Children List
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={handleOpen}
+          sx={{
+            bgcolor: 'rgb(51, 62, 77)',
+            '&:hover': {
+              bgcolor: 'rgb(41, 52, 67)'
+            },
+            position: 'absolute',
+            right: '24px'
+          }}
+        >
+          ADD CHILD
+        </Button>
+      </Box>
+
+      <Box sx={{ 
+        maxWidth: '1200px', 
+        mx: 'auto',
+        mt: 4
+      }}>
+        <TableContainer component={Paper} sx={{ 
+          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+          borderRadius: '12px',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden'
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ 
+                bgcolor: 'rgb(51, 62, 77)',
+                '& th': {
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  padding: '16px'
+                }
+              }}>
+                <TableCell sx={{ color: 'white' }}>Name</TableCell>
+                <TableCell sx={{ color: 'white' }}>Gender</TableCell>
+                <TableCell sx={{ color: 'white' }}>Date of Birth</TableCell>
+                <TableCell sx={{ color: 'white' }}>Place of Birth</TableCell>
+                <TableCell sx={{ color: 'white' }}>Status</TableCell>
+                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {children.length > 0 ? (
+                children.map((child) => (
+                  <TableRow 
+                    key={child.id} 
+                    sx={{ 
+                      '&:hover': { 
+                        bgcolor: 'rgba(0, 0, 0, 0.04)',
+                        transition: 'background-color 0.2s ease'
+                      },
+                      '& td': {
+                        padding: '16px',
+                        fontSize: '14px'
+                      }
+                    }}
+                  >
+                    <TableCell>{child.name}</TableCell>
+                    <TableCell>{child.gender}</TableCell>
+                    <TableCell>{child.dateOfBirth}</TableCell>
+                    <TableCell>{child.placeOfBirth}</TableCell>
+                    <TableCell>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: '16px',
+                          bgcolor: child.isStudent ? 'rgba(46, 125, 50, 0.1)' : 'rgba(237, 108, 2, 0.1)',
+                          color: child.isStudent ? 'rgb(46, 125, 50)' : 'rgb(237, 108, 2)',
+                          fontSize: '13px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {child.isStudent ? 'Enrolled' : 'Pending'}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton 
+                        onClick={() => handleEditOpen(child)}
+                        disabled={child.isStudent}
+                        sx={{ 
+                          color: child.isStudent ? 'grey.400' : 'rgb(51, 62, 77)',
+                          '&:hover': {
+                            bgcolor: 'rgba(51, 62, 77, 0.04)'
+                          },
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell 
+                    colSpan={6} 
+                    align="center" 
+                    sx={{ 
+                      py: 8,
+                      fontSize: '15px',
+                      color: 'text.secondary',
+                      bgcolor: 'rgba(0, 0, 0, 0.02)'
+                    }}
+                  >
+                    <Typography variant="body1">
+                      No children found. Click "ADD CHILD" to add one.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      <Dialog 
+        fullScreen 
+        open={open} 
+        onClose={handleClose}
+      >
+        <AppBar sx={{ position: 'relative' }}>
+          <Toolbar>
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={handleClose}
+              aria-label="close"
+            >
+              <CloseIcon />
+            </IconButton>
+            <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
+              {editId ? "Edit Child Information" : "Add New Child"}
+            </Typography>
+          </Toolbar>
+        </AppBar>
+
         <form onSubmit={handleSubmit}>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 350 }}>
+          <DialogContent sx={{ 
+            p: 4,
+            maxWidth: '1200px',
+            mx: 'auto',
+            height: 'calc(100% - 140px)', // Adjust for AppBar and footer height
+            overflow: 'auto'
+          }}>
+            {/* Basic Information Section */}
+            <Typography variant="h5" sx={{ 
+              mb: 3,
+              pb: 1,
+              borderBottom: '2px solid',
+              borderColor: 'primary.main',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: '28px',
+              color: 'rgb(51, 62, 77)'
+            }}>
+              Form Information
+            </Typography>
+            <Stack spacing={3} sx={{ mb: 6 }}>
             <TextField
               label="Name"
               name="name"
               value={form.name}
               onChange={handleChange}
               required
+                fullWidth
+                variant="outlined"
+                size="medium"
             />
             <FormControl component="fieldset" required>
               <FormLabel component="legend">Gender</FormLabel>
@@ -208,8 +487,16 @@ const ChildrenList = () => {
                 value={form.gender}
                 onChange={handleChange}
               >
-                <FormControlLabel value="Male" control={<Radio />} label="Male" />
-                <FormControlLabel value="Female" control={<Radio />} label="Female" />
+                  <FormControlLabel 
+                    value="Male" 
+                    control={<Radio color="primary" />} 
+                    label="Male"
+                  />
+                  <FormControlLabel 
+                    value="Female" 
+                    control={<Radio color="primary" />} 
+                    label="Female"
+                  />
               </RadioGroup>
             </FormControl>
             <TextField
@@ -220,6 +507,8 @@ const ChildrenList = () => {
               onChange={handleChange}
               InputLabelProps={{ shrink: true }}
               required
+                fullWidth
+                size="medium"
             />
             <TextField
               label="Place of Birth"
@@ -227,18 +516,255 @@ const ChildrenList = () => {
               value={form.placeOfBirth}
               onChange={handleChange}
               required
-            />
+                fullWidth
+                size="medium"
+              />
+            </Stack>
+
+            <Divider sx={{ my: 4 }} />
+
+            {/* Form Information Section */}
+            <Typography variant="h5" sx={{ 
+              mb: 3,
+              pb: 1,
+              borderBottom: '2px solid',
+              borderColor: 'primary.main',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: '28px',
+              color: 'rgb(51, 62, 77)'
+            }}>
+              Upload Documents
+            </Typography>
+            <Stack spacing={4}>
+              <TextField
+                label="Household Registration Address"
+                name="householdRegistrationAddress"
+                value={form.householdRegistrationAddress}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                rows={3}
+                helperText="Enter the complete household registration address"
+                size="medium"
+              />
+
+              {/* File Upload Section */}
+              <Stack spacing={3}>
+                {/* Profile Image Upload */}
+                <Stack 
+                  direction="row" 
+                  alignItems="center" 
+                  spacing={2}
+                  sx={{ 
+                    p: 3, 
+                    border: '1px dashed',
+                    borderColor: 'primary.main',
+                    borderRadius: 2,
+                    bgcolor: 'grey.50'
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ minWidth: '200px', height: '45px' }}
+                  >
+                    Profile Image
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e.target.files[0], "profileImage")}
+                    />
+                  </Button>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                    <Typography noWrap sx={{ flex: 1, color: uploadedFiles.profile ? 'text.primary' : 'text.secondary' }}>
+                      {uploadedFiles.profile?.name || "No file chosen"}
+                    </Typography>
+                    {uploadedFiles.profile && (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => {
+                          setUploadedFiles(prev => ({ ...prev, profile: null }));
+                          setForm(prev => ({ ...prev, profileImage: "" }));
+                        }}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Stack>
+                </Stack>
+
+                {/* Birth Certificate Upload */}
+                <Stack 
+                  direction="row" 
+                  alignItems="center" 
+                  spacing={2}
+                  sx={{ 
+                    p: 3, 
+                    border: '1px dashed',
+                    borderColor: 'primary.main',
+                    borderRadius: 2,
+                    bgcolor: 'grey.50'
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ minWidth: '200px', height: '45px' }}
+                  >
+                    Birth Certificate
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e.target.files[0], "birthCertificateImg")}
+                    />
+                  </Button>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                    <Typography noWrap sx={{ flex: 1, color: uploadedFiles.birth ? 'text.primary' : 'text.secondary' }}>
+                      {uploadedFiles.birth?.name || "No file chosen"}
+                    </Typography>
+                    {uploadedFiles.birth && (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => {
+                          setUploadedFiles(prev => ({ ...prev, birth: null }));
+                          setForm(prev => ({ ...prev, birthCertificateImg: "" }));
+                        }}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Stack>
+                </Stack>
+
+                {/* Household Registration Upload */}
+                <Stack 
+                  direction="row" 
+                  alignItems="center" 
+                  spacing={2}
+                  sx={{ 
+                    p: 3, 
+                    border: '1px dashed',
+                    borderColor: 'primary.main',
+                    borderRadius: 2,
+                    bgcolor: 'grey.50'
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ minWidth: '200px', height: '45px' }}
+                  >
+                    Household Doc
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e.target.files[0], "householdRegistrationImg")}
+                    />
+                  </Button>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                    <Typography noWrap sx={{ flex: 1, color: uploadedFiles.household ? 'text.primary' : 'text.secondary' }}>
+                      {uploadedFiles.household?.name || "No file chosen"}
+                    </Typography>
+                    {uploadedFiles.household && (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => {
+                          setUploadedFiles(prev => ({ ...prev, household: null }));
+                          setForm(prev => ({ ...prev, householdRegistrationImg: "" }));
+                        }}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Stack>
+                </Stack>
+
+                {/* Commitment Upload */}
+                <Stack 
+                  direction="row" 
+                  alignItems="center" 
+                  spacing={2}
+                  sx={{ 
+                    p: 3, 
+                    border: '1px dashed',
+                    borderColor: 'primary.main',
+                    borderRadius: 2,
+                    bgcolor: 'grey.50'
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    component="label"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ minWidth: '200px', height: '45px' }}
+                  >
+                    Commitment
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={(e) => handleFileUpload(e.target.files[0], "commitmentImg")}
+                    />
+                  </Button>
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
+                    <Typography noWrap sx={{ flex: 1, color: uploadedFiles.commitment ? 'text.primary' : 'text.secondary' }}>
+                      {uploadedFiles.commitment?.name || "No file chosen"}
+                    </Typography>
+                    {uploadedFiles.commitment && (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => {
+                          setUploadedFiles(prev => ({ ...prev, commitment: null }));
+                          setForm(prev => ({ ...prev, commitmentImg: "" }));
+                        }}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Stack>
+                </Stack>
+              </Stack>
+            </Stack>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+          
+          <Box sx={{
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            width: '100%',
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            p: 2,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            zIndex: 1,
+          }}>
             <Button
-              type="submit"
               variant="contained"
-              color={editId ? "secondary" : "primary"}
+              type="submit"
+              sx={{
+                minWidth: 120,
+                bgcolor: 'rgb(51, 62, 77)',
+                '&:hover': {
+                  bgcolor: 'rgb(41, 52, 67)'
+                }
+              }}
             >
-              {editId ? "Update" : "Add"}
+              SAVE
             </Button>
-          </DialogActions>
+          </Box>
         </form>
       </Dialog>
       <Snackbar
@@ -251,80 +777,7 @@ const ChildrenList = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      <Paper sx={{
-        width: '100%',
-        borderRadius: 3,
-        overflow: 'hidden',
-        backgroundColor: '#fff',
-        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-        border: '2px solid rgb(254, 254, 253)'
-      }}>
-        <Typography variant="h6" sx={{ m: 2 }}>Children List</Typography>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16, marginRight: 16 }}>
-          <Button variant="contained" onClick={handleOpen} sx={{ color:'#ffffff' }}>
-            Add Child
-          </Button>
-        </div>
-        {safeChildren.length === 0 ? (
-          <Box display="flex" justifyContent="center" alignItems="center" p={3}>
-            <Typography variant="body1" color="text.secondary">
-              No children found. Click "Add Child" to add one.
-            </Typography>
           </Box>
-        ) : (
-          <>
-            <TableContainer sx={{ maxHeight: 440 }}>
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell align="center">No</TableCell>
-                    <TableCell align="center">Name</TableCell>
-                    <TableCell align="center">Gender</TableCell>
-                    <TableCell align="center">Date of Birth</TableCell>
-                    <TableCell align="center">Place of Birth</TableCell>
-                    <TableCell align="center">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {safeChildren.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((child, index) => (
-                      <TableRow key={child.id || child.studentId || index}>
-                        <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
-                        <TableCell align="center">{child.name || ''}</TableCell>
-                        <TableCell align="center">{child.gender || ''}</TableCell>
-                        <TableCell align="center">{child.dateOfBirth || ''}</TableCell>
-                        <TableCell align="center">{child.placeOfBirth || ''}</TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            color="secondary"
-                            sx={{
-                              backgroundColor: "#ff9800",
-                              color: "#fff",
-                              "&:hover": { backgroundColor: "#fb8c00" }
-                            }}
-                            onClick={() => handleEditOpen(child)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component="div"
-              rowsPerPageOptions={[5, 10, 15]}
-              count={children.length}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </>
-        )}
-      </Paper>
-    </>
   );
 };
 
