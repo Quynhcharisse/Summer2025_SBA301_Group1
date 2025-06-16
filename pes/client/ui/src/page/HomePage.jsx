@@ -87,7 +87,7 @@ function RenderHeader() {
 
             <div className="button-action">
                 <Button variant={"contained"} className={"btn"} onClick={() => navigate("/login")}>Đăng nhập</Button>
-                <Button variant={"contained"} className={"btn"}>Đăng kí</Button>
+                <Button variant={"contained"} className={"btn"} onClick={() =>navigate("/register")}>Đăng kí</Button>
             </div>
         </div>
     )

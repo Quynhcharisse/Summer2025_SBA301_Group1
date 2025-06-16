@@ -1,9 +1,13 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.requests.LoginRequest;
+import com.sba301.group1.pes_be.requests.RegisterRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import com.sba301.group1.pes_be.services.JWTService;
@@ -18,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +37,8 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpiration;
 
     private final AccountRepo accountRepo;
+
+    private final ParentRepo parentRepo;
 
     private final JWTService jwtService;
 
@@ -112,6 +119,66 @@ public class AuthServiceImpl implements AuthService {
                 ResponseObject.builder()
                         .message("Refresh invalid")
                         .success(false)
+                        .data(null)
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> register(RegisterRequest parentRegisterRequest, HttpServletRequest request) {
+        if (parentRegisterRequest.getEmail() == null || parentRegisterRequest.getPassword() == null) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("Email and password are required")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Check if email already exists
+        if (parentRepo.existsByAccount_Email(parentRegisterRequest.getEmail())) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("Email is already in use")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Create Account
+        Account account = Account.builder()
+                .email(parentRegisterRequest.getEmail())
+                .password(parentRegisterRequest.getPassword()) // Consider encrypting the password
+                .role(Role.PARENT)
+                .status("active")
+                .createdAt(LocalDate.now())
+                .name(parentRegisterRequest.getName())
+                .phone(parentRegisterRequest.getPhone())
+                .gender(parentRegisterRequest.getGender())
+                .identityNumber(parentRegisterRequest.getIdentityNumber())
+                .build();
+
+        // Save Account
+        accountRepo.save(account);
+
+        // Create Parent
+        Parent parent = Parent.builder()
+                .account(account)
+                .address(parentRegisterRequest.getAddress())
+                .job(parentRegisterRequest.getJob())
+                .relationshipToChild(parentRegisterRequest.getRelationshipToChild())
+                .dayOfBirth(parentRegisterRequest.getDayOfBirth())
+                .build();
+
+        // Save Parent
+        parentRepo.save(parent);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Parent registered successfully")
+                        .success(true)
                         .data(null)
                         .build()
         );
