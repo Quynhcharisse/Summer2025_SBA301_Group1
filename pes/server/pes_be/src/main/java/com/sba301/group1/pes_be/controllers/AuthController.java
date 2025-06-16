@@ -1,12 +1,14 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.LoginRequest;
+import com.sba301.group1.pes_be.requests.RegisterRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,4 +35,10 @@ public class AuthController {
     public ResponseEntity<ResponseObject> refresh(HttpServletRequest request, HttpServletResponse response) {
         return authService.refresh(request, response);
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<ResponseObject> register(@RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        return authService.register(request, httpRequest);
+    }
+
 }
