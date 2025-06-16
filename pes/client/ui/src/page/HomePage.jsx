@@ -69,8 +69,7 @@ function RenderHeader() {
     return (
         <div className="header">
             <img fetchPriority="high" width="200" height="70"
-                 src="https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal.png" alt=""
-                 srcSet="https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal.png 903w, https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal-300x113.png 300w, https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal-768x289.png 768w"
+                 src='/logo-merrystar-horizontal.png' alt=""
                  sizes="(max-width: 100vw) 100vw, 903px"/>
             <div className={"dropdown-area"}>
                 {dropDownBtn.map(item => (
@@ -101,7 +100,7 @@ function RenderCarousel() {
                 <Carousel.Item>
                     <img
                         decoding="async"
-                        src="https://merrystar.edu.vn/wp-content/uploads/2022/02/Mam-non-song-ngu-Merrystar-2022-3-1.jpg"
+                        src="/Mam-non-song-ngu-merrystar.webp"
                         alt="Mam-non-song-ngu-Merrystar-2022 (3)"
                         loading="lazy"
                         data-default="https://merrystar.edu.vn/wp-content/uploads/2022/02/Mam-non-song-ngu-Merrystar-2022-3-1.jpg"/>
@@ -109,7 +108,7 @@ function RenderCarousel() {
                 <Carousel.Item>
                     <img
                         decoding="async"
-                        src="https://merrystar.edu.vn/wp-content/uploads/2022/03/Mam-non-song-ngu-Merrystar-2022-banner-1.jpg"
+                        src="/488220712_975051164805057_4560363873878312652_n.jpg"
                         alt="Mam-non-song-ngu-Merrystar-2022-banner (1)"
                         loading="lazy"
                         data-default="https://merrystar.edu.vn/wp-content/uploads/2022/03/Mam-non-song-ngu-Merrystar-2022-banner-1.jpg"/>
@@ -117,7 +116,7 @@ function RenderCarousel() {
                 <Carousel.Item>
                     <img
                         decoding="async"
-                        src="https://merrystar.edu.vn/wp-content/uploads/2022/09/merrystar-bo-gddt-toi-tham-1.jpg"
+                        src="/487870127_975051254805048_6838321561132019387_n.jpg"
                         alt="merrystar-bo-gddt-toi-tham (1)"
                         loading="lazy"
                         data-default="https://merrystar.edu.vn/wp-content/uploads/2022/09/merrystar-bo-gddt-toi-tham-1.jpg"/>
@@ -134,7 +133,7 @@ function RenderFooter() {
                 {/* Phần bên trái */}
                 <div className="footer-left">
                     <img className="logo"
-                         src="https://merrystar.edu.vn/wp-content/uploads/2021/09/logo-merrystar-horizontal.png"
+                         src="/logo-merrystar-horizontal.png"
                          alt="MerryStar Logo"/>
                     <p className="school-name">MẦM NON SONG NGỮ MERRYSTAR</p>
                     <div className="languages">

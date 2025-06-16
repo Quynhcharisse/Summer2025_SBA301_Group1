@@ -321,6 +321,15 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
     const [selectedStudentId, setSelectedStudentId] = useState(
         studentList?.[0]?.id || ''
     );
+
+    // Thêm console.log để debug
+    console.log("Student List in Form:", studentList);
+    console.log("Selected Student ID:", selectedStudentId);
+    
+    const selectedStudent = studentList?.find(child => child.id === selectedStudentId);
+    console.log("Selected Student:", selectedStudent);
+    console.log("Selected Student Gender:", selectedStudent?.gender);
+
     //lam 1 useState de nhap input cho address + note
     const [input, setInput] = useState({
         address: '',
@@ -359,9 +368,6 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
         if (!uploadResult) {
             return;
         }
-
-        const selectedStudent = studentList.find(child => child.id === selectedStudentId);
-        console.log("Selected student:", selectedStudent);
 
         const response = await submittedForm(
             selectedStudent.id,
@@ -547,12 +553,24 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                             <Stack>
                                 <FormControl>
                                     <FormLabel sx={{color: 'black'}}>Gender</FormLabel>
-                                    <RadioGroup row
-                                                value={studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).gender : ''}>
-                                        <FormControlLabel value="female" control={<Radio/>} label="Female"
-                                                          sx={{color: 'black'}} disabled/>
-                                        <FormControlLabel value="male" control={<Radio/>} label="Male"
-                                                          sx={{color: 'black'}} disabled/>
+                                    <RadioGroup 
+                                        row
+                                        value={selectedStudent?.gender || ''}
+                                    >
+                                        <FormControlLabel 
+                                            value="female" 
+                                            control={<Radio/>} 
+                                            label="Female"
+                                            sx={{color: 'black'}} 
+                                            disabled
+                                        />
+                                        <FormControlLabel 
+                                            value="male" 
+                                            control={<Radio/>} 
+                                            label="Male"
+                                            sx={{color: 'black'}} 
+                                            disabled
+                                        />
                                     </RadioGroup>
                                 </FormControl>
                             </Stack>
@@ -562,7 +580,11 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                                     sx={{fill: '#2c3e50'}}
                                     label="Date of birth"
                                     disabled
-                                    defaultValue={dayjs(studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).dateOfBirth : null)}
+                                    value={
+                                        selectedStudentId
+                                            ? dayjs(studentList.find(child => child.id === selectedStudentId)?.dateOfBirth)
+                                            : null
+                                    }
                                     slotProps={{textField: {fullWidth: true}}}
                                 />
                             </Stack>

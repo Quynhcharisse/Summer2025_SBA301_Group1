@@ -14,7 +14,6 @@ import {
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Snackbar, Alert, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import { addChild, updateChild } from "../../services/ParentService";
-import axiosClient from "../../config/APIConfig.jsx";
 
 const ChildrenList = () => {
   const [children, setChildren] = useState([]);
@@ -36,19 +35,6 @@ const ChildrenList = () => {
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // // Add function to add a child
-  // const add = async (child) => {
-  //   try {
-  //     const response = await axiosClient.post("/parent", child);
-  //     const newChild = response.data?.data || response.data;
-  //     setChildren(prev => [...prev, newChild]);
-  //     setSnackbar({ open: true, message: "Add child successfully!", severity: "success" });
-  //     handleClose();
-  //   } catch (error) {
-  //     setSnackbar({ open: true, message: error.response?.data?.message || "Add child failed!", severity: "error" });
-  //   }
-  // };
-
   const add = async (child) => {
     try {
       const response = await addChild(child);
@@ -64,26 +50,6 @@ const ChildrenList = () => {
       });
     }
   };
-  //
-  // const update = async (child) => {
-  //   console.log(child);
-  //
-  //   try {
-  //     const response = await axiosClient.put(`/parent`, child);
-  //     console.log("Response from updateChild:", response);
-  //
-  //     const updatedChild = response.data?.data || response.data;
-  //     setChildren(prev =>
-  //       prev.map(c =>
-  //         (c.id || c.studentId) === editId ? { ...c, ...updatedChild } : c
-  //       )
-  //     );
-  //     setSnackbar({ open: true, message: "Update child successfully!", severity: "success" });
-  //     handleClose();
-  //   } catch (error) {
-  //     setSnackbar({ open: true, message: error.response?.data?.message || "Update child failed!", severity: "error" });
-  //   }
-  // };
 
   const update = async (child) => {
     try {
@@ -256,7 +222,7 @@ const ChildrenList = () => {
       }}>
         <Typography variant="h6" sx={{ m: 2 }}>Children List</Typography>
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <Button variant="contained" color="primary" onClick={handleOpen}>
+        <Button variant="contained" onClick={handleOpen} sx={{ color:'#2c3e50' }}>
           Add Child
         </Button>
       </div>
@@ -313,4 +279,8 @@ const ChildrenList = () => {
   );
 };
 
+
 export default ChildrenList;
+
+
+

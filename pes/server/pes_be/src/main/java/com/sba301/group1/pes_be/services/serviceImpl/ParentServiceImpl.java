@@ -69,7 +69,7 @@ public class ParentServiceImpl implements ParentService {
                     Map<String, Object> studentDetail = new HashMap<>();
                     studentDetail.put("id", student.getId());
                     studentDetail.put("name", student.getName());
-                    studentDetail.put("gender", student.getGender());
+                    studentDetail.put("gender", student.getGender().toLowerCase());
                     studentDetail.put("dateOfBirth", student.getDateOfBirth());
                     studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
                     studentDetail.put("isStudent", student.isStudent());
