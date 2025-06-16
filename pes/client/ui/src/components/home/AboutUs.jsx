@@ -46,7 +46,7 @@ export default function AboutUs() {
                         </p>
                     </div>
                     <div className="about-image-side">
-                        <img src="	https://merrystar.edu.vn/wp-content/uploads/2021/10/Mam-non-song-ngu-merrystar-ve-chung-toi-2.png" alt="Tầm nhìn"/>
+                        <img src="/487216724_970330175277156_3252495190011527878_n.jpg" alt="Tầm nhìn"/>
                     </div>
                 </div>
 
@@ -61,14 +61,14 @@ export default function AboutUs() {
                         </p>
                     </div>
                     <div className="about-image-side">
-                        <img src="	https://merrystar.edu.vn/wp-content/uploads/2021/10/Mam-non-song-ngu-merrystar-ve-chung-toi-1.png" alt="Sứ mệnh"/>
+                        <img src="/486791182_970330155277158_3848753021387074753_n.jpg" alt="Sứ mệnh"/>
                     </div>
                 </div>
 
                 {/* Giá trị cốt lõi */}
                 <div className="about-core-values">
                     <div className="core-value-item core-blue">
-                        <img src="https://merrystar.edu.vn/wp-content/uploads/2021/10/Mam-non-song-ngu-merrystar-chan-dung-hoc-sinh-1-1.png" alt="Thân icon" />
+                        <img src="/486637140_968708965439277_3585836273710347498_n.jpg" alt="Thân icon" />
                         <h4>Thân</h4>
                         <p>
                             Học sinh MerryStar Khỏe mạnh – Kháng bệnh tốt – Tràn đầy năng lượng.
@@ -76,7 +76,7 @@ export default function AboutUs() {
                     </div>
 
                     <div className="core-value-item core-pink">
-                        <img src="https://merrystar.edu.vn/wp-content/uploads/2021/10/Mam-non-song-ngu-merrystar-chan-dung-hoc-sinh-2.png" alt="Tâm icon" />
+                        <img src="/487207558_968708952105945_5733640689784949425_n.jpg" alt="Tâm icon" />
                         <h4>Tâm</h4>
                         <p>
                             Học sinh MerryStar biết yêu thương và lan tỏa tình yêu thương với những biểu hiện cụ thể.
@@ -84,7 +84,7 @@ export default function AboutUs() {
                     </div>
 
                     <div className="core-value-item core-yellow">
-                        <img src="https://merrystar.edu.vn/wp-content/uploads/2021/10/Mam-non-song-ngu-merrystar-chan-dung-hoc-sinh-3.png" alt="Tuệ icon" />
+                        <img src="/486159745_967920775518096_5981093204083660212_n.jpg" alt="Tuệ icon" />
                         <h4>Tuệ</h4>
                         <p>
                             Học sinh MerryStar làm chủ ngôn ngữ tiếng Anh và tiếng Việt, có tư duy lựa chọn độc lập và sáng tạo để thành công.
