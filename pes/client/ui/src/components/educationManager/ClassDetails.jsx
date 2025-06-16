@@ -495,18 +495,30 @@ function ClassDetails() {
                                                 <IconButton
                                                     size="small"
                                                     onClick={() => handleEditSchedule(schedule)}
-                                                    sx={{ color: '#ff9800' }}
+                                                    sx={{
+                                                        color: '#1976d2',
+                                                        backgroundColor: '#1976d2',
+                                                        '&:hover': {
+                                                            backgroundColor: '#1565c0'
+                                                        }
+                                                    }}
                                                 >
-                                                    <Edit />
+                                                    <Edit sx={{ color: 'white' }} />
                                                 </IconButton>
                                             </Tooltip>
                                             <Tooltip title="Delete Schedule">
                                                 <IconButton
                                                     size="small"
                                                     onClick={() => handleDeleteSchedule(schedule.id, schedule.weekNumber)}
-                                                    sx={{ color: '#f44336' }}
+                                                    sx={{
+                                                        color: '#f44336',
+                                                        backgroundColor: '#f44336',
+                                                        '&:hover': {
+                                                            backgroundColor: '#d32f2f'
+                                                        }
+                                                    }}
                                                 >
-                                                    <Delete />
+                                                    <Delete sx={{ color: 'white' }} />
                                                 </IconButton>
                                             </Tooltip>
                                         </Box>
@@ -528,9 +540,15 @@ function ClassDetails() {
                                                             edge="end"
                                                             size="small"
                                                             onClick={() => handleDeleteActivity(activity.id, activity.topic)}
-                                                            sx={{ color: '#f44336' }}
+                                                            sx={{
+                                                                color: '#f44336',
+                                                                backgroundColor: '#f44336',
+                                                                '&:hover': {
+                                                                    backgroundColor: '#d32f2f'
+                                                                }
+                                                            }}
                                                         >
-                                                            <Delete />
+                                                            <Delete sx={{ color: 'white' }} />
                                                         </IconButton>
                                                     }
                                                 >
