@@ -156,8 +156,8 @@ function ClassList() {
         },
         {
             field: 'numberStudent',
-            headerName: 'Capacity',
-            width: 100,
+            headerName: 'Number of Students',
+            width: 180,
             headerAlign: 'center',
             align: 'center'
         },

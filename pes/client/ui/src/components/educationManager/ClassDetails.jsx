@@ -364,7 +364,7 @@ function ClassDetails() {
                             <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
                         </Box>
                         <Box>
-                            <Typography variant="body2" color="text.secondary">Capacity</Typography>
+                            <Typography variant="body2" color="text.secondary">Number of Students</Typography>
                             <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
                         </Box>
                     </Stack>

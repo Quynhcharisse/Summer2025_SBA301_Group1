@@ -23,6 +23,10 @@ import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
+import com.sba301.group1.pes_be.repositories.StudentClassRepo;
+import com.sba301.group1.pes_be.models.StudentClass;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -60,6 +64,9 @@ public class PesBeApplication {
 
     private final ActivityRepo activityRepo;
 
+    private final StudentClassRepo studentClassRepo;
+
+    private final EntityManager entityManager;
 
     public static void main(String[] args) {
         SpringApplication.run(PesBeApplication.class, args);
@@ -507,6 +514,72 @@ public class PesBeApplication {
             }
 
             System.out.println("Schedules and Activities initialization completed successfully!");
+        };
+    }
+
+    @Bean
+    @Transactional
+    public CommandLineRunner assignStudentsToClasses() {
+        return args -> {
+            // Get all students and classes
+            var allStudents = studentRepo.findAll();
+            var allClasses = classesRepo.findAll();
+
+            if (allStudents.isEmpty() || allClasses.isEmpty()) {
+                System.out.println("No students or classes found, skipping student assignment");
+                return;
+            }
+
+            // Check if students are already assigned to classes
+            if (!studentClassRepo.findAll().isEmpty()) {
+                System.out.println("Students already assigned to classes, skipping assignment");
+                return;
+            }
+
+            // Assign students to classes based on age/grade
+            for (Student student : allStudents) {
+                // Calculate age and determine appropriate grade
+                int age = LocalDate.now().getYear() - student.getDateOfBirth().getYear();
+                Grade appropriateGrade;
+                
+                if (age <= 3) {
+                    appropriateGrade = Grade.SEED;
+                } else if (age == 4) {
+                    appropriateGrade = Grade.BUD;
+                } else {
+                    appropriateGrade = Grade.LEAF;
+                }
+
+                // Find a class with the appropriate grade that has space
+                Classes targetClass = allClasses.stream()
+                    .filter(cls -> cls.getGrade() == appropriateGrade)
+                    .filter(cls -> cls.getNumberStudent() < 15) // Assuming max 15 students per class
+                    .findFirst()
+                    .orElse(null);
+
+                if (targetClass != null) {
+                    // Create StudentClass relationship
+                    StudentClass studentClass = StudentClass.builder()
+                            .student(student)
+                            .classes(targetClass)
+                            .build();
+                    studentClassRepo.save(studentClass);
+
+                    // Update student status to active student
+                    student.setStudent(true);
+                    studentRepo.save(student);
+
+                    // Update class student count
+                    targetClass.setNumberStudent(targetClass.getNumberStudent() + 1);
+                    classesRepo.save(targetClass);
+
+                    System.out.println("Assigned student " + student.getName() + " (age " + age + ") to class " + targetClass.getName());
+                } else {
+                    System.out.println("No available class found for student " + student.getName() + " with grade " + appropriateGrade);
+                }
+            }
+
+            System.out.println("Student assignment completed successfully!");
         };
     }
 }
