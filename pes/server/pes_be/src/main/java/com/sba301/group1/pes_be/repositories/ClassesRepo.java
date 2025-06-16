@@ -28,4 +28,11 @@ public interface ClassesRepo extends JpaRepository<Classes, Integer> {
     
     @Query("SELECT c FROM Classes c WHERE c.syllabus.id = :syllabusId AND c.status = :status")
     List<Classes> findBySyllabusIdAndStatus(@Param("syllabusId") Integer syllabusId, @Param("status") String status);
+    
+    // Add query to fetch classes with teacher eagerly loaded
+    @Query("SELECT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus")
+    List<Classes> findAllWithTeacherAndSyllabus();
+    
+    @Query("SELECT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus WHERE c.id = :id")
+    Classes findByIdWithTeacherAndSyllabus(@Param("id") Integer id);
 }

@@ -75,7 +75,7 @@ public class Classes {
     @JoinColumn(name = "`syllabus_id`")
     Syllabus syllabus;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "`teacher_id`")
     Account teacher;
 }

@@ -8,10 +8,13 @@ import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.ClassesResponse;
 import com.sba301.group1.pes_be.services.ClassesService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -87,13 +90,16 @@ public class ClassesServiceImpl implements ClassesService {
     @Override
     public ResponseEntity<ResponseObject> viewClass(Integer classId) {
         return classRepo.findById(classId)
-                .map(classes -> ResponseEntity.ok().body(
-                        ResponseObject.builder()
-                                .message("Class found")
-                                .success(true)
-                                .data(classes)
-                                .build()
-                ))
+                .map(classes -> {
+                    ClassesResponse classResponse = ClassesResponse.fromEntity(classes);
+                    return ResponseEntity.ok().body(
+                            ResponseObject.builder()
+                                    .message("Class found")
+                                    .success(true)
+                                    .data(classResponse)
+                                    .build()
+                    );
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -164,11 +170,13 @@ public class ClassesServiceImpl implements ClassesService {
 
     @Override
     public ResponseEntity<ResponseObject> viewClassList() {
+        List<Classes> classes = classRepo.findAll();
+        List<ClassesResponse> classesResponses = ClassesResponse.fromEntityList(classes);
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("Class list retrieved successfully")
                         .success(true)
-                        .data(classRepo.findAll())
+                        .data(classesResponses)
                         .build()
         );
     }

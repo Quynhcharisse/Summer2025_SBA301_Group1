@@ -148,8 +148,16 @@ function ClassList() {
             headerAlign: 'center',
             align: 'center',
             valueGetter: (params) => {
+                // DataGrid passes the teacher object directly as params for this field
+                if (params && params.name) {
+                    return params.name;
+                }
+                if (params && params.firstName) {
+                    return params.firstName;
+                }
+                // Fallback to check if it's the full row object
                 if (params && params.row && params.row.teacher) {
-                    return params.row.teacher.name || 'No Teacher';
+                    return params.row.teacher.name || params.row.teacher.firstName || 'No Teacher';
                 }
                 return 'No Teacher';
             }
