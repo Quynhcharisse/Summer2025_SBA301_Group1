@@ -366,15 +366,18 @@ public class PesBeApplication {
                 String topic = parts[0];
                 String description = parts[1];
 
-                if (lessonRepo.findByTopicContaining(topic).isEmpty()) {
+                List<Lesson> found = lessonRepo.findByTopicContaining(topic);
+                if (found.isEmpty()) {
                     lessons[i] = Lesson.builder()
                             .topic(topic)
                             .description(description)
+                        .duration(30)
+                        .materials("Basic materials")
                             .build();
                     lessons[i] = lessonRepo.save(lessons[i]);
                     System.out.println("Created Lesson: " + topic);
                 } else {
-                    lessons[i] = lessonRepo.findByTopicContaining(topic).get(0);
+                    lessons[i] = found.get(0);
                 }
             }
 

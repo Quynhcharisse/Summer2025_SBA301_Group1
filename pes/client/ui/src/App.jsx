@@ -13,6 +13,7 @@ import ProcessForm from "./components/admissionManager/ProcessForm.jsx";
 import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
 import ClassList from "./components/educationManager/ClassList.jsx";
+import ClassDetails from "./components/educationManager/ClassDetails.jsx";
 import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
 import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
@@ -94,6 +95,10 @@ const router = createBrowserRouter([
             {
                 path: 'classes',
                 element: <ClassList/>
+            },
+            {
+                path: 'classes/:id',
+                element: <ClassDetails/>
             },
             {
                 path: 'syllabus',

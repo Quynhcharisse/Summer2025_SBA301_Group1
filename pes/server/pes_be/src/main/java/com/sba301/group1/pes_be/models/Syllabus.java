@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -36,13 +37,15 @@ public class Syllabus {
 
     String description;
 
-    @OneToMany(mappedBy = "syllabus", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "syllabus", fetch = FetchType.LAZY)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     List<SyllabusLesson> syllabusLessonList;
 
-    @OneToMany(mappedBy = "syllabus", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "syllabus", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     List<Classes> classesList;
 }
