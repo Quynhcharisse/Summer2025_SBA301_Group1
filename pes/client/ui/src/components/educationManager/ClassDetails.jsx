@@ -16,7 +16,8 @@ import {
     Paper,
     Stack,
     IconButton,
-    Tooltip
+    Tooltip,
+    TextField
 } from '@mui/material';
 import {
     ArrowBack,
@@ -30,7 +31,9 @@ import {
     Add,
     Edit,
     Delete,
-    Visibility
+    Visibility,
+    ChevronLeft,
+    ChevronRight
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
@@ -51,6 +54,7 @@ import {
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
+import '../../styles/manager/ScheduleManagement.css';
 
 function ClassDetails() {
     const { id: classId } = useParams();
@@ -63,6 +67,10 @@ function ClassDetails() {
     const [allLessons, setAllLessons] = useState([]);
     const [allClasses, setAllClasses] = useState([]);
     const [loading, setLoading] = useState(false);
+    
+    // Week navigation state
+    const [currentWeek, setCurrentWeek] = useState(1);
+    const [weekInput, setWeekInput] = useState('1');
     
     // Schedule form modal state
     const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
@@ -155,6 +163,17 @@ function ClassDetails() {
         fetchData();
     }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
 
+    // Initialize current week when schedules are loaded
+    useEffect(() => {
+        if (schedules.length > 0) {
+            const firstWeek = Math.min(...schedules.map(s => s.weekNumber));
+            if (currentWeek === 1 && firstWeek !== 1) {
+                setCurrentWeek(firstWeek);
+                setWeekInput(firstWeek.toString());
+            }
+        }
+    }, [schedules, currentWeek]);
+
     const handleBackToClasses = () => {
         navigate('/education/classes');
     };
@@ -173,10 +192,62 @@ function ClassDetails() {
         return new Date(dateString).toLocaleDateString();
     };
 
+    // Week navigation functions
+    const handlePreviousWeek = () => {
+        if (currentWeek > 1) {
+            const newWeek = currentWeek - 1;
+            setCurrentWeek(newWeek);
+            setWeekInput(newWeek.toString());
+        }
+    };
+
+    const handleNextWeek = () => {
+        const maxWeek = Math.max(...schedules.map(s => s.weekNumber), 0);
+        if (currentWeek < maxWeek + 1) {
+            const newWeek = currentWeek + 1;
+            setCurrentWeek(newWeek);
+            setWeekInput(newWeek.toString());
+        }
+    };
+
+    const handleWeekInputChange = (event) => {
+        const value = event.target.value;
+        setWeekInput(value);
+        
+        const weekNum = parseInt(value);
+        if (!isNaN(weekNum) && weekNum > 0) {
+            setCurrentWeek(weekNum);
+        }
+    };
+
+    const getCurrentWeekSchedule = () => {
+        return schedules.find(schedule => schedule.weekNumber === currentWeek);
+    };
+
+    const getCurrentWeekActivities = () => {
+        const weekSchedule = getCurrentWeekSchedule();
+        if (!weekSchedule) return [];
+        return activities.filter(activity => activity.scheduleId === weekSchedule.id);
+    };
+
+    const groupActivitiesByDay = () => {
+        const weekActivities = getCurrentWeekActivities();
+        const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+        const grouped = {};
+        
+        days.forEach(day => {
+            grouped[day] = weekActivities.filter(activity =>
+                activity.dayOfWeek?.toUpperCase() === day
+            );
+        });
+        
+        return grouped;
+    };
+
     const handleCreateSchedule = () => {
         setSelectedSchedule({
             classId: classId,
-            weekNumber: schedules.length + 1,
+            weekNumber: currentWeek,
             note: '',
             activities: []
         });
@@ -502,13 +573,24 @@ function ClassDetails() {
     );
 
     const renderSchedulesAndActivities = () => {
-        const groupedData = groupActivitiesBySchedule();
+        const currentWeekSchedule = getCurrentWeekSchedule();
+        const activitiesByDay = groupActivitiesByDay();
+        const days = [
+            { key: 'MONDAY', label: 'Monday' },
+            { key: 'TUESDAY', label: 'Tuesday' },
+            { key: 'WEDNESDAY', label: 'Wednesday' },
+            { key: 'THURSDAY', label: 'Thursday' },
+            { key: 'FRIDAY', label: 'Friday' }
+        ];
+        
+        const maxWeek = Math.max(...schedules.map(s => s.weekNumber), 0);
         
         return (
-            <Stack spacing={2}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Stack spacing={3}>
+                {/* Header with navigation controls */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
                     <Typography variant="h6" color="primary">
-                        Schedules & Activities ({schedules.length} schedules)
+                        Weekly Schedule & Activities
                     </Typography>
                     <Button
                         variant="contained"
@@ -520,156 +602,271 @@ function ClassDetails() {
                     </Button>
                 </Box>
 
-                {schedules.length === 0 ? (
-                    <Alert severity="info">
-                        No schedules found for this class. Click "Create Schedule" to add one.
-                    </Alert>
-                ) : (
-                    schedules.map((schedule) => {
-                        const scheduleActivities = groupedData[schedule.id]?.activities || [];
-                        return (
-                            <Card key={schedule.id} sx={{ mb: 2 }}>
-                                <CardContent>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                        <Box>
-                                            <Typography variant="h6">
-                                                Week {schedule.weekNumber}
-                                            </Typography>
-                                            {schedule.note && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {schedule.note}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Tooltip title="Edit Schedule">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleEditSchedule(schedule)}
-                                                    sx={{
-                                                        color: '#1976d2',
-                                                        backgroundColor: '#1976d2',
-                                                        '&:hover': {
-                                                            backgroundColor: '#1565c0'
-                                                        }
-                                                    }}
-                                                >
-                                                    <Edit sx={{ color: 'white' }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete Schedule">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleDeleteSchedule(schedule.id, schedule.weekNumber)}
-                                                    sx={{
-                                                        color: '#f44336',
-                                                        backgroundColor: '#f44336',
-                                                        '&:hover': {
-                                                            backgroundColor: '#d32f2f'
-                                                        }
-                                                    }}
-                                                >
-                                                    <Delete sx={{ color: 'white' }} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                    </Box>
+                {/* Week Navigation Controls */}
+                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: '#f8f9fa' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <IconButton
+                            onClick={handlePreviousWeek}
+                            disabled={currentWeek <= 1}
+                            sx={{
+                                bgcolor: 'white',
+                                border: '1px solid #e0e0e0',
+                                '&:hover': {
+                                    bgcolor: '#f5f5f5'
+                                },
+                                '&:disabled': {
+                                    bgcolor: '#fafafa',
+                                    color: '#ccc'
+                                }
+                            }}
+                        >
+                            <ChevronLeft />
+                        </IconButton>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" fontWeight="500">
+                                Week
+                            </Typography>
+                            <TextField
+                                size="small"
+                                value={weekInput}
+                                onChange={handleWeekInputChange}
+                                type="number"
+                                inputProps={{
+                                    min: 1,
+                                    style: { textAlign: 'center', width: '60px' }
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'white',
+                                        height: '40px'
+                                    }
+                                }}
+                            />
+                        </Box>
+                        
+                        <IconButton
+                            onClick={handleNextWeek}
+                            sx={{
+                                bgcolor: 'white',
+                                border: '1px solid #e0e0e0',
+                                '&:hover': {
+                                    bgcolor: '#f5f5f5'
+                                }
+                            }}
+                        >
+                            <ChevronRight />
+                        </IconButton>
+                    </Box>
+                    
+                    {/* Week info and actions */}
+                    {currentWeekSchedule && (
+                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                                <Box>
+                                    <Typography variant="subtitle1" fontWeight="600">
+                                        Week {currentWeek}
+                                    </Typography>
+                                    {currentWeekSchedule.note && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            {currentWeekSchedule.note}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Tooltip title="Edit Schedule">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleEditSchedule(currentWeekSchedule)}
+                                            sx={{
+                                                bgcolor: '#1976d2',
+                                                color: 'white',
+                                                '&:hover': {
+                                                    bgcolor: '#1565c0'
+                                                }
+                                            }}
+                                        >
+                                            <Edit />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete Schedule">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleDeleteSchedule(currentWeekSchedule.id, currentWeekSchedule.weekNumber)}
+                                            sx={{
+                                                bgcolor: '#f44336',
+                                                color: 'white',
+                                                '&:hover': {
+                                                    bgcolor: '#d32f2f'
+                                                }
+                                            }}
+                                        >
+                                            <Delete />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                            </Box>
+                        </Box>
+                    )}
+                </Paper>
 
-                                    {scheduleActivities.length > 0 ? (
-                                        <List dense>
-                                            {scheduleActivities.map((activity) => (
-                                                <ListItem
-                                                    key={activity.id}
-                                                    sx={{
-                                                        border: '1px solid #e0e0e0',
-                                                        borderRadius: 1,
-                                                        mb: 1,
-                                                        backgroundColor: '#fafafa'
-                                                    }}
-                                                    secondaryAction={
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                {/* 5-Column Daily Activities Grid */}
+                {currentWeekSchedule ? (
+                    <Grid container spacing={2}>
+                        {days.map((day) => (
+                            <Grid item xs={12} sm={6} md={2.4} key={day.key}>
+                                <Card sx={{ height: '100%', minHeight: '300px' }}>
+                                    <CardContent sx={{ p: 2 }}>
+                                        <Typography
+                                            variant="h6"
+                                            color="primary"
+                                            sx={{
+                                                mb: 2,
+                                                textAlign: 'center',
+                                                fontSize: '1rem',
+                                                fontWeight: 600
+                                            }}
+                                        >
+                                            {day.label}
+                                        </Typography>
+                                        
+                                        <Stack spacing={1}>
+                                            {activitiesByDay[day.key]?.length > 0 ? (
+                                                activitiesByDay[day.key].map((activity) => (
+                                                    <Card
+                                                        key={activity.id}
+                                                        variant="outlined"
+                                                        sx={{
+                                                            p: 1.5,
+                                                            borderRadius: 2,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                boxShadow: 2,
+                                                                transform: 'translateY(-2px)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Typography
+                                                            variant="subtitle2"
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                color: '#1976d2',
+                                                                mb: 0.5
+                                                            }}
+                                                        >
+                                                            {activity.topic}
+                                                        </Typography>
+                                                        
+                                                        <Typography
+                                                            variant="caption"
+                                                            color="text.secondary"
+                                                            sx={{
+                                                                display: 'block',
+                                                                mb: 0.5,
+                                                                fontWeight: 500
+                                                            }}
+                                                        >
+                                                            {activity.startTime} - {activity.endTime}
+                                                        </Typography>
+                                                        
+                                                        {activity.description && (
+                                                            <Typography
+                                                                variant="caption"
+                                                                color="text.secondary"
+                                                                sx={{
+                                                                    display: 'block',
+                                                                    fontSize: '0.7rem',
+                                                                    lineHeight: 1.2
+                                                                }}
+                                                            >
+                                                                {activity.description}
+                                                            </Typography>
+                                                        )}
+                                                        
+                                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1 }}>
                                                             <Tooltip title="Edit Activity">
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleEditActivity(activity)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleEditActivity(activity);
+                                                                    }}
                                                                     sx={{
-                                                                        color: '#1976d2',
-                                                                        backgroundColor: '#1976d2',
+                                                                        width: 24,
+                                                                        height: 24,
+                                                                        bgcolor: '#1976d2',
+                                                                        color: 'white',
                                                                         '&:hover': {
-                                                                            backgroundColor: '#1565c0'
+                                                                            bgcolor: '#1565c0'
                                                                         }
                                                                     }}
                                                                 >
-                                                                    <Edit sx={{ color: 'white' }} />
+                                                                    <Edit sx={{ fontSize: 14 }} />
                                                                 </IconButton>
                                                             </Tooltip>
                                                             <Tooltip title="Delete Activity">
                                                                 <IconButton
                                                                     size="small"
-                                                                    onClick={() => handleDeleteActivity(activity.id, activity.topic)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteActivity(activity.id, activity.topic);
+                                                                    }}
                                                                     sx={{
-                                                                        color: '#f44336',
-                                                                        backgroundColor: '#f44336',
+                                                                        width: 24,
+                                                                        height: 24,
+                                                                        bgcolor: '#f44336',
+                                                                        color: 'white',
                                                                         '&:hover': {
-                                                                            backgroundColor: '#d32f2f'
+                                                                            bgcolor: '#d32f2f'
                                                                         }
                                                                     }}
                                                                 >
-                                                                    <Delete sx={{ color: 'white' }} />
+                                                                    <Delete sx={{ fontSize: 14 }} />
                                                                 </IconButton>
                                                             </Tooltip>
                                                         </Box>
+                                                    </Card>
+                                                ))
+                                            ) : (
+                                                <Box sx={{
+                                                    textAlign: 'center',
+                                                    py: 3,
+                                                    color: 'text.secondary'
+                                                }}>
+                                                    <Typography variant="caption">
+                                                        No activities
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                            
+                                            {/* Add Activity Button for each day */}
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                startIcon={<Add />}
+                                                onClick={() => handleCreateActivity(currentWeekSchedule.id)}
+                                                sx={{
+                                                    mt: 1,
+                                                    borderStyle: 'dashed',
+                                                    fontSize: '0.7rem',
+                                                    '&:hover': {
+                                                        borderStyle: 'solid'
                                                     }
-                                                >
-                                                    <ListItemIcon>
-                                                        <Event sx={{ color: '#1976d2' }} />
-                                                    </ListItemIcon>
-                                                    <ListItemText
-                                                        primary={activity.topic}
-                                                        secondary={
-                                                            <>
-                                                                {activity.dayOfWeek} • {activity.startTime} - {activity.endTime}
-                                                                {activity.description && (
-                                                                    <br/>
-                                                                )}
-                                                                {activity.description}
-                                                            </>
-                                                        }
-                                                        secondaryTypographyProps={{
-                                                            variant: 'caption',
-                                                            color: 'text.secondary'
-                                                        }}
-                                                    />
-                                                </ListItem>
-                                            ))}
-                                        </List>
-                                    ) : (
-                                        <Alert severity="info" sx={{ mt: 1 }}>
-                                            No activities scheduled for this week
-                                        </Alert>
-                                    )}
-
-                                    {/* Add Activity Button */}
-                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<Add />}
-                                            onClick={() => handleCreateActivity(schedule.id)}
-                                            size="small"
-                                            sx={{
-                                                borderStyle: 'dashed',
-                                                '&:hover': {
-                                                    borderStyle: 'solid'
-                                                }
-                                            }}
-                                        >
-                                            Add Activity to Week {schedule.weekNumber}
-                                        </Button>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        );
-                    })
+                                                }}
+                                            >
+                                                Add Activity
+                                            </Button>
+                                        </Stack>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                ) : (
+                    <Alert severity="info" sx={{ textAlign: 'center' }}>
+                        No schedule found for Week {currentWeek}. Click "Create Schedule" to add one.
+                    </Alert>
                 )}
             </Stack>
         );
