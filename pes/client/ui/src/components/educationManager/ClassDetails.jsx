@@ -46,7 +46,8 @@ import {
     updateSchedule,
     createActivity,
     updateActivity,
-    getAllLessons
+    getAllLessons,
+    getAllClasses
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 
@@ -59,7 +60,7 @@ function ClassDetails() {
     const [syllabus, setSyllabus] = useState(null);
     const [classLessons, setClassLessons] = useState([]);
     const [allLessons, setAllLessons] = useState([]);
-    const [allClasses] = useState([]);
+    const [allClasses, setAllClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     
     // Schedule form modal state
@@ -75,6 +76,17 @@ function ClassDetails() {
             }
         } catch (error) {
             console.error('Error fetching lessons:', error);
+        }
+    }, []);
+
+    const fetchAllClasses = useCallback(async () => {
+        try {
+            const response = await getAllClasses();
+            if (response && response.success) {
+                setAllClasses(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching classes:', error);
         }
     }, []);
 
@@ -130,11 +142,12 @@ function ClassDetails() {
             if (classId) {
                 await fetchClassDetails();
                 await fetchAllLessons();
+                await fetchAllClasses();
             }
         };
         
         fetchData();
-    }, [classId, fetchClassDetails, fetchAllLessons]);
+    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
 
     const handleBackToClasses = () => {
         navigate('/education/classes');
