@@ -1,26 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Box,
-    Paper,
-    Typography,
     Button,
-    TextField,
-    InputAdornment,
     Chip,
     Dialog,
-    DialogTitle,
+    DialogActions,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogTitle,
+    InputAdornment,
+    Paper,
+    TextField,
+    Typography
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Info, Delete, Search, Add } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import {
-    getAllClasses
-} from '../../services/EducationService.jsx';
-import ClassesService from '../../services/ClassesService.jsx';
-import { enqueueSnackbar } from 'notistack';
+import {DataGrid} from '@mui/x-data-grid';
+import {Add, Delete, Info, Search} from '@mui/icons-material';
+import {useNavigate} from 'react-router-dom';
+import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
+import {enqueueSnackbar} from 'notistack';
 import '../../styles/manager/ActivityManagement.css';
 
 function ClassList() {
@@ -39,19 +36,19 @@ function ClassList() {
         try {
             setLoading(true);
             const classesResponse = await getAllClasses();
-            
+
             if (classesResponse && classesResponse.success) {
                 // Ensure data is an array and filter out any invalid entries
                 const classData = Array.isArray(classesResponse.data) ? classesResponse.data : [];
                 const validClasses = classData.filter(cls => cls && typeof cls === 'object' && cls.id);
                 setClasses(validClasses);
             } else {
-                enqueueSnackbar('Failed to fetch classes', { variant: 'error' });
+                enqueueSnackbar('Failed to fetch classes', {variant: 'error'});
                 setClasses([]);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
-            enqueueSnackbar('Error fetching data', { variant: 'error' });
+            enqueueSnackbar('Error fetching data', {variant: 'error'});
             setClasses([]);
         } finally {
             setLoading(false);
@@ -71,20 +68,20 @@ function ClassList() {
         if (!classToDelete) return;
 
         try {
-            const response = await ClassesService.remove(classToDelete.id);
+            const response = await removeClass(classToDelete.id);
             if (response && response.success) {
-                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, { variant: 'success' });
+                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, {variant: 'success'});
                 // Refresh the class list
                 fetchClasses();
             } else {
-                enqueueSnackbar('Failed to delete class', { variant: 'error' });
+                enqueueSnackbar('Failed to delete class', {variant: 'error'});
             }
         } catch (error) {
             console.error('Error deleting class:', error);
             if (error.response?.status === 409) {
-                enqueueSnackbar('Cannot delete class. It may have dependencies (students, activities, etc.)', { variant: 'error' });
+                enqueueSnackbar('Cannot delete class. It may have dependencies (students, activities, etc.)', {variant: 'error'});
             } else {
-                enqueueSnackbar('Error deleting class', { variant: 'error' });
+                enqueueSnackbar('Error deleting class', {variant: 'error'});
             }
         } finally {
             setDeleteDialogOpen(false);
@@ -99,10 +96,14 @@ function ClassList() {
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'active': return 'success';
-            case 'inactive': return 'error';
-            case 'pending': return 'warning';
-            default: return 'default';
+            case 'active':
+                return 'success';
+            case 'inactive':
+                return 'error';
+            case 'pending':
+                return 'warning';
+            default:
+                return 'default';
         }
     };
 
@@ -181,7 +182,7 @@ function ClassList() {
                     <Button
                         size="small"
                         variant="contained"
-                        startIcon={<Info />}
+                        startIcon={<Info/>}
                         onClick={() => params?.row && handleViewInfo(params.row)}
                         disabled={!params?.row}
                         sx={{
@@ -200,7 +201,7 @@ function ClassList() {
                     <Button
                         size="small"
                         variant="contained"
-                        startIcon={<Delete />}
+                        startIcon={<Delete/>}
                         onClick={() => params?.row && handleDeleteClick(params.row)}
                         disabled={!params?.row}
                         sx={{
@@ -224,7 +225,7 @@ function ClassList() {
     // Filter classes based on search term
     const filteredClasses = classes.filter(classItem => {
         if (!searchTerm) return true;
-        
+
         const searchLower = searchTerm.toLowerCase();
         return (
             classItem.name?.toLowerCase().includes(searchLower) ||
@@ -236,14 +237,14 @@ function ClassList() {
     });
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+        <Box sx={{p: 3}}>
+            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+                <Typography variant="h4" sx={{fontWeight: 'bold'}}>
                     Class Management
                 </Typography>
                 <Button
                     variant="contained"
-                    startIcon={<Add />}
+                    startIcon={<Add/>}
                     sx={{
                         background: 'linear-gradient(135deg, var(--success-color), #45a049)',
                         '&:hover': {
@@ -257,7 +258,7 @@ function ClassList() {
             </Box>
 
             {/* Search Bar */}
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{mb: 3}}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -267,7 +268,7 @@ function ClassList() {
                     InputProps={{
                         startAdornment: (
                             <InputAdornment position="start">
-                                <Search />
+                                <Search/>
                             </InputAdornment>
                         ),
                     }}
@@ -280,7 +281,7 @@ function ClassList() {
                 />
             </Box>
 
-            <Paper sx={{ height: 600, width: '100%' }}>
+            <Paper sx={{height: 600, width: '100%'}}>
                 <DataGrid
                     rows={filteredClasses || []}
                     columns={columns}
@@ -315,7 +316,8 @@ function ClassList() {
                 <DialogContent>
                     <DialogContentText id="delete-dialog-description">
                         Are you sure you want to delete the class "{classToDelete?.name}"?
-                        This action cannot be undone and may affect related data such as students, activities, and schedules.
+                        This action cannot be undone and may affect related data such as students, activities, and
+                        schedules.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
