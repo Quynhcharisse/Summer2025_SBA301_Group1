@@ -9,7 +9,12 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Typography
+  Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio
 } from "@mui/material";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Snackbar, Alert, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -162,17 +167,18 @@ const ChildrenList = () => {
               onChange={handleChange}
               required
             />
-            <TextField
-              select
-              label="Gender"
-              name="gender"
-              value={form.gender}
-              onChange={handleChange}
-              required
-            >
-              <MenuItem value="Male">Male</MenuItem>
-              <MenuItem value="Female">Female</MenuItem>
-            </TextField>
+            <FormControl component="fieldset" required>
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                name="gender"
+                value={form.gender}
+                onChange={handleChange}
+              >
+                <FormControlLabel value="Male" control={<Radio />} label="Male" />
+                <FormControlLabel value="Female" control={<Radio />} label="Female" />
+              </RadioGroup>
+            </FormControl>
             <TextField
               label="Date of Birth"
               name="dateOfBirth"
@@ -222,7 +228,7 @@ const ChildrenList = () => {
       }}>
         <Typography variant="h6" sx={{ m: 2 }}>Children List</Typography>
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <Button variant="contained" onClick={handleOpen} sx={{ color:'#2c3e50' }}>
+        <Button variant="contained" onClick={handleOpen} sx={{ color:'#ffffff' }}>
           Add Child
         </Button>
       </div>
