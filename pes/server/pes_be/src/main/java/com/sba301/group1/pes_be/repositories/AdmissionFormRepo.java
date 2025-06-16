@@ -9,4 +9,5 @@ import java.util.List;
 public interface AdmissionFormRepo extends JpaRepository<AdmissionForm, Integer> {
     List<AdmissionForm> findAllByParent_IdAndStudent_Id(int parentId, int studentId);
     long countByStatusAndAdmissionTerm_YearAndAdmissionTerm_Grade(String status, int year, Grade grade);
+    AdmissionForm findByStudent_IdAndAdmissionTerm_Id(int studentId, int admissionTermId);
 }

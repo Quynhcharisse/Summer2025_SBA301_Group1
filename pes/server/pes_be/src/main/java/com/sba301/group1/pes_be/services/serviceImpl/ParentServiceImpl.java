@@ -1,13 +1,16 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.AdmissionForm;
+import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.*;
@@ -36,11 +39,11 @@ public class ParentServiceImpl implements ParentService {
 
     private final AdmissionFormRepo admissionFormRepo;
 
+    private final AdmissionTermRepo admissionTermRepo;
+
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
-    
-    private final AccountRepo accountRepo;
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList(HttpServletRequest request) {
@@ -122,7 +125,7 @@ public class ParentServiceImpl implements ParentService {
         if (account == null || !account.getRole().equals(Role.PARENT)) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("Submitted admission form failed")
+                            .message("Unauthorized access")
                             .success(false)
                             .data(null)
                             .build()
@@ -130,7 +133,6 @@ public class ParentServiceImpl implements ParentService {
         }
 
         String error = FormByParentValidation.submittedForm(request);
-
         if (!error.isEmpty()) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -141,33 +143,65 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        List<AdmissionForm> formList = admissionFormRepo.findAllByParent_IdAndStudent_Id(account.getParent().getId(), request.getStudentId());
+        // 3. Kiểm tra tồn tại student và term
+        Student student = studentRepo.findById(request.getStudentId()).orElse(null);
+        AdmissionTerm term = admissionTermRepo.findById(request.getAdmissionTermId()).orElse(null);
 
-        if (!formList.isEmpty()) {
+        if (student == null || term == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
-                            .message("This student was already registered")
+                            .message("Student or admission term not found")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        admissionFormRepo.save(
-                AdmissionForm.builder()
-                        .parent(account.getParent()) // tránh lỗi bị crash null
-                        .student(studentRepo.findById(request.getStudentId()).orElse(null)) //mỗi form phải gắn với đúng Student để biết phiếu đó là của ai
-                        .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                        .profileImage(request.getProfileImage())
-                        .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                        .birthCertificateImg(request.getBirthCertificateImg())
-                        .commitmentImg(request.getCommitmentImg())
-                        .note(request.getNote())
-                        .submittedDate(LocalDate.now())
-                        .status(Status.PENDING_APPROVAL.getValue())
-                        .build()
-        );
+        // 4. Kiểm tra độ tuổi đúng với grade
+        if (!isAgeValidForGrade(student.getDateOfBirth(), term.getGrade())) {
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Student's age does not match the required grade")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
 
+        // 6. Kiểm tra form trùng lặp
+        AdmissionForm existingForm = admissionFormRepo.findByStudent_IdAndAdmissionTerm_Id(request.getStudentId(), request.getAdmissionTermId());
+        
+        if (existingForm != null) {
+            // Chỉ cho phép submit lại nếu form trước đó đã bị REJECTED hoặc CANCELLED
+            if (!existingForm.getStatus().equals(Status.REJECTED.getValue()) && 
+                !existingForm.getStatus().equals(Status.CANCELLED.getValue())) {
+                return ResponseEntity.ok().body(
+                        ResponseObject.builder()
+                                .message("You have already submitted a form for this term")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+        }
+
+        // 7. Tạo và lưu form mới
+
+            AdmissionForm newForm = AdmissionForm.builder()
+                    .parent(account.getParent())
+                    .student(student)
+                    .admissionTerm(term)  // Thêm term vào form
+                    .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                    .profileImage(request.getProfileImage())
+                    .householdRegistrationImg(request.getHouseholdRegistrationImg())
+                    .birthCertificateImg(request.getBirthCertificateImg())
+                    .commitmentImg(request.getCommitmentImg())
+                    .note(request.getNote())
+                    .submittedDate(LocalDate.now())
+                    .status(Status.PENDING_APPROVAL.getValue())
+                    .build();
+
+            admissionFormRepo.save(newForm);
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -176,6 +210,12 @@ public class ParentServiceImpl implements ParentService {
                         .data(null)
                         .build()
         );
+    }
+
+    private boolean isAgeValidForGrade(LocalDate dateOfBirth, Grade grade) {
+        int currentYear = LocalDate.now().getYear();
+        int age = currentYear - dateOfBirth.getYear();
+        return age == grade.getAge();
     }
 
     // cancel form
