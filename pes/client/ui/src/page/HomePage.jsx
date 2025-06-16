@@ -100,7 +100,7 @@ function RenderCarousel() {
                 <Carousel.Item>
                     <img
                         decoding="async"
-                        src="/487740107_975051634805010_8611635320830059307_n.jpg"
+                        src="/Mam-non-song-ngu-merrystar.webp"
                         alt="Mam-non-song-ngu-Merrystar-2022 (3)"
                         loading="lazy"
                         data-default="https://merrystar.edu.vn/wp-content/uploads/2022/02/Mam-non-song-ngu-Merrystar-2022-3-1.jpg"/>
