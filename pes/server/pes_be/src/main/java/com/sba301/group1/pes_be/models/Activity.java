@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -44,6 +45,7 @@ public class Activity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`schedule_id`")
+    @JsonIgnore
     Schedule schedule;
 
     @ManyToOne(fetch = FetchType.LAZY)

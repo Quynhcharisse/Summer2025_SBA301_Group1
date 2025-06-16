@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sba301.group1.pes_be.enums.Grade;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -61,11 +62,13 @@ public class Classes {
     @OneToMany(mappedBy = "classes", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     List<StudentClass> studentClassList;
 
     @OneToMany(mappedBy = "classes", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     List<Schedule> scheduleList;
 
     @ManyToOne(fetch = FetchType.LAZY)

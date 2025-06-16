@@ -1,11 +1,11 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sba301.group1.pes_be.enums.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -59,14 +59,16 @@ public class Account implements UserDetails {
     @Column(name = "`identity_number`")
     String identityNumber;
 
-    @OneToOne(mappedBy = "account") //chú ý fetch
+    @OneToOne(mappedBy = "account")
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     Parent parent;
 
-    @OneToOne(mappedBy = "teacher") //chú ý fetch
+    @OneToOne(mappedBy = "teacher")
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
+    @JsonIgnore
     Classes classes;
 
     @Override

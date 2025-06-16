@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,9 +31,11 @@ public class StudentClass {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`student_id`")
+    @JsonIgnore
     Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`classes_id`")
+    @JsonIgnore
     Classes classes;
 }

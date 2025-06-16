@@ -1,68 +1,51 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    Grid,
-    Container,
-    Paper,
-    Avatar,
-    Chip
-} from '@mui/material';
-import {
-    School,
-    Event,
-    CalendarToday,
-    Dashboard,
-    TrendingUp,
-    Assignment
-} from '@mui/icons-material';
+import {Avatar, Box, Card, CardContent, Chip, Container, Grid, Paper, Typography} from '@mui/material';
+import {Assignment, CalendarToday, Dashboard, Event, School, TrendingUp} from '@mui/icons-material';
 
 function EducationDashboard() {
     const features = [
         {
             title: 'Class Management',
             description: 'Manage student classes, enrollment, and class information with comprehensive tools.',
-            icon: <School />,
+            icon: <School/>,
             color: '#1976d2',
             stats: 'Active Classes'
         },
         {
             title: 'Activity Management',
             description: 'Organize and manage educational activities, events, and extracurricular programs.',
-            icon: <Event />,
+            icon: <Event/>,
             color: '#9c27b0',
             stats: 'Upcoming Activities'
         },
         {
             title: 'Schedule Management',
             description: 'Plan and manage class schedules, timetables, and academic calendar efficiently.',
-            icon: <CalendarToday />,
+            icon: <CalendarToday/>,
             color: '#f57c00',
             stats: 'Scheduled Sessions'
         },
         {
             title: 'Syllabus Management',
             description: 'Create and manage syllabi for different classes and subjects.',
-            icon: <Assignment />,
+            icon: <Assignment/>,
             color: '#4caf50',
             stats: 'Active Syllabi'
         },
         {
             title: 'Lessons Management',
             description: 'Plan, organize, and manage lessons effectively.',
-            icon: <Dashboard />,
+            icon: <Dashboard/>,
             color: '#3f51b5',
             stats: 'Total Lessons'
         }
     ];
 
     return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Container maxWidth="lg" sx={{py: 4}}>
             {/* Header Section */}
-            <Box sx={{ mb: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box sx={{mb: 4}}>
+                <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
                     <Avatar
                         sx={{
                             bgcolor: 'primary.main',
@@ -71,7 +54,7 @@ function EducationDashboard() {
                             height: 48
                         }}
                     >
-                        <Dashboard />
+                        <Dashboard/>
                     </Avatar>
                     <Box>
                         <Typography
@@ -84,20 +67,20 @@ function EducationDashboard() {
                             Education Management Dashboard
                         </Typography>
                         <Chip
-                            icon={<TrendingUp sx={{ color: '#666' }} />}
+                            icon={<TrendingUp sx={{color: '#666'}}/>}
                             label="Management Portal"
                             color="primary"
                             variant="outlined"
                         />
                     </Box>
                 </Box>
-                
+
                 <Typography
                     variant="h6"
                     color="text.secondary"
-                    sx={{ maxWidth: 600 }}
+                    sx={{maxWidth: 600}}
                 >
-                    Welcome to the Education Management System. Access powerful tools to manage 
+                    Welcome to the Education Management System. Access powerful tools to manage
                     classes, activities, and schedules from your centralized dashboard.
                 </Typography>
             </Box>
@@ -117,13 +100,13 @@ function EducationDashboard() {
                         <Typography variant="h6" gutterBottom>
                             System Overview
                         </Typography>
-                        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                        <Typography variant="body1" sx={{opacity: 0.9}}>
                             Monitor and manage all educational activities from this central hub.
                             Navigate using the sidebar to access specific management tools.
                         </Typography>
                     </Grid>
-                    <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
-                        <Assignment sx={{ fontSize: 60, opacity: 0.8 }} />
+                    <Grid item xs={12} md={4} sx={{textAlign: 'center'}}>
+                        <Assignment sx={{fontSize: 60, opacity: 0.8}}/>
                     </Grid>
                 </Grid>
             </Paper>
@@ -134,7 +117,7 @@ function EducationDashboard() {
                 component="h2"
                 fontWeight="600"
                 gutterBottom
-                sx={{ mb: 3 }}
+                sx={{mb: 3}}
             >
                 Management Features
             </Typography>
@@ -153,8 +136,8 @@ function EducationDashboard() {
                                 }
                             }}
                         >
-                            <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <CardContent sx={{p: 3}}>
+                                <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
                                     <Avatar
                                         sx={{
                                             bgcolor: feature.color,
@@ -174,11 +157,11 @@ function EducationDashboard() {
                                         {feature.title}
                                     </Typography>
                                 </Box>
-                                
+
                                 <Typography
                                     variant="body2"
                                     color="text.secondary"
-                                    sx={{ mb: 2, lineHeight: 1.6 }}
+                                    sx={{mb: 2, lineHeight: 1.6}}
                                 >
                                     {feature.description}
                                 </Typography>
@@ -199,7 +182,7 @@ function EducationDashboard() {
             </Grid>
 
             {/* Additional Info Section */}
-            <Box sx={{ mt: 4 }}>
+            <Box sx={{mt: 4}}>
                 <Paper
                     elevation={1}
                     sx={{
@@ -213,8 +196,9 @@ function EducationDashboard() {
                         Getting Started
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Use the navigation menu on the left to access different management tools. 
-                        Each section provides comprehensive functionality for managing your educational institution's operations.
+                        Use the navigation menu on the left to access different management tools.
+                        Each section provides comprehensive functionality for managing your educational institution's
+                        operations.
                     </Typography>
                 </Paper>
             </Box>

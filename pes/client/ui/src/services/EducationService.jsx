@@ -40,6 +40,25 @@ export const getClassesByGrade = async (grade) => {
     return response ? response.data : null
 }
 
+export const createClass = async (data) => {
+    const response = await axiosClient.post('/education/classes', data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const updateClass = async (id, data) => {
+    const response = await axiosClient.put(`/education/classes/${id}`, data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const removeClass = async (id) => {
+    const response = await axiosClient.delete(`/education/classes/${id}`);
+    return response.data;
+}
+
 // Syllabus APIs
 export const getAllSyllabi = async () => {
     const response = await axiosClient.get('/education/syllabus')
@@ -54,6 +73,26 @@ export const getSyllabusById = async (syllabusId) => {
 export const getLessonsBySyllabusId = async (syllabusId) => {
     const response = await axiosClient.get(`/education/syllabus/${syllabusId}/lessons`)
     return response ? response.data : null
+}
+
+
+export const createSyllabus = async (data) => {
+    const response = await axiosClient.post('/education/syllabus', data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const updateSyllabus = async (id, data) => {
+    const response = await axiosClient.put(`/education/syllabus/${id}`, data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const removeSyllabus = async (id) => {
+    const response = await axiosClient.delete(`/education/syllabus/${id}`);
+    return response.data;
 }
 
 // Lesson APIs
@@ -79,6 +118,25 @@ export const getLessonById = async (lessonId) => {
 export const getLessonsByTopic = async (topic) => {
     const response = await axiosClient.get(`/education/lessons/search?topic=${topic}`)
     return response ? response.data : null
+}
+
+export const createLesson = async (data) => {
+    const response = await axiosClient.post('/education/lessons', data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const updateLesson = async (id, data) => {
+    const response = await axiosClient.put(`/education/lessons/${id}`, data, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+}
+
+export const removeLesson = async (id) => {
+    const response = await axiosClient.delete(`/education/lessons/${id}`);
+    return response.data;
 }
 
 // Activity APIs

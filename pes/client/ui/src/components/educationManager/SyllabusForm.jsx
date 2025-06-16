@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import {memo, useCallback, useEffect, useRef, useState} from 'react';
+import {useFieldArray, useForm} from 'react-hook-form';
 import {
     Box,
     Button,
@@ -7,38 +7,37 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     FormControl,
     FormHelperText,
     InputLabel,
     MenuItem,
     Select,
     TextField,
-    Typography,
-    Divider
+    Typography
 } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
-import { Add } from '@mui/icons-material';
-import SyllabusService from '../../services/SyllabusService.jsx';
+import {enqueueSnackbar} from 'notistack';
+import {Add} from '@mui/icons-material';
+import {createSyllabus, getAllSyllabi, updateSyllabus} from "../../services/EducationService.jsx";
 
-// Memoized Lesson Item component to prevent unnecessary re-renders
 const LessonItem = memo(({
-    item,
-    index,
-    register,
-    remove,
-    allLessons,
-    errors,
-    loading
-}) => {
+                             item,
+                             index,
+                             register,
+                             remove,
+                             allLessons,
+                             errors,
+                             loading
+                         }) => {
     return (
-        <Box key={item.id} sx={{ border: 1, borderRadius: 1, p: 2, mb: 2 }}>
+        <Box key={item.id} sx={{border: 1, borderRadius: 1, p: 2, mb: 2}}>
             <FormControl fullWidth margin="dense" error={!!errors?.lessons?.[index]?.lessonId}>
                 <InputLabel id={`lesson-select-label-${index}`}>Lesson</InputLabel>
                 <Select
                     labelId={`lesson-select-label-${index}`}
                     label="Lesson"
                     defaultValue={item.lessonId || ""}
-                    {...register(`lessons.${index}.lessonId`, { required: true })}
+                    {...register(`lessons.${index}.lessonId`, {required: true})}
                     disabled={loading}
                 >
                     <MenuItem value="">
@@ -64,7 +63,7 @@ const LessonItem = memo(({
                 </Typography>
             )}
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{my: 2}}/>
 
             <TextField
                 label="Note"
@@ -76,14 +75,14 @@ const LessonItem = memo(({
                 defaultValue={item.note || ""}
                 {...register(`lessons.${index}.note`)}
                 disabled={loading}
-                sx={{ mb: 1 }}
+                sx={{mb: 1}}
             />
 
             <Button
                 variant="outlined"
                 color="error"
                 size="small"
-                sx={{ mt: 1 }}
+                sx={{mt: 1}}
                 onClick={() => remove(index)}
                 disabled={loading}
             >
@@ -93,7 +92,7 @@ const LessonItem = memo(({
     );
 });
 
-export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
+export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
     const [allLessons, setAllLessons] = useState([]);
     const [loading, setLoading] = useState(false);
     const [addingLesson, setAddingLesson] = useState(false);
@@ -108,30 +107,26 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
         }
     });
 
-    const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = formMethods;
+    const {register, handleSubmit, reset, control, setValue, watch, formState: {errors}} = formMethods;
 
-    // Watch syllabusId for updates
     const syllabusId = watch('syllabusId');
-    // Watch lessons for debugging
     const watchLessons = watch('lessons');
 
-    const { fields, append, remove, replace } = useFieldArray({
+    const {fields, append, remove, replace} = useFieldArray({
         control,
         name: "lessons"
     });
 
-    // Debug current form values
     useEffect(() => {
         console.log("Current form fields:", fields);
         console.log("Current form values - lessons:", watchLessons);
     }, [fields, watchLessons]);
 
-    // Fetch all available lessons
     useEffect(() => {
         const fetchLessons = async () => {
             try {
                 setLoading(true);
-                const response = await SyllabusService.getAllLessons();
+                const response = await getAllSyllabi();
                 // Ensure we're getting data in the right format
                 const lessonData = response.data ? response.data : response;
                 setAllLessons(Array.isArray(lessonData) ? lessonData : []);
@@ -148,19 +143,16 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
         fetchLessons();
     }, []);
 
-    // Set form values when syllabus changes (for edit mode)
     useEffect(() => {
         if (isEdit && syllabus) {
             console.log("Setting up edit mode with syllabus:", syllabus);
 
             lessonsProcessedRef.current = false;
 
-            // Process syllabusLessonList if available
             try {
                 if (syllabus.syllabusLessonList && Array.isArray(syllabus.syllabusLessonList)) {
                     console.log("Found syllabusLessonList:", syllabus.syllabusLessonList);
 
-                    // Map the lesson data to the format expected by the form
                     const lessonFormData = syllabus.syllabusLessonList
                         .filter(syllabusLesson => syllabusLesson && syllabusLesson.lesson)
                         .map(syllabusLesson => ({
@@ -171,7 +163,6 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
 
                     console.log("Processed lesson data for form:", lessonFormData);
 
-                    // First reset the form with the basic data
                     reset({
                         syllabusId: syllabus.id,
                         title: syllabus.title || '',
@@ -179,12 +170,10 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                         lessons: lessonFormData // Include lessons directly in reset
                     });
 
-                    // After form reset, ensure the field array is also updated
                     replace(lessonFormData);
 
                     lessonsProcessedRef.current = true;
                 } else {
-                    // Just reset basic info if no lessons
                     reset({
                         syllabusId: syllabus.id,
                         title: syllabus.title || '',
@@ -195,10 +184,9 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                 }
             } catch (error) {
                 console.error("Error processing syllabus lessons:", error);
-                enqueueSnackbar('Error loading syllabus lessons', { variant: 'error' });
+                enqueueSnackbar('Error loading syllabus lessons', {variant: 'error'});
             }
         } else if (!isEdit) {
-            // For create mode, reset the form
             reset({
                 syllabusId: null,
                 title: '',
@@ -208,9 +196,8 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
         }
     }, [syllabus, isEdit, reset, replace]);
 
-    // Safe append function that won't freeze the UI
     const safeAppend = useCallback(() => {
-        if (addingLesson) return; // Prevent multiple rapid clicks
+        if (addingLesson) return;
 
         try {
             setAddingLesson(true);
@@ -228,7 +215,6 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
         }
     }, [append, addingLesson, syllabusId]);
 
-    // Update syllabusId in all lessons when the main syllabusId changes
     useEffect(() => {
         if (syllabusId && fields.length > 0) {
             fields.forEach((_, index) => {
@@ -242,7 +228,6 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
             setLoading(true);
             let response;
 
-            // Convert syllabusId and lessonId to integers
             const formattedData = {
                 ...data,
                 syllabusId: data.syllabusId ? Number(data.syllabusId) : null,
@@ -256,20 +241,17 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
             console.log("Submitting data:", formattedData);
 
             if (isEdit && syllabus) {
-                // Make sure syllabusId is set for update operations
                 formattedData.syllabusId = Number(syllabus.id);
-                response = await SyllabusService.update(syllabus.id, formattedData);
-                enqueueSnackbar('Syllabus updated successfully!', { variant: 'success' });
+                response = await updateSyllabus(syllabus.id, formattedData);
+                enqueueSnackbar('Syllabus updated successfully!', {variant: 'success'});
             } else {
-                // For create operation, we don't include syllabusId in the initial request
-                // The backend will assign an ID
-                response = await SyllabusService.create(formattedData);
+                response = await createSyllabus(formattedData);
                 if (!response.data) {
-                    enqueueSnackbar("Syllabus already exists!", { variant: 'error' });
+                    enqueueSnackbar("Syllabus already exists!", {variant: 'error'});
                     setLoading(false);
                     return;
                 }
-                enqueueSnackbar("Syllabus added successfully!", { variant: 'success' });
+                enqueueSnackbar("Syllabus added successfully!", {variant: 'success'});
             }
 
             setLoading(false);
@@ -281,7 +263,7 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                 isEdit
                     ? 'Failed to update syllabus: ' + (error?.response?.data?.message || error.message)
                     : 'Syllabus addition failed: ' + (error?.response?.data?.message || error.message),
-                { variant: 'error' }
+                {variant: 'error'}
             );
             setLoading(false);
         }
@@ -291,8 +273,7 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>{isEdit ? 'Edit Syllabus' : 'Add Syllabus'}</DialogTitle>
             <DialogContent>
-                <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 1 }}>
-                    {/* Hidden field for syllabusId */}
+                <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 1}}>
                     <input type="hidden" {...register("syllabusId")} />
 
                     <TextField
@@ -301,7 +282,7 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                         margin="normal"
                         error={!!errors.title}
                         helperText={errors.title ? "Title is required" : ""}
-                        {...register("title", { required: true })}
+                        {...register("title", {required: true})}
                         autoFocus
                         disabled={loading}
                     />
@@ -312,15 +293,15 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                         margin="normal"
                         error={!!errors.description}
                         helperText={errors.description ? "Description is required" : ""}
-                        {...register("description", { required: true })}
+                        {...register("description", {required: true})}
                         disabled={loading}
                     />
                     <Typography variant="subtitle1" mt={2}>Lessons</Typography>
 
-                    {/* Debugging output */}
                     {isEdit && syllabus?.syllabusLessonList?.length > 0 && fields.length === 0 && (
                         <Typography color="error" variant="body2">
-                            Found {syllabus.syllabusLessonList.length} lessons but not displayed. Check console for details.
+                            Found {syllabus.syllabusLessonList.length} lessons but not displayed. Check console for
+                            details.
                         </Typography>
                     )}
 
@@ -340,8 +321,8 @@ export default function SyllabusForm({ open, onClose, syllabus, isEdit }) {
                         variant="outlined"
                         color="secondary"
                         onClick={safeAppend}
-                        sx={{ mb: 2 }}
-                        startIcon={<Add />}
+                        sx={{mb: 2}}
+                        startIcon={<Add color="secondary"/>}
                         disabled={loading || addingLesson}
                     >
                         Add Lesson
