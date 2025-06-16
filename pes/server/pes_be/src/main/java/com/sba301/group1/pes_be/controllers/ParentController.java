@@ -54,9 +54,9 @@ public class ParentController {
         return parentService.updateChild(request, httpRequest);
     }
 
-    @GetMapping("/children")
+    @GetMapping("/child")
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request) {
-        return parentService.getChildrenByParentId(request);
+    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
+        return parentService.getChildrenByParent(request);
     }
 }

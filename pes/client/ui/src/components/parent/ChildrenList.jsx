@@ -14,7 +14,9 @@ import {
   FormLabel,
   RadioGroup,
   FormControlLabel,
-  Radio
+  Radio,
+  Box,
+  CircularProgress
 } from "@mui/material";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Snackbar, Alert, IconButton } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -23,6 +25,7 @@ import { addChild, updateChild } from "../../services/ParentService";
 const ChildrenList = () => {
   const [children, setChildren] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -82,6 +85,7 @@ const ChildrenList = () => {
     setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "" });
     setOpen(true);
   };
+  
   const handleEditOpen = (child) => {
     console.log("Editing child:", child);
     
@@ -95,6 +99,7 @@ const ChildrenList = () => {
     });
     setOpen(true);
   };
+
   const handleClose = () => {
     setOpen(false);
     setForm({ name: "", gender: "", dateOfBirth: "", placeOfBirth: "" });
@@ -114,7 +119,6 @@ const ChildrenList = () => {
     if (form.name && form.gender && form.dateOfBirth && form.placeOfBirth) {
       if (editId) {
         console.log(form);
-        
         update(form);
       } else {
         add(form);
@@ -126,18 +130,31 @@ const ChildrenList = () => {
 
   useEffect(() => {
     const fetchChildren = async () => {
-      setLoading(true);
-      const data = await getChildrenList();
-      console.log("Fetching children list...");
-      console.log("Data received from getChildrenList:", data);      
-      let childrenArr = [];
-      if (data && data.success === true) {
-        childrenArr = data.data.studentList;
-        console.log("Children data:", childrenArr);
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getChildrenList();
+        console.log("Fetching children list...");
+        console.log("Data received from getChildrenList:", data);      
         
+        if (!data) {
+          throw new Error("Failed to fetch children data");
+        }
+
+        if (!data.success) {
+          throw new Error(data.message || "Failed to fetch children data");
+        }
+
+        const childrenArr = data.data?.studentList || [];
+        console.log("Children data:", childrenArr);
+        setChildren(childrenArr);
+      } catch (err) {
+        console.error("Error fetching children:", err);
+        setError(err.message || "Failed to fetch children data");
+        setChildren([]);
+      } finally {
+        setLoading(false);
       }
-      setChildren(childrenArr);
-      setLoading(false);
     };
     fetchChildren();
   }, []);
@@ -151,9 +168,25 @@ const ChildrenList = () => {
     setPage(0);
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (!children.length) return <div>No children found.</div>;
+  const safeChildren = Array.isArray(children) ? children : [];
 
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  console.log(form)
   return (
     <>
       <Dialog open={open} onClose={handleClose}>
@@ -227,64 +260,73 @@ const ChildrenList = () => {
         border: '2px solid rgb(254, 254, 253)'
       }}>
         <Typography variant="h6" sx={{ m: 2 }}>Children List</Typography>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <Button variant="contained" onClick={handleOpen} sx={{ color:'#ffffff' }}>
-          Add Child
-        </Button>
-      </div>
-        <TableContainer sx={{ maxHeight: 440 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell align="center">No</TableCell>
-                <TableCell align="center">Name</TableCell>
-                <TableCell align="center">Gender</TableCell>
-                <TableCell align="center">Date of Birth</TableCell>
-                <TableCell align="center">Place of Birth</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {children.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((child, index) => (
-                  <TableRow key={child.id || child.studentId || index}>
-                    <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
-                    <TableCell align="center">{child.name}</TableCell>
-                    <TableCell align="center">{child.gender}</TableCell>
-                    <TableCell align="center">{child.dateOfBirth}</TableCell>
-                    <TableCell align="center">{child.placeOfBirth}</TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        color="secondary"
-                        sx={{
-                          backgroundColor: "#ff9800",
-                          color: "#fff",
-                          "&:hover": { backgroundColor: "#fb8c00" }
-                        }}
-                        onClick={() => handleEditOpen(child)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16, marginRight: 16 }}>
+          <Button variant="contained" onClick={handleOpen} sx={{ color:'#ffffff' }}>
+            Add Child
+          </Button>
+        </div>
+        {safeChildren.length === 0 ? (
+          <Box display="flex" justifyContent="center" alignItems="center" p={3}>
+            <Typography variant="body1" color="text.secondary">
+              No children found. Click "Add Child" to add one.
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <TableContainer sx={{ maxHeight: 440 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center">No</TableCell>
+                    <TableCell align="center">Name</TableCell>
+                    <TableCell align="center">Gender</TableCell>
+                    <TableCell align="center">Date of Birth</TableCell>
+                    <TableCell align="center">Place of Birth</TableCell>
+                    <TableCell align="center">Actions</TableCell>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          rowsPerPageOptions={[5, 10, 15]}
-          count={children.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+                </TableHead>
+                <TableBody>
+                  {safeChildren.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((child, index) => (
+                      <TableRow key={child.id || child.studentId || index}>
+                        <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
+                        <TableCell align="center">{child.name || ''}</TableCell>
+                        <TableCell align="center">{child.gender || ''}</TableCell>
+                        <TableCell align="center">{child.dateOfBirth || ''}</TableCell>
+                        <TableCell align="center">{child.placeOfBirth || ''}</TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            color="secondary"
+                            sx={{
+                              backgroundColor: "#ff9800",
+                              color: "#fff",
+                              "&:hover": { backgroundColor: "#fb8c00" }
+                            }}
+                            onClick={() => handleEditOpen(child)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              rowsPerPageOptions={[5, 10, 15]}
+              count={children.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </>
+        )}
       </Paper>
     </>
   );
 };
-
 
 export default ChildrenList;
 
