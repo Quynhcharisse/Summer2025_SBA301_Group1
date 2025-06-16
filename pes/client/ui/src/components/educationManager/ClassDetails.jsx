@@ -50,6 +50,7 @@ import {
     getAllClasses
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
+import ActivityForm from './ActivityForm.jsx';
 
 function ClassDetails() {
     const { id: classId } = useParams();
@@ -67,6 +68,11 @@ function ClassDetails() {
     const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
     const [scheduleFormMode, setScheduleFormMode] = useState('create');
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+    
+    // Activity form modal state
+    const [activityFormOpen, setActivityFormOpen] = useState(false);
+    const [activityFormMode, setActivityFormMode] = useState('create');
+    const [selectedActivity, setSelectedActivity] = useState(null);
 
     const fetchAllLessons = useCallback(async () => {
         try {
@@ -189,6 +195,18 @@ function ClassDetails() {
         setScheduleFormOpen(true);
     };
 
+    const handleEditActivity = (activity) => {
+        setSelectedActivity(activity);
+        setActivityFormMode('edit');
+        setActivityFormOpen(true);
+    };
+
+    const handleCreateActivity = (scheduleId) => {
+        setSelectedActivity({ scheduleId });
+        setActivityFormMode('create');
+        setActivityFormOpen(true);
+    };
+
     const handleDeleteSchedule = async (scheduleId, weekNumber) => {
         if (window.confirm(`Are you sure you want to delete Week ${weekNumber} schedule? This will also delete all associated activities.`)) {
             try {
@@ -220,6 +238,39 @@ function ClassDetails() {
                 console.error('Error deleting activity:', error);
                 enqueueSnackbar('Error deleting activity', { variant: 'error' });
             }
+        }
+    };
+
+    const handleActivityFormSubmit = async (activityData) => {
+        try {
+            let response;
+            
+            if (activityFormMode === 'create') {
+                response = await createActivity(activityData);
+            } else if (activityFormMode === 'edit') {
+                response = await updateActivity(selectedActivity.id, {
+                    topic: activityData.topic,
+                    description: activityData.description,
+                    dayOfWeek: activityData.dayOfWeek,
+                    startTime: activityData.startTime,
+                    endTime: activityData.endTime,
+                    lessonId: activityData.lessonId
+                });
+            }
+            
+            if (response && response.success) {
+                setActivityFormOpen(false);
+                await fetchClassDetails();
+                enqueueSnackbar(
+                    activityFormMode === 'create' ? 'Activity created successfully' : 'Activity updated successfully',
+                    { variant: 'success' }
+                );
+            } else {
+                enqueueSnackbar('Failed to save activity', { variant: 'error' });
+            }
+        } catch (error) {
+            console.error('Error handling activity form submission:', error);
+            enqueueSnackbar('Error saving activity', { variant: 'error' });
         }
     };
 
@@ -536,20 +587,38 @@ function ClassDetails() {
                                                         backgroundColor: '#fafafa'
                                                     }}
                                                     secondaryAction={
-                                                        <IconButton
-                                                            edge="end"
-                                                            size="small"
-                                                            onClick={() => handleDeleteActivity(activity.id, activity.topic)}
-                                                            sx={{
-                                                                color: '#f44336',
-                                                                backgroundColor: '#f44336',
-                                                                '&:hover': {
-                                                                    backgroundColor: '#d32f2f'
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Delete sx={{ color: 'white' }} />
-                                                        </IconButton>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Tooltip title="Edit Activity">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleEditActivity(activity)}
+                                                                    sx={{
+                                                                        color: '#1976d2',
+                                                                        backgroundColor: '#1976d2',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#1565c0'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Edit sx={{ color: 'white' }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            <Tooltip title="Delete Activity">
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleDeleteActivity(activity.id, activity.topic)}
+                                                                    sx={{
+                                                                        color: '#f44336',
+                                                                        backgroundColor: '#f44336',
+                                                                        '&:hover': {
+                                                                            backgroundColor: '#d32f2f'
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Delete sx={{ color: 'white' }} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                        </Box>
                                                     }
                                                 >
                                                     <ListItemIcon>
@@ -579,6 +648,24 @@ function ClassDetails() {
                                             No activities scheduled for this week
                                         </Alert>
                                     )}
+
+                                    {/* Add Activity Button */}
+                                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Add />}
+                                            onClick={() => handleCreateActivity(schedule.id)}
+                                            size="small"
+                                            sx={{
+                                                borderStyle: 'dashed',
+                                                '&:hover': {
+                                                    borderStyle: 'solid'
+                                                }
+                                            }}
+                                        >
+                                            Add Activity to Week {schedule.weekNumber}
+                                        </Button>
+                                    </Box>
                                 </CardContent>
                             </Card>
                         );
@@ -648,6 +735,18 @@ function ClassDetails() {
                 }))}
                 lessons={allLessons}
                 loading={false}
+            />
+
+            {/* Activity Form Modal */}
+            <ActivityForm
+                open={activityFormOpen}
+                onClose={() => setActivityFormOpen(false)}
+                onSubmit={handleActivityFormSubmit}
+                mode={activityFormMode}
+                initialData={selectedActivity}
+                lessons={allLessons}
+                loading={false}
+                scheduleId={selectedActivity?.scheduleId}
             />
         </Box>
     );
