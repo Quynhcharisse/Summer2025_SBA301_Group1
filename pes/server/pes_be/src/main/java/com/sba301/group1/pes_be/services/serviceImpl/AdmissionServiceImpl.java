@@ -4,18 +4,21 @@ import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
+import com.sba301.group1.pes_be.models.ReversionRequestTerm;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
+import com.sba301.group1.pes_be.repositories.ReversionRequestTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateReversionTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.CloneAdmissionTermRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
+import com.sba301.group1.pes_be.validations.AdmissionValidation.ReversionRequestTermValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,9 +39,11 @@ public class AdmissionServiceImpl implements AdmissionService {
     private final AdmissionFormRepo admissionFormRepo;
     private final AdmissionTermRepo admissionTermRepo;
     private final MailService mailService;
+    private final ReversionRequestTermRepo reversionRequestTermRepo;
 
     @Override
     public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
+        // 1. Validate các field cơ bản (ngày, số lượng, grade rỗng...)
         String error = AdmissionTermValidation.createTermValidate(request);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
@@ -50,30 +55,70 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        admissionTermRepo.save(
+        // 2. Chuyển đổi grade và tính năm hiện tại
+        Grade grade = Grade.valueOf(request.getGrade().toUpperCase());
+        int currentYear = LocalDate.now().getYear();
+        String name = "Admission Term " + grade.getName() + " " + currentYear;
+
+        // 3. Mỗi năm, mỗi grade chỉ được phép có 1 đợt tuyển sinh
+        long termCountThisYear = admissionTermRepo.countByYearAndGrade(currentYear, grade);
+        if (termCountThisYear >= 1) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("Admission term already exists for grade " + grade + " in year " + currentYear)
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // 4. Kiểm tra trùng thời gian với cùng grade
+        List<AdmissionTerm> termsWithSameGrade = admissionTermRepo.findByGrade(grade);
+        for (AdmissionTerm t : termsWithSameGrade) {
+            if (datesOverlap(request.getStartDate(), request.getEndDate(), t.getStartDate(), t.getEndDate())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        ResponseObject.builder()
+                                .message("Time period overlaps with another term of the same grade")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+        }
+
+        // 5. Đếm số đơn đã được duyệt cho grade + year
+        long approvedCount = admissionFormRepo
+                .countByStatusAndAdmissionTerm_YearAndAdmissionTerm_Grade(Status.APPROVED.getValue(), currentYear, grade);
+
+        // Nếu hợp lệ, tiếp tục tạo term
+        AdmissionTerm term = admissionTermRepo.save(
                 AdmissionTerm.builder()
+                        .name(name)
                         .grade(Grade.valueOf(request.getGrade().toUpperCase()))
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
                         .year(LocalDateTime.now().getYear())
                         .maxNumberRegistration(request.getMaxNumberRegistration())
+                        .registeredCount((int) approvedCount)
                         .status(Status.INACTIVE_TERM.getValue())
                         .build()
         );
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
-                        .message("Create term and fee successfully")
+                        .message("Create term successfully")
                         .success(true)
                         .data(null)
                         .build()
         );
     }
 
+    private boolean datesOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
+        return !(end1.isBefore(start2) || start1.isAfter(end2));
+    }
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionTerm() {
-
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
         LocalDateTime today = LocalDateTime.now();
@@ -90,13 +135,14 @@ public class AdmissionServiceImpl implements AdmissionService {
                 .map(term -> {
                             Map<String, Object> data = new HashMap<>();
                             data.put("id", term.getId());
+                            data.put("name", term.getName());
                             data.put("startDate", term.getStartDate());
                             data.put("endDate", term.getEndDate());
                             data.put("year", LocalDate.now().getYear());
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
+                            data.put("registeredCount", term.getRegisteredCount());
                             data.put("grade", term.getGrade());
                             data.put("status", term.getStatus());
-
                             return data;
                         }
                 )
@@ -123,10 +169,102 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     @Override
-    public ResponseEntity<ResponseObject> cloneAdmissionTerm(CloneAdmissionTermRequest request) {
-        return null;
+    public ResponseEntity<ResponseObject> createReversionRequestTerm(CreateReversionTermRequest request) {
+
+        // 1. Validate các field cơ bản (ngày, số lượng, grade rỗng...)
+        String error = ReversionRequestTermValidation.createReversionRequestTerm(request);
+        if (!error.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // 2. Kiểm tra AdmissionTerm tồn tại
+        AdmissionTerm term = admissionTermRepo.findById(request.getAdmissionTermId()).orElse(null);
+        if (term == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                            .message("Admission term not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // 3. Kiểm tra status và chỉ tiêu
+        if (!term.getStatus().equals(Status.LOCKED_TERM.getValue())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message("Only locked terms can have reversion requests")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        if (term.getRegisteredCount() >= term.getMaxNumberRegistration()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message("Term has already reached maximum registration")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // 4. Tạo ReversionRequestTerm
+        ReversionRequestTerm reversion = ReversionRequestTerm.builder()
+                .name("Reversion Term - " + term.getGrade().getName() + " " + term.getYear())
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .maxNumberRegistration(request.getMaxNumberRegistration())
+                .reason(request.getReason())
+                .admissionTerm(term)
+                .build();
+
+        reversionRequestTermRepo.save(reversion);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResponseObject.builder()
+                        .message("Reversion request term created successfully")
+                        .success(true)
+                        .data(null)
+                        .build()
+        );
     }
 
+    @Override
+    public ResponseEntity<ResponseObject> viewReversionRequestTerm() {
+        List<ReversionRequestTerm> reversions = reversionRequestTermRepo.findAll();
+
+        List<Map<String, Object>> reversionList = reversions.stream()
+                .map(rev -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", rev.getId());
+                    data.put("name", rev.getName());
+                    data.put("startDate", rev.getStartDate());
+                    data.put("endDate", rev.getEndDate());
+                    data.put("maxNumberRegistration", rev.getMaxNumberRegistration());
+                    data.put("reason", rev.getReason());
+                    data.put("admissionTermId", rev.getAdmissionTerm().getId());
+                    data.put("grade", rev.getAdmissionTerm().getGrade());
+                    data.put("year", rev.getAdmissionTerm().getYear());
+                    return data;
+                })
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseObject.builder()
+                        .message("")
+                        .success(true)
+                        .data(reversionList)
+                        .build()
+        );
+    }
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList() {
@@ -162,6 +300,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .build()
         );
     }
+
 
     @Override
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {

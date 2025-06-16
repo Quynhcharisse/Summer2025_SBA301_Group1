@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="PesBeApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <envs>
+      <env name="MAIL_PASSWORD" value="sssfrjtumwhthvlo" />
+      <env name="MAIL_USERNAME" value="quynhpvnse182895@fpt.edu.vn" />
+    </envs>
+    <module name="pes_be" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.sba301.group1.pes_be.PesBeApplication" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.sba301.group1.pes_be.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

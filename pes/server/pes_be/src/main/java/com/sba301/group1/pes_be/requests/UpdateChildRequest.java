@@ -20,4 +20,11 @@ public class UpdateChildRequest {
     String gender;
     LocalDate dateOfBirth;
     String placeOfBirth;
+    
+    // Form information
+    String profileImage;
+    String householdRegistrationAddress;
+    String birthCertificateImg;
+    String householdRegistrationImg;
+    String commitmentImg;
 }
