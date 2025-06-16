@@ -20,12 +20,17 @@ import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
 import ChildrenList from "./components/parent/ChildrenList.jsx";
 import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
+import RegisterPage from "./page/RegisterPage.jsx";
 
 
 const router = createBrowserRouter([
     {
         path: '/login',
         element: <LoginPage/>
+    },
+    {
+        path: '/register',
+        element: <RegisterPage/>
     },
     {
         path: "/home",

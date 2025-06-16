@@ -6,13 +6,11 @@ import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
+import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.ParentService;
@@ -40,6 +38,7 @@ public class ParentServiceImpl implements ParentService {
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
+    private final AccountRepo accountRepo;
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList(HttpServletRequest request) {
@@ -420,6 +419,5 @@ public class ParentServiceImpl implements ParentService {
                         .build()
         );
     }
-
 }
 
