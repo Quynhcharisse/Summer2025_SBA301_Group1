@@ -4,21 +4,21 @@ import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
-import com.sba301.group1.pes_be.models.ReversionRequestTerm;
+import com.sba301.group1.pes_be.models.ExtraTerm;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
-import com.sba301.group1.pes_be.repositories.ReversionRequestTermRepo;
+import com.sba301.group1.pes_be.repositories.ExtraTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
-import com.sba301.group1.pes_be.requests.CreateReversionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
-import com.sba301.group1.pes_be.validations.AdmissionValidation.ReversionRequestTermValidation;
+import com.sba301.group1.pes_be.validations.AdmissionValidation.ExtraTermValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +39,7 @@ public class AdmissionServiceImpl implements AdmissionService {
     private final AdmissionFormRepo admissionFormRepo;
     private final AdmissionTermRepo admissionTermRepo;
     private final MailService mailService;
-    private final ReversionRequestTermRepo reversionRequestTermRepo;
+    private final ExtraTermRepo extraTermRepo;
 
     @Override
     public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
@@ -86,12 +86,9 @@ public class AdmissionServiceImpl implements AdmissionService {
             }
         }
 
-        // 5. Đếm số đơn đã được duyệt cho grade + year
-        long approvedCount = admissionFormRepo
-                .countByStatusAndAdmissionTerm_YearAndAdmissionTerm_Grade(Status.APPROVED.getValue(), currentYear, grade);
 
         // Nếu hợp lệ, tiếp tục tạo term
-        AdmissionTerm term = admissionTermRepo.save(
+        admissionTermRepo.save(
                 AdmissionTerm.builder()
                         .name(name)
                         .grade(Grade.valueOf(request.getGrade().toUpperCase()))
@@ -99,7 +96,6 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .endDate(request.getEndDate())
                         .year(LocalDateTime.now().getYear())
                         .maxNumberRegistration(request.getMaxNumberRegistration())
-                        .registeredCount((int) approvedCount)
                         .status(Status.INACTIVE_TERM.getValue())
                         .build()
         );
@@ -124,9 +120,19 @@ public class AdmissionServiceImpl implements AdmissionService {
         LocalDateTime today = LocalDateTime.now();
 
         for (AdmissionTerm term : terms) {
-            String updateStatus = updateTermStatus(term, today);
-            if (!term.getStatus().equals(updateStatus)) {
-                term.setStatus(updateStatus);
+            String timeStatus = updateTermStatus(term, today);
+
+            //if đủ → cần "khóa" lại dù chưa hết hạn
+            boolean isFull = countApprovedFormByTerm(term) >= term.getMaxNumberRegistration();
+
+            //term đang ACTIVE nhưng đã đủ số lượng → chuyển sang LOCKED_TERM
+            //trường hợp khác giữ nguyên status tính từ thời gian
+            String finalStatus = (timeStatus.equals(Status.ACTIVE_TERM.getValue()) && isFull)
+                    ? Status.LOCKED_TERM.getValue()
+                    : timeStatus;
+
+            if (!term.getStatus().equals(finalStatus)) {
+                term.setStatus(finalStatus);
                 admissionTermRepo.save(term);
             }
         }
@@ -138,9 +144,9 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("name", term.getName());
                             data.put("startDate", term.getStartDate());
                             data.put("endDate", term.getEndDate());
-                            data.put("year", LocalDate.now().getYear());
+                            data.put("year", term.getYear());
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
-                            data.put("registeredCount", term.getRegisteredCount());
+                            data.put("registeredCount", countApprovedFormByTerm(term));
                             data.put("grade", term.getGrade());
                             data.put("status", term.getStatus());
                             return data;
@@ -169,10 +175,10 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     @Override
-    public ResponseEntity<ResponseObject> createReversionRequestTerm(CreateReversionTermRequest request) {
+    public ResponseEntity<ResponseObject> createExtraTerm(CreateExtraTermRequest request) {
 
         // 1. Validate các field cơ bản (ngày, số lượng, grade rỗng...)
-        String error = ReversionRequestTermValidation.createReversionRequestTerm(request);
+        String error = ExtraTermValidation.createExtraTerm(request);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
@@ -199,14 +205,14 @@ public class AdmissionServiceImpl implements AdmissionService {
         if (!term.getStatus().equals(Status.LOCKED_TERM.getValue())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
-                            .message("Only locked terms can have reversion requests")
+                            .message("Only locked terms can have extra requests")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        if (term.getRegisteredCount() >= term.getMaxNumberRegistration()) {
+        if (countApprovedFormByTerm(term) >= term.getMaxNumberRegistration()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message("Term has already reached maximum registration")
@@ -216,17 +222,17 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        // 4. Tạo ReversionRequestTerm
-        ReversionRequestTerm reversion = ReversionRequestTerm.builder()
+        // 4. Tạo extra RequestTerm
+        ExtraTerm reversion = ExtraTerm.builder()
                 .name("Reversion Term - " + term.getGrade().getName() + " " + term.getYear())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .maxNumberRegistration(request.getMaxNumberRegistration())
+                .maxNumberRegistration(countMissingFormAmountByTerm(term))
                 .reason(request.getReason())
                 .admissionTerm(term)
                 .build();
 
-        reversionRequestTermRepo.save(reversion);
+        extraTermRepo.save(reversion);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
@@ -238,10 +244,10 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> viewReversionRequestTerm() {
-        List<ReversionRequestTerm> reversions = reversionRequestTermRepo.findAll();
+    public ResponseEntity<ResponseObject> viewExtraTerm() {
+        List<ExtraTerm> extraTerm = extraTermRepo.findAll();
 
-        List<Map<String, Object>> reversionList = reversions.stream()
+        List<Map<String, Object>> extraTermList = extraTerm.stream()
                 .map(rev -> {
                     Map<String, Object> data = new HashMap<>();
                     data.put("id", rev.getId());
@@ -261,9 +267,17 @@ public class AdmissionServiceImpl implements AdmissionService {
                 ResponseObject.builder()
                         .message("")
                         .success(true)
-                        .data(reversionList)
+                        .data(extraTermList)
                         .build()
         );
+    }
+
+    private int countApprovedFormByTerm(AdmissionTerm term) {
+        return  (int) term.getAdmissionFormList().stream().filter(form -> form.getStatus().equals(Status.APPROVED.getValue())).count();
+    }
+
+    private int countMissingFormAmountByTerm(AdmissionTerm term) {
+        return term.getMaxNumberRegistration() - countApprovedFormByTerm(term);
     }
 
     @Override
@@ -377,4 +391,5 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .build()
         );
     }
+
 }

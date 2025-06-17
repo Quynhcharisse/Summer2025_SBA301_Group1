@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
-import com.sba301.group1.pes_be.requests.CreateReversionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
@@ -34,16 +34,16 @@ public class AdmissionController {
         return admissionService.viewAdmissionTerm();
     }
 
-    @PostMapping("/reversion/request/term")
+    @PostMapping("/extra/term")
     @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> createReversionRequestTerm(@RequestBody CreateReversionTermRequest request) {
-        return admissionService.createReversionRequestTerm(request);
+    public ResponseEntity<ResponseObject> createExtraTerm(@RequestBody CreateExtraTermRequest request) {
+        return admissionService.createExtraTerm(request);
     }
 
-    @GetMapping("/reversion/request/term")
+    @GetMapping("/extra/term")
     @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> viewReversionRequestTerm() {
-        return admissionService.viewReversionRequestTerm();
+    public ResponseEntity<ResponseObject> viewExtraTerm() {
+        return admissionService.viewExtraTerm();
     }
 
     @GetMapping("/form/list")

@@ -48,6 +48,9 @@ public class Student {
     @Column(name = "`place_of_birth`")
     String placeOfBirth;
 
+    @Column(name = "`modified_date`")
+    LocalDate modifiedDate;
+
     @Column(name = "`profile_image`")
     String profileImage;
 

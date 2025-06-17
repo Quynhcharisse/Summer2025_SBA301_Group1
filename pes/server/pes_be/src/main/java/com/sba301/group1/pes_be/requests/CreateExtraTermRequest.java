@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CreateReversionTermRequest {
+public class CreateExtraTermRequest {
     Integer admissionTermId;
     LocalDateTime startDate;
     LocalDateTime endDate;
