@@ -25,8 +25,8 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "`reversion_request_term`")
-public class ReversionRequestTerm {
+@Table(name = "`extra_term`")
+public class ExtraTerm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -14,7 +14,6 @@ public class ChildValidation {
         // Validate form information
         if (!validateFormFields(
                 request.getProfileImage(),
-                request.getHouseholdRegistrationAddress(),
                 request.getBirthCertificateImg(),
                 request.getHouseholdRegistrationImg(),
                 request.getCommitmentImg())) {
@@ -34,7 +33,6 @@ public class ChildValidation {
         // Validate form information
         if (!validateFormFields(
                 request.getProfileImage(),
-                request.getHouseholdRegistrationAddress(),
                 request.getBirthCertificateImg(),
                 request.getHouseholdRegistrationImg(),
                 request.getCommitmentImg())) {
@@ -46,19 +44,16 @@ public class ChildValidation {
 
     public static boolean validateFormFields(
             String profileImage,
-            String householdRegistrationAddress,
             String birthCertificateImg,
             String householdRegistrationImg,
             String commitmentImg) {
         
-        boolean hasAnyField = profileImage != null || 
-                            householdRegistrationAddress != null ||
+        boolean hasAnyField = profileImage != null ||
                             birthCertificateImg != null || 
                             householdRegistrationImg != null ||
                             commitmentImg != null;
 
-        boolean hasAllFields = profileImage != null && 
-                             householdRegistrationAddress != null &&
+        boolean hasAllFields = profileImage != null &&
                              birthCertificateImg != null && 
                              householdRegistrationImg != null &&
                              commitmentImg != null;

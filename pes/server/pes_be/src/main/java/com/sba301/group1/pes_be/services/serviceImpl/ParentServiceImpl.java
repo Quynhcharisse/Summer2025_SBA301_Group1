@@ -8,14 +8,17 @@ import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
-import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
-import com.sba301.group1.pes_be.requests.*;
+import com.sba301.group1.pes_be.requests.AddChildRequest;
+import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.UpdateChildRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
+import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
 import com.sba301.group1.pes_be.validations.ParentValidation.ChildValidation;
 import com.sba301.group1.pes_be.validations.ParentValidation.FormByParentValidation;
@@ -26,6 +29,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +49,8 @@ public class ParentServiceImpl implements ParentService {
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
+
+    private final MailService mailService;
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList(HttpServletRequest request) {
@@ -119,7 +126,6 @@ public class ParentServiceImpl implements ParentService {
     //submit form
     @Override
     public ResponseEntity<ResponseObject> submitAdmissionForm(SubmitAdmissionFormRequest request, HttpServletRequest httpRequest) {
-
         // 1. Lấy account từ cookie
         Account account = jwtService.extractAccountFromCookie(httpRequest);
         if (account == null || !account.getRole().equals(Role.PARENT)) {
@@ -143,65 +149,101 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        // 3. Kiểm tra tồn tại student và term
+        // 3. Lấy thông tin student
         Student student = studentRepo.findById(request.getStudentId()).orElse(null);
-        AdmissionTerm term = admissionTermRepo.findById(request.getAdmissionTermId()).orElse(null);
-
-        if (student == null || term == null) {
-            return ResponseEntity.ok().body(
+        if (student == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
-                            .message("Student or admission term not found")
+                            .message("Student not found")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        // 4. Kiểm tra độ tuổi đúng với grade
-        if (!isAgeValidForGrade(student.getDateOfBirth(), term.getGrade())) {
-            return ResponseEntity.ok().body(
+        // 4. Tìm kỳ tuyển sinh đang ACTIVE
+        AdmissionTerm activeTerm = admissionTermRepo.findAll().stream()
+                .filter(t -> t.getStatus().equals(Status.ACTIVE_TERM.getValue()))
+                .findFirst()
+                .orElse(null);
+
+        if (activeTerm == null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     ResponseObject.builder()
-                            .message("Student's age does not match the required grade")
+                            .message("No active admission term currently open")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        // 6. Kiểm tra form trùng lặp
-        AdmissionForm existingForm = admissionFormRepo.findByStudent_IdAndAdmissionTerm_Id(request.getStudentId(), request.getAdmissionTermId());
-        
-        if (existingForm != null) {
-            // Chỉ cho phép submit lại nếu form trước đó đã bị REJECTED hoặc CANCELLED
-            if (!existingForm.getStatus().equals(Status.REJECTED.getValue()) && 
-                !existingForm.getStatus().equals(Status.CANCELLED.getValue())) {
-                return ResponseEntity.ok().body(
-                        ResponseObject.builder()
-                                .message("You have already submitted a form for this term")
-                                .success(false)
-                                .data(null)
-                                .build()
-                );
-            }
+        // 5. Kiểm tra độ tuổi phù hợp
+        if (!isAgeValidForGrade(student.getDateOfBirth(), activeTerm.getGrade())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message("Student's age does not match the required grade for current term")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
         }
 
-        // 7. Tạo và lưu form mới
+        // 6. Kiểm tra xem học sinh đã nộp form kỳ này chưa
+        List<AdmissionForm> existingForms = admissionFormRepo
+                .findAllByParent_IdAndStudent_Id(account.getParent().getId(), student.getId()).stream()
+                .filter(form -> form.getAdmissionTerm() != null && form.getAdmissionTerm().getId() == activeTerm.getId())
+                .toList();
 
-            AdmissionForm newForm = AdmissionForm.builder()
-                    .parent(account.getParent())
-                    .student(student)
-                    .admissionTerm(term)  // Thêm term vào form
-                    .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                    .profileImage(request.getProfileImage())
-                    .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                    .birthCertificateImg(request.getBirthCertificateImg())
-                    .commitmentImg(request.getCommitmentImg())
-                    .note(request.getNote())
-                    .submittedDate(LocalDate.now())
-                    .status(Status.PENDING_APPROVAL.getValue())
-                    .build();
+        boolean hasSubmittedForm = existingForms.stream()
+                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED.getValue()) && form.getStatus().equals(Status.CANCELLED.getValue()));
 
-            admissionFormRepo.save(newForm);
+        if (hasSubmittedForm) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("This student has already been submit in the current admission term.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        boolean hasPendingForm = existingForms.stream()
+                .anyMatch(form -> form.getStatus().equals(Status.PENDING_APPROVAL.getValue()));
+
+        if (hasPendingForm) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("You have already submitted a pending form for this student in the current term.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // 7. Lưu form mới
+        AdmissionForm form = AdmissionForm.builder()
+                .parent(account.getParent())
+                .student(student)
+                .admissionTerm(activeTerm)
+                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                .note(request.getNote())
+                .submittedDate(LocalDate.now())
+                .status(Status.PENDING_APPROVAL.getValue())
+                .build();
+
+        admissionFormRepo.save(form);
+
+        // 8. Gửi email
+        try {
+            mailService.sendMail(
+                    account.getEmail(),
+                    "Admission Form Submitted",
+                    "Dear Parent,\n\nYour admission form for your child has been successfully submitted on "
+                            + LocalDateTime.now() + ".\n\nRegards,\nSunShine Preschool"
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send email notification: " + e.getMessage());
+        }
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -213,10 +255,10 @@ public class ParentServiceImpl implements ParentService {
     }
 
     private boolean isAgeValidForGrade(LocalDate dateOfBirth, Grade grade) {
-        int currentYear = LocalDate.now().getYear();
-        int age = currentYear - dateOfBirth.getYear();
-        return age == grade.getAge();
+        int exactAge = Period.between(dateOfBirth, LocalDate.now()).getYears();
+        return exactAge == grade.getAge();
     }
+
 
     // cancel form
     @Override
@@ -271,14 +313,13 @@ public class ParentServiceImpl implements ParentService {
         );
     }
 
-
     @Override
     public ResponseEntity<ResponseObject> addChild(AddChildRequest request, HttpServletRequest httpRequest) {
         Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                     ResponseObject.builder()
-                            .message("Add child failed: Unauthorized")
+                            .message("Forbidden: Only parents can access this resource")
                             .success(false)
                             .data(null)
                             .build());
@@ -286,7 +327,7 @@ public class ParentServiceImpl implements ParentService {
 
         String error = ChildValidation.addChildValidate(request);
         if (!error.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)
@@ -296,7 +337,7 @@ public class ParentServiceImpl implements ParentService {
 
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         if (parent == null) {
-            return ResponseEntity.status(404).body(
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                             .message("Parent not found")
                             .success(false)
@@ -310,59 +351,31 @@ public class ParentServiceImpl implements ParentService {
                         .gender(request.getGender())
                         .dateOfBirth(request.getDateOfBirth())
                         .placeOfBirth(request.getPlaceOfBirth())
+                        .modifiedDate(LocalDate.now())
                         .isStudent(false)         // mặc định là chưa chính thức
                         .parent(parent)           // gán cha mẹ
                         .build());
 
-        // Save admission form if provided
-        if (request.getProfileImage() != null) {
-            AdmissionForm form = AdmissionForm.builder()
-                    .parent(parent)
-                    .student(student)
-                    .profileImage(request.getProfileImage())
-                    .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                    .birthCertificateImg(request.getBirthCertificateImg())
-                    .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                    .commitmentImg(request.getCommitmentImg())
-                    .submittedDate(LocalDate.now())
-                    .build();
-            
-            admissionFormRepo.save(form);
-        }
 
-        Map<String, Object> childData = new HashMap<>();
-        childData.put("id", student.getId());
-        childData.put("name", student.getName());
-        childData.put("gender", student.getGender());
-        childData.put("dateOfBirth", student.getDateOfBirth());
-        childData.put("placeOfBirth", student.getPlaceOfBirth());
-        childData.put("isStudent", student.isStudent());
+        // 7. Lưu form mới
+        admissionFormRepo.save(
+                AdmissionForm.builder()
+                        .student(student)
+                        .parent(parent)
+                        .status(Status.DRAFT.getValue()) // add child ==> save thì có status = draft
+                        .profileImage(request.getProfileImage())
+                        .householdRegistrationImg(request.getHouseholdRegistrationImg())
+                        .birthCertificateImg(request.getBirthCertificateImg())
+                        .commitmentImg(request.getCommitmentImg())
+                        .build());
 
-        // Add form information to response if exists
-        if (!student.getAdmissionFormList().isEmpty()) {
-            AdmissionForm latestForm = student.getAdmissionFormList().stream()
-                    .max(Comparator.comparing(AdmissionForm::getSubmittedDate))
-                    .orElse(null);
-            
-            if (latestForm != null) {
-                Map<String, Object> formDetail = new HashMap<>();
-                formDetail.put("profileImage", latestForm.getProfileImage());
-                formDetail.put("householdRegistrationAddress", latestForm.getHouseholdRegistrationAddress());
-                formDetail.put("birthCertificateImg", latestForm.getBirthCertificateImg());
-                formDetail.put("householdRegistrationImg", latestForm.getHouseholdRegistrationImg());
-                formDetail.put("commitmentImg", latestForm.getCommitmentImg());
-                childData.put("admissionForm", formDetail);
-            }
-        }
-
-        return ResponseEntity.ok().body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
                         .message("Child added successfully")
                         .success(true)
                         .data(null)
                         .build()
         );
-
     }
 
     @Override
@@ -371,7 +384,7 @@ public class ParentServiceImpl implements ParentService {
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                     ResponseObject.builder()
-                            .message("Update child failed: Unauthorized")
+                            .message("Forbidden: Only parents can access this resource")
                             .success(false)
                             .data(null)
                             .build());
@@ -401,7 +414,6 @@ public class ParentServiceImpl implements ParentService {
 
         // KHÔNG cho update nếu đã là học sinh chính thức
         Student student = studentRepo.findById(request.getId()).orElse(null);
-        System.out.println(request);
         if (student == null || !student.getParent().getId().equals(parent.getId())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
@@ -411,8 +423,14 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        if (student.isStudent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+        boolean hasSubmittedForm = student.getAdmissionFormList()
+                .stream()
+                .anyMatch(
+                        form -> !form.getStatus().equals(Status.DRAFT.getValue())
+                );
+
+        if (student.isStudent() || hasSubmittedForm) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     ResponseObject.builder()
                             .message("Cannot update child info after submitting admission form")
                             .success(false)
@@ -425,66 +443,21 @@ public class ParentServiceImpl implements ParentService {
         student.setGender(request.getGender());
         student.setDateOfBirth(request.getDateOfBirth());
         student.setPlaceOfBirth(request.getPlaceOfBirth());
-
+        student.setModifiedDate(LocalDate.now());
         studentRepo.save(student);
 
-        // Update or create admission form if provided
-        if (request.getProfileImage() != null) {
-            AdmissionForm existingForm = null;
-            if (!student.getAdmissionFormList().isEmpty()) {
-                existingForm = student.getAdmissionFormList().stream()
-                        .max(Comparator.comparing(AdmissionForm::getSubmittedDate))
-                        .orElse(null);
-            }
+        //1 draft
+        AdmissionForm draftForm = student.getAdmissionFormList().stream()
+                .filter(f -> f.getStatus().equals(Status.DRAFT.getValue()))
+                .findFirst().get(); //1 form DRAFT duy nhất cho mỗi student
 
-            if (existingForm != null) {
-                existingForm.setProfileImage(request.getProfileImage());
-                existingForm.setHouseholdRegistrationAddress(request.getHouseholdRegistrationAddress());
-                existingForm.setBirthCertificateImg(request.getBirthCertificateImg());
-                existingForm.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
-                existingForm.setCommitmentImg(request.getCommitmentImg());
-                admissionFormRepo.save(existingForm);
-            } else {
-                AdmissionForm newForm = AdmissionForm.builder()
-                        .parent(parent)
-                        .student(student)
-                        .profileImage(request.getProfileImage())
-                        .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                        .birthCertificateImg(request.getBirthCertificateImg())
-                        .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                        .commitmentImg(request.getCommitmentImg())
-                        .submittedDate(LocalDate.now())
-                        .build();
-                
-                admissionFormRepo.save(newForm);
-            }
-        }
+        draftForm.setProfileImage(request.getProfileImage());
+        draftForm.setBirthCertificateImg(request.getBirthCertificateImg());
+        draftForm.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
+        draftForm.setCommitmentImg(request.getCommitmentImg());
+        admissionFormRepo.save(draftForm);
 
-        Map<String, Object> childData = new HashMap<>();
-        childData.put("id", student.getId());
-        childData.put("name", student.getName());
-        childData.put("gender", student.getGender());
-        childData.put("dateOfBirth", student.getDateOfBirth());
-        childData.put("placeOfBirth", student.getPlaceOfBirth());
-
-        // Add form information to response if exists
-        if (!student.getAdmissionFormList().isEmpty()) {
-            AdmissionForm latestForm = student.getAdmissionFormList().stream()
-                    .max(Comparator.comparing(AdmissionForm::getSubmittedDate))
-                    .orElse(null);
-            
-            if (latestForm != null) {
-                Map<String, Object> formDetail = new HashMap<>();
-                formDetail.put("profileImage", latestForm.getProfileImage());
-                formDetail.put("householdRegistrationAddress", latestForm.getHouseholdRegistrationAddress());
-                formDetail.put("birthCertificateImg", latestForm.getBirthCertificateImg());
-                formDetail.put("householdRegistrationImg", latestForm.getHouseholdRegistrationImg());
-                formDetail.put("commitmentImg", latestForm.getCommitmentImg());
-                childData.put("admissionForm", formDetail);
-            }
-        }
-
-        return ResponseEntity.ok().body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
                         .message("Child updated successfully")
                         .success(true)
@@ -520,6 +493,7 @@ public class ParentServiceImpl implements ParentService {
 
         // Lấy danh sách student của parent đó
         List<Map<String, Object>> studentList = parent.getStudentList().stream()
+                .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(student -> {
                     Map<String, Object> studentDetail = new HashMap<>();
                     studentDetail.put("id", student.getId());
@@ -527,26 +501,9 @@ public class ParentServiceImpl implements ParentService {
                     studentDetail.put("gender", student.getGender());
                     studentDetail.put("dateOfBirth", student.getDateOfBirth());
                     studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+                    studentDetail.put("modifiedDate", student.getModifiedDate());
                     studentDetail.put("isStudent", student.isStudent());
                     studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
-
-                    // Add admission form information if exists
-                    if (!student.getAdmissionFormList().isEmpty()) {
-                        AdmissionForm latestForm = student.getAdmissionFormList().stream()
-                                .max(Comparator.comparing(AdmissionForm::getSubmittedDate))
-                                .orElse(null);
-                        
-                        if (latestForm != null) {
-                            Map<String, Object> formDetail = new HashMap<>();
-                            formDetail.put("profileImage", latestForm.getProfileImage());
-                            formDetail.put("householdRegistrationAddress", latestForm.getHouseholdRegistrationAddress());
-                            formDetail.put("birthCertificateImg", latestForm.getBirthCertificateImg());
-                            formDetail.put("householdRegistrationImg", latestForm.getHouseholdRegistrationImg());
-                            formDetail.put("commitmentImg", latestForm.getCommitmentImg());
-                            studentDetail.put("admissionForm", formDetail);
-                        }
-                    }
-
                     return studentDetail;
                 })
                 .toList();

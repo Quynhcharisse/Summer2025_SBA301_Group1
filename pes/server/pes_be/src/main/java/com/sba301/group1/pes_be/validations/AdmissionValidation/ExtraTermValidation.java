@@ -1,9 +1,9 @@
 package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
-import com.sba301.group1.pes_be.requests.CreateReversionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
 
-public class ReversionRequestTermValidation {
-    public static String createReversionRequestTerm(CreateReversionTermRequest request) {
+public class ExtraTermValidation {
+    public static String createExtraTerm(CreateExtraTermRequest request) {
         if (request.getAdmissionTermId() == null) {
             return "Admission term ID is required.";
         }
