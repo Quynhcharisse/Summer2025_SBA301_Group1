@@ -21,6 +21,7 @@ import ChildrenList from "./components/parent/ChildrenList.jsx";
 import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
 import RegisterPage from "./page/RegisterPage.jsx";
+import ParentDetails from "./components/parent/ParentDetails.jsx";
 
 
 const router = createBrowserRouter([
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
             {
                 index: true,
                 element: <Navigate to="/parent/form"/>
+            },
+            {
+                path: ':id',
+                element: <ParentDetails/>
             },
             {
                 path: 'form',
