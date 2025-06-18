@@ -54,7 +54,7 @@ const ClassInformation = ({ classData, syllabus, classLessons }) => {
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Grade</Typography>
-                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small"/>
+                            <Chip label={classData?.grade || 'Not specified'} color="primary" size="small"/>
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Status</Typography>
@@ -132,10 +132,6 @@ const ClassInformation = ({ classData, syllabus, classLessons }) => {
                                 <Typography variant="body1">{syllabus.description}</Typography>
                             </Box>
                         )}
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small"/>
-                        </Box>
                         {classLessons.length > 0 && (
                             <Box>
                                 <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>

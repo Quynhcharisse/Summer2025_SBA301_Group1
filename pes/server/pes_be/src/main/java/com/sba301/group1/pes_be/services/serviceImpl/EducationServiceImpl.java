@@ -921,6 +921,7 @@ public class EducationServiceImpl implements EducationService {
                 .startDate(request.getStartDate().toString())
                 .endDate(request.getEndDate().toString())
                 .status(request.getStatus())
+                .grade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null)
                 .build();
 
         classesRepo.save(classes);
@@ -985,6 +986,7 @@ public class EducationServiceImpl implements EducationService {
                     classes.setStartDate(request.getStartDate().toString());
                     classes.setEndDate(request.getEndDate().toString());
                     classes.setStatus(request.getStatus());
+                    classes.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
                     classesRepo.save(classes);
                     return ResponseEntity.ok().body(
