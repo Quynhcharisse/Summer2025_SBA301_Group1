@@ -387,12 +387,24 @@ function ClassDetails() {
                     scheduleFormMode === 'create' ? 'Schedule created successfully' : 'Schedule updated successfully',
                     {variant: 'success'}
                 );
+                return scheduleResponse; // Return the response for ScheduleForm to use
             } else {
-                enqueueSnackbar('Failed to save schedule', {variant: 'error'});
+                // Handle specific error messages from backend
+                const errorMessage = scheduleResponse?.message || 'Failed to save schedule';
+                enqueueSnackbar(errorMessage, {variant: 'error'});
+                throw new Error(errorMessage); // Throw error so ScheduleForm can handle it
             }
         } catch (error) {
             console.error('Error handling schedule form submission:', error);
-            enqueueSnackbar('Error saving schedule', {variant: 'error'});
+            // Check if it's a duplicate schedule error or other specific errors
+            if (error.details && error.details.message) {
+                enqueueSnackbar(error.details.message, {variant: 'error'});
+            } else if (error.message && error.message.includes('already exists')) {
+                enqueueSnackbar('A schedule already exists for this week and class. Please choose a different week number.', {variant: 'warning'});
+            } else {
+                enqueueSnackbar('Error saving schedule', {variant: 'error'});
+            }
+            throw error; // Re-throw so ScheduleForm knows there was an error
         }
     };
 

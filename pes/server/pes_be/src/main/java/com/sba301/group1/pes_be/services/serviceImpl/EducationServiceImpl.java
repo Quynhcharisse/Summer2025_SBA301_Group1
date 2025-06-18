@@ -1280,6 +1280,23 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Schedule schedule = scheduleOpt.get();
+            
+            // Check if updating to a week number that already exists for the same class
+            // Only check if the week number is actually changing
+            if (schedule.getWeekNumber() != request.getWeekNumber()) {
+                Optional<Schedule> existingSchedule = scheduleRepo.findByClassesIdAndWeekNumber(
+                    schedule.getClasses().getId(), request.getWeekNumber());
+                if (existingSchedule.isPresent()) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        ResponseObject.builder()
+                            .message("A schedule already exists for week " + request.getWeekNumber() + " in this class")
+                            .success(false)
+                            .data(null)
+                            .build()
+                    );
+                }
+            }
+            
             schedule.setWeekNumber(request.getWeekNumber());
             schedule.setNote(request.getNote());
 

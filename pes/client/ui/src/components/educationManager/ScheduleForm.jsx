@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+    Alert,
     Box,
     Button,
     Dialog,
@@ -58,7 +59,7 @@ function ScheduleForm({
                 const newFormData = {
                     weekNumber: initialData.weekNumber || 1,
                     note: initialData.note || '',
-                    classId: initialData.classId || ''
+                    classId: initialData.classId || initialData.classes?.id || ''
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(initialData);
@@ -103,12 +104,18 @@ function ScheduleForm({
     };
 
     const handleSubmit = async () => {
-        // Call the onSubmit prop with form data
-        const result = await onSubmit(formData);
-        
-        // If creating a new schedule, set it as selected so activities can be managed
-        if (mode === 'create' && result?.data) {
-            setSelectedSchedule(result.data);
+        try {
+            // Call the onSubmit prop with form data
+            const result = await onSubmit(formData);
+            
+            // If creating a new schedule, set it as selected so activities can be managed
+            if (mode === 'create' && result?.data) {
+                setSelectedSchedule(result.data);
+            }
+        } catch (error) {
+            // Error handling is done in the parent component (ClassDetails)
+            // This catch block prevents the form from closing on error
+            console.error('Error in schedule form submission:', error);
         }
     };
 
@@ -129,6 +136,11 @@ function ScheduleForm({
                 </DialogTitle>
                 <DialogContent>
                     <Stack spacing={3} sx={{mt: 2}}>
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                            <strong>Schedule Validation:</strong> Each class can only have one schedule per week number.
+                            If you try to create a duplicate, you'll receive an error message.
+                        </Alert>
+                        
                         <TextField
                             fullWidth
                             label="Week Number"
@@ -137,7 +149,7 @@ function ScheduleForm({
                             onChange={(e) => setFormData({...formData, weekNumber: parseInt(e.target.value) || 1})}
                             inputProps={{min: 1}}
                             required
-                            helperText="Enter the week number for this schedule (e.g., 1, 2, 3...)"
+                            helperText="Enter the week number for this schedule. Note: Each class can only have one schedule per week number."
                         />
 
                         <FormControl fullWidth required>
