@@ -1,7 +1,6 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
-import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
 import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
@@ -104,12 +103,6 @@ public class EducationController {
         return educationService.assignActivityToClass(request);
     }
 
-    @PostMapping("/activities/bulk-create")
-    @PreAuthorize("hasRole('education')")
-    @Operation(summary = "Create multiple activities")
-    public ResponseEntity<ResponseObject> bulkCreateActivities(@RequestBody BulkCreateActivityRequest request) {
-        return educationService.bulkCreateActivities(request);
-    }
 
     @PostMapping("/activities/create-from-lessons")
     @PreAuthorize("hasRole('education')")

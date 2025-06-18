@@ -1,7 +1,6 @@
 package com.sba301.group1.pes_be.services;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
-import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
 import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
@@ -92,12 +91,6 @@ public interface EducationService {
      */
     ResponseEntity<ResponseObject> getActivitiesByClassAndDay(Integer classId, String dayOfWeek);
 
-    /**
-     * Creates multiple activities in bulk
-     * @param request the bulk creation request
-     * @return ResponseEntity containing the operation result
-     */
-    ResponseEntity<ResponseObject> bulkCreateActivities(BulkCreateActivityRequest request);
 
     /**
      * Creates activities from existing lessons

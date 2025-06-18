@@ -49,7 +49,7 @@ function ActivityForm({
                     dayOfWeek: slotContext?.dayOfWeek || '',
                     startTime: slotContext?.startTime || '',
                     endTime: slotContext?.endTime || '',
-                    lessonId: '',
+                    lessonId: null,
                     scheduleId: scheduleId || ''
                 });
             } else if (mode === 'edit' && initialData) {
@@ -60,7 +60,7 @@ function ActivityForm({
                     dayOfWeek: initialData.dayOfWeek || '',
                     startTime: initialData.startTime || '',
                     endTime: initialData.endTime || '',
-                    lessonId: initialData.lessonId || (initialData.lesson?.id) || '',
+                    lessonId: initialData.lessonId || (initialData.lesson?.id) || null,
                     scheduleId: initialData.scheduleId || scheduleId || ''
                 });
             }
@@ -140,7 +140,7 @@ function ActivityForm({
         
         setFormData({
             ...formData,
-            lessonId: lessonId,
+            lessonId: lessonId === '' ? null : lessonId, // Convert empty string to null
             endTime: newEndTime
         });
     };
@@ -215,7 +215,7 @@ function ActivityForm({
                     <FormControl fullWidth>
                         <InputLabel>Lesson (Optional)</InputLabel>
                         <Select
-                            value={formData.lessonId}
+                            value={formData.lessonId || ""}
                             onChange={(e) => handleLessonChange(e.target.value)}
                             label="Lesson (Optional)"
                         >

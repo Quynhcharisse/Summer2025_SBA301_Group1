@@ -254,20 +254,6 @@ export const assignActivityToClass = async (assignData) => {
     return response ? response.data : null
 }
 
-export const bulkCreateActivities = async (bulkData) => {
-    try {
-        const response = await axiosClient.post('/education/activities/bulk-create', bulkData)
-        return response ? response.data : null
-    } catch (error) {
-        throw {
-            error: true,
-            message: 'Failed to bulk create activities',
-            status: error.response?.status,
-            details: error.response?.data || error.message
-        }
-    }
-}
-
 export const createActivitiesFromLessons = async (lessonsData) => {
     const response = await axiosClient.post('/education/activities/create-from-lessons', lessonsData)
     return response ? response.data : null

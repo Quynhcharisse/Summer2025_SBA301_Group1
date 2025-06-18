@@ -324,16 +324,16 @@ const ActivityDetailView = ({
                     </Card>
 
                     {/* Associated Lesson Information */}
-                    {displayActivity.lesson && (
-                        <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid #e0e0e0' }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                    <MenuBook sx={{ color: '#2196f3' }} />
-                                    <Typography variant="h6" fontWeight="600" color="#2196f3">
-                                        Associated Lesson
-                                    </Typography>
-                                </Box>
-                                <Divider sx={{ mb: 2 }} />
+                    <Card sx={{ mb: 3, borderRadius: 3, border: '1px solid #e0e0e0' }}>
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                                <MenuBook sx={{ color: '#2196f3' }} />
+                                <Typography variant="h6" fontWeight="600" color="#2196f3">
+                                    Associated Lesson
+                                </Typography>
+                            </Box>
+                            <Divider sx={{ mb: 2 }} />
+                            {displayActivity.lesson ? (
                                 <Stack spacing={2}>
                                     <Box>
                                         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -354,9 +354,22 @@ const ActivityDetailView = ({
                                         </Box>
                                     )}
                                 </Stack>
-                            </CardContent>
-                        </Card>
-                    )}
+                            ) : (
+                                <Box sx={{
+                                    textAlign: 'center',
+                                    py: 3,
+                                    color: 'text.secondary'
+                                }}>
+                                    <Typography variant="body1" fontWeight="500">
+                                        None
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ mt: 1 }}>
+                                        No lesson is associated with this activity
+                                    </Typography>
+                                </Box>
+                            )}
+                        </CardContent>
+                    </Card>
 
                     {/* Schedule and Class Information */}
                     {displayActivity.schedule && (

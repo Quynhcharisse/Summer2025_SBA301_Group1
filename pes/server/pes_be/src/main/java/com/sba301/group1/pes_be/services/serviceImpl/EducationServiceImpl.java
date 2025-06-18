@@ -137,7 +137,7 @@ public class EducationServiceImpl implements EducationService {
             activity.setStartTime(request.getStartTime());
             activity.setEndTime(request.getEndTime());
 
-            // Update lesson if provided
+            // Update lesson if provided, or set to null if not provided
             if (request.getLessonId() != null) {
                 if (lessonRepo.existsById(request.getLessonId())) {
                     activity.setLesson(Lesson.builder().id(request.getLessonId()).build());
@@ -150,6 +150,9 @@ public class EducationServiceImpl implements EducationService {
                             .build()
                     );
                 }
+            } else {
+                // Set lesson to null when no lesson is selected
+                activity.setLesson(null);
             }
 
             Activity updatedActivity = activityRepo.save(activity);
@@ -493,72 +496,6 @@ public class EducationServiceImpl implements EducationService {
         }
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> bulkCreateActivities(BulkCreateActivityRequest request) {
-        try {
-            // Validate schedule exists
-            Optional<Schedule> scheduleOpt = scheduleRepo.findById(request.getScheduleId());
-            if (scheduleOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
-                );
-            }
-
-            Schedule schedule = scheduleOpt.get();
-            List<Activity> activities = new ArrayList<>();
-
-            for (BulkCreateActivityRequest.ActivityData activityData : request.getActivities()) {
-                Activity activity = Activity.builder()
-                    .topic(activityData.getTopic())
-                    .description(activityData.getDescription())
-                    .dayOfWeek(activityData.getDayOfWeek())
-                    .startTime(activityData.getStartTime())
-                    .endTime(activityData.getEndTime())
-                    .schedule(schedule)
-                    .build();
-
-                // Set lesson if provided
-                if (activityData.getLessonId() != null) {
-                    if (lessonRepo.existsById(activityData.getLessonId())) {
-                        activity.setLesson(Lesson.builder().id(activityData.getLessonId()).build());
-                    } else {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                            ResponseObject.builder()
-                                .message("Lesson with ID " + activityData.getLessonId() + " not found")
-                                .success(false)
-                                .data(null)
-                                .build()
-                        );
-                    }
-                }
-
-                activities.add(activity);
-            }
-
-            List<Activity> savedActivities = activityRepo.saveAll(activities);
-            List<ActivityResponse> activityResponses = convertToResponse(savedActivities);
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Activities created successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
-            );
-        }
-    }
 
     @Override
     public ResponseEntity<ResponseObject> createActivitiesFromLessons(CreateActivitiesFromLessonsRequest request) {
