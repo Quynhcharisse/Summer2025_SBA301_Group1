@@ -44,9 +44,6 @@ public class Parent {
     @Column(name = "`relationship_to_child`")
     String relationshipToChild;
 
-    @Column(name = "`password_changed`")
-    boolean passwordChanged;
-
     @Column(name = "`day_of_birth`")
     LocalDate dayOfBirth;
 

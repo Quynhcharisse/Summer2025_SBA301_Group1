@@ -57,15 +57,12 @@ export const updateChild = async (child) => {
     return response ? response.data : null;
 }
 
-export const getParentById = async (id) => {
-    const response = await axiosClient.get(`/parent/${id}`);
-    console.log(response)
+export const viewParentProfile = async () => {
+    const response = await axiosClient.get("/parent/profile");
     return response ? response.data : null;
 }
 
-export const updateParent = async (parent) => {
-    const response = await axiosClient.put("parent/update", parent);
-    console.log("update parent response: " + response);
-    
-    return response ? response.data : null
+export const updateParentProfile = async (profileData) => {
+    const response = await axiosClient.put("/parent/profile", profileData);
+    return response ? response.data : null;
 }

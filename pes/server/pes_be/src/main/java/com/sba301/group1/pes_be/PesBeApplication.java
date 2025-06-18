@@ -40,14 +40,6 @@ public class PesBeApplication {
 
     private final AccountRepo accountRepo;
 
-    private final AdmissionFormRepo admissionFormRepo;
-
-    private final ParentRepo parentRepo;
-
-    private final StudentRepo studentRepo;
-
-    private final AdmissionTermRepo admissionTermRepo;
-
     private final SyllabusRepo syllabusRepo;
 
     private final LessonRepo lessonRepo;
@@ -83,61 +75,6 @@ public class PesBeApplication {
             phone.append(digit); //used to append data to the end of the current string (not create new string)
         }
         return phone.toString();
-    }
-
-    private String generateRandomAddress() {
-        String[] streets = {"Nguyen Trai", "Le Loi", "Tran Hung Dao", "Pham Van Dong", "Hai Ba Trung"};
-        String[] wards = {"Ward 1", "Ward 2", "Ward 3", "Ward 4", "Ward 5"};
-        String[] districts = {"District 1", "District 3", "District 5", "Binh Thanh", "Go Vap"};
-        String[] cities = {"Ho Chi Minh City", "Hanoi", "Da Nang", "Can Tho"};
-
-        int streetNumber = (int) (Math.random() * 200 + 1); // số nhà từ 1-200
-        String street = streets[(int) (Math.random() * streets.length)];
-        String ward = wards[(int) (Math.random() * wards.length)];
-        String district = districts[(int) (Math.random() * districts.length)];
-        String city = cities[(int) (Math.random() * cities.length)];
-
-        return streetNumber + " " + street + ", " + ward + ", " + district + ", " + city;
-    }
-
-    private LocalDate generateRandomBirthDateForChild() {
-        LocalDate today = LocalDate.now();
-        LocalDate from = today.minusYears(5); // 5 tuổi
-        LocalDate to = today.minusYears(3);   // 3 tuổi
-
-        long days = to.toEpochDay() - from.toEpochDay();
-        long randomDay = from.toEpochDay() + (long) (Math.random() * days);
-        return LocalDate.ofEpochDay(randomDay);
-    }
-
-    private String generateRandomBirthHospital() {
-        String[] hospitals = {
-                "Bệnh viện Từ Dũ",
-                "Bệnh viện Hùng Vương",
-                "Bệnh viện Phụ sản Trung ương",
-                "Bệnh viện Quốc tế City",
-                "Bệnh viện Quốc tế Hạnh Phúc",
-                "Bệnh viện Đại học Y Dược TP.HCM",
-                "Bệnh viện Vinmec Central Park",
-                "Bệnh viện Phụ sản Hà Nội",
-                "Bệnh viện Mekong",
-                "Bệnh viện An Sinh"
-        };
-        int index = (int) (Math.random() * hospitals.length);
-        return hospitals[index];
-    }
-
-    private String generateRandomName() {
-        String[] names = {
-                "Khoa Vu Tu Du",
-                "Hùng Vương",
-                "Le Thi Trung Uong",
-                "Nguyen Van Toan",
-                "Pham Van Hanh Phuc",
-                "Pham Van Nhu Quynh"
-        };
-        int index = (int) (Math.random() * names.length);
-        return names[index];
     }
 
     @Bean
@@ -192,91 +129,6 @@ public class PesBeApplication {
                         .build();
                 accountRepo.save(hr);
                 System.out.println("Created account: hr@gmail.com (HR)");
-            }
-        };
-    }
-
-    @Bean
-    public CommandLineRunner initAccounts() {
-        return args -> {
-            // Names for children
-            List<String> usedNames = new ArrayList<>();
-            String[] childNames = {
-                    "An", "Bao", "Chi", "Dung", "Giang", "Hoa", "Khanh", "Linh", "Minh", "Nam",
-                    "Oanh", "Phuc", "Quang", "Trang", "Tuan", "Thao", "Uyen", "Van", "Xuan", "Yen"
-            };
-            Random random = new Random();
-
-            // Create Parent accounts + students
-            for (int i = 1; i <= 3; i++) {
-                String emailParent = "parent" + i + "@gmail.com";
-
-                Account parentAccount = accountRepo.findByEmail(emailParent).orElse(null);
-                if (parentAccount == null) {
-                    parentAccount = Account.builder()
-                            .email(emailParent)
-                            .password("123456")
-                            .role(Role.PARENT)
-                            .name("Parent " + i)
-                            .gender(random.nextBoolean() ? "male" : "female")
-                            .phone(generateRandomPhone())
-                            .identityNumber(generateRandomCCCD())
-                            .status(Status.ACCOUNT_ACTIVE.getValue())
-                            .createdAt(LocalDate.now())
-                            .build();
-                    accountRepo.save(parentAccount);
-                    System.out.println("Created Parent Account: " + emailParent);
-                }
-
-                // Create Parent entity
-                Parent parent = parentRepo.findByAccount_Id(parentAccount.getId()).orElse(null);
-                if (parent == null) {
-                    String[] jobs = {"Office worker", "Teacher", "Factory worker", "Driver", "Freelancer"};
-                    String relationship = random.nextBoolean() ? "farther" : "mother";
-
-                    parent = Parent.builder()
-                            .account(parentAccount)
-                            .dayOfBirth(LocalDate.of(1980 + random.nextInt(15), 1 + random.nextInt(12), 1 + random.nextInt(28)))
-                            .address("No. " + (100 + random.nextInt(100)) + " ABC Street, District " + (1 + random.nextInt(12)) + ", Ho Chi Minh City")
-                            .job(jobs[random.nextInt(jobs.length)])
-                            .relationshipToChild(relationship)
-                            .build();
-
-                    parentRepo.save(parent);
-                }
-
-                if (studentRepo.findAll().isEmpty()) {
-                    // Generate 2–3 students
-                    int numChildren = 2 + random.nextInt(2); // 2–3
-                    for (int j = 0; j < numChildren; j++) {
-                        String childName;
-                        int year = 2019 + random.nextInt(4); // 2019–2022
-                        int month = 1 + random.nextInt(12);
-                        int maxDay = switch (month) {
-                            case 2 -> 28;
-                            case 4, 6, 9, 11 -> 30;
-                            default -> 31;
-                        };
-                        int day = 1 + random.nextInt(maxDay);
-                        LocalDate dob = LocalDate.of(year, month, day);
-
-                        do {
-                            childName = childNames[random.nextInt(childNames.length)];
-                        } while (usedNames.contains(childName));
-                        usedNames.add(childName);
-
-                        Student student = Student.builder()
-                                .name(childName)
-                                .gender(random.nextBoolean() ? "male" : "female")
-                                .dateOfBirth(dob)
-                                .placeOfBirth("Hồ Chí Minh")
-                                .isStudent(false)
-                                .parent(parent)
-                                .build();
-                        studentRepo.save(student);
-                        System.out.printf("Created Student %s for Parent %s%n", childName, parentAccount.getEmail());
-                    }
-                }
             }
         };
     }

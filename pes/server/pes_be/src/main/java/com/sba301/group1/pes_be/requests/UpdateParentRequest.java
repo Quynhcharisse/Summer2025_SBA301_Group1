@@ -16,10 +16,8 @@ public class UpdateParentRequest {
     String job;
     String relationshipToChild;
     LocalDate dayOfBirth;
-    String email;
     String password;
     String name;
     String phone;
     String gender;
-    String identityNumber;
 }

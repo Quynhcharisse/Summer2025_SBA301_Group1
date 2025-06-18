@@ -8,14 +8,23 @@ import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
-import com.sba301.group1.pes_be.repositories.*;
-import com.sba301.group1.pes_be.requests.*;
+import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
+import com.sba301.group1.pes_be.repositories.ParentRepo;
+import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.requests.AddChildRequest;
+import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.requests.UpdateParentRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
 import com.sba301.group1.pes_be.validations.ParentValidation.ChildValidation;
 import com.sba301.group1.pes_be.validations.ParentValidation.FormByParentValidation;
+import com.sba301.group1.pes_be.validations.ParentValidation.UpdateProfileValidation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -513,62 +522,20 @@ public class ParentServiceImpl implements ParentService {
                         .build());
     }
 
-//    @Override
-//    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
-//        //xac thuc nguoi dung
-//        Account account = jwtService.extractAccountFromCookie(request);
-//        if (account == null || !account.getRole().equals(Role.PARENT)) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-//                    ResponseObject.builder()
-//                            .message("Forbidden: Only parents can access this resource")
-//                            .success(false)
-//                            .data(null)
-//                            .build()
-//            );
-//        }
-//
-//        // Tìm parent dựa vào account ID
-//        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
-//        if (parent == null) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-//                    ResponseObject.builder()
-//                            .message("Parent not found")
-//                            .success(false)
-//                            .data(null)
-//                            .build()
-//            );
-//        }
-//
-//        // Lấy danh sách student của parent đó
-//        List<Map<String, Object>> studentList = parent.getStudentList().stream()
-//                .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
-//                .map(student -> {
-//                    Map<String, Object> studentDetail = new HashMap<>();
-//                    studentDetail.put("id", student.getId());
-//                    studentDetail.put("name", student.getName());
-//                    studentDetail.put("gender", student.getGender());
-//                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
-//                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
-//                    studentDetail.put("modifiedDate", student.getModifiedDate());
-//                    studentDetail.put("isStudent", student.isStudent());
-//                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
-//                    return studentDetail;
-//                })
-//                .toList();
-//
-//        return ResponseEntity.status(HttpStatus.OK).body(
-//                ResponseObject.builder()
-//                        .message("")
-//                        .success(true)
-//                        .data(studentList)
-//                        .build()
-//        );
-//    }
-
     @Override
-    public ResponseEntity<ResponseObject> getParentById(int id, HttpServletRequest request) {
+    public ResponseEntity<ResponseObject> viewProfileParent(HttpServletRequest request) {
+        Account acc = jwtService.extractAccountFromCookie(request);
+        if (acc == null || !acc.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    ResponseObject.builder()
+                            .message("Forbidden: Only parents can access this resource")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
         // Retrieve parent by ID
-        Parent parent = parentRepo.findById(id).orElse(null);
+        Parent parent = parentRepo.findById(acc.getParent().getId()).orElse(null);
         if (parent == null) {
             return ResponseEntity.status(404).body(
                     ResponseObject.builder()
@@ -579,77 +546,90 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        // Prepare parent details
-        Account account = parent.getAccount();
         Map<String, Object> parentData = new HashMap<>();
         parentData.put("id", parent.getId());
-        parentData.put("name", account.getName());
-        parentData.put("email", account.getEmail());
-        parentData.put("phone", account.getPhone());
-        parentData.put("gender", account.getGender());
-        parentData.put("identityNumber", account.getIdentityNumber());
+        parentData.put("name", parent.getAccount().getName());
+        parentData.put("email", parent.getAccount().getEmail());
+        parentData.put("phone", parent.getAccount().getPhone());
+        parentData.put("gender", parent.getAccount().getGender());
+        parentData.put("identityNumber", maskIdentityNumber(parent.getAccount().getIdentityNumber()));
         parentData.put("address", parent.getAddress());
         parentData.put("job", parent.getJob());
         parentData.put("relationshipToChild", parent.getRelationshipToChild());
         parentData.put("dayOfBirth", parent.getDayOfBirth());
 
-        return ResponseEntity.ok().body(
+        return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
-                        .message("Parent retrieved successfully")
+                        .message("")
                         .success(true)
                         .data(parentData)
                         .build()
         );
     }
 
+    private String maskIdentityNumber(String identityNumber) {
+        if (identityNumber == null || identityNumber.length() < 4) {
+            return "****"; // hoặc xử lý phù hợp nếu quá ngắn
+        }
+
+        int visibleDigits = 4;
+        String masked = "*".repeat(identityNumber.length() - visibleDigits);
+        String last4 = identityNumber.substring(identityNumber.length() - visibleDigits);
+        return masked + last4;
+    }
+
+
     @Override
-    public ResponseEntity<ResponseObject> updateParent(UpdateParentRequest request, HttpServletRequest httpRequest) {
-        // Retrieve parent by ID
-        Parent parent = parentRepo.findById(request.getId()).orElse(null);
+    public ResponseEntity<ResponseObject> updateProfileParent(UpdateParentRequest request, HttpServletRequest httpRequest) {
+        Account acc = jwtService.extractAccountFromCookie(httpRequest);
+        if (acc == null || !acc.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    ResponseObject.builder()
+                            .message("Forbidden: Only parents can update their own profile")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        Parent parent = parentRepo.findById(acc.getParent().getId()).orElse(null);
         if (parent == null) {
-            return ResponseEntity.status(404).body(
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                             .message("Parent not found")
                             .success(false)
                             .data(null)
-                            .build()
-            );
+                            .build());
         }
 
-        // Update parent details
-        parent.setAddress(request.getAddress());
-        parent.setJob(request.getJob());
-        parent.setRelationshipToChild(request.getRelationshipToChild());
-        parent.setDayOfBirth(request.getDayOfBirth());
+        String error = UpdateProfileValidation.validate(request);
+        if (!error.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
 
-        // Update account details
+        // Update account
         Account account = parent.getAccount();
         account.setName(request.getName());
         account.setPhone(request.getPhone());
         account.setGender(request.getGender());
-        account.setIdentityNumber(request.getIdentityNumber());
-
-        // Save updated entities
         accountRepo.save(account);
-        parentRepo.save(parent);
 
-        Map<String, Object> updatedParentData = new HashMap<>();
-        updatedParentData.put("id", parent.getId());
-        updatedParentData.put("name", account.getName());
-        updatedParentData.put("email", account.getEmail());
-        updatedParentData.put("phone", account.getPhone());
-        updatedParentData.put("gender", account.getGender());
-        updatedParentData.put("identityNumber", account.getIdentityNumber());
-        updatedParentData.put("address", parent.getAddress());
-        updatedParentData.put("job", parent.getJob());
-        updatedParentData.put("relationshipToChild", parent.getRelationshipToChild());
-        updatedParentData.put("dayOfBirth", parent.getDayOfBirth());
+        // Update parent
+        parent.setAddress(request.getAddress());
+        parent.setJob(request.getJob());
+        parent.setDayOfBirth(request.getDayOfBirth());
+        parent.setRelationshipToChild(request.getRelationshipToChild());
+        parentRepo.save(parent);
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Parent updated successfully")
+                        .message("Profile updated successfully")
                         .success(true)
-                        .data(updatedParentData)
+                        .data(null)
                         .build()
         );
     }

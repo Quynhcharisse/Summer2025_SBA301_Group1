@@ -18,8 +18,6 @@ public class RegisterRequest {
     String phone;
     String gender;
     String identityNumber;
-    Role role;
-    LocalDate createAt;
     String address;
     String job;
     String relationshipToChild;

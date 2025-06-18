@@ -14,5 +14,5 @@ public interface AuthService {
 
     ResponseEntity<ResponseObject> refresh  (HttpServletRequest request, HttpServletResponse response);
 
-    ResponseEntity<ResponseObject> register(RegisterRequest RegisterRequest, HttpServletRequest request);
+    ResponseEntity<ResponseObject> register(RegisterRequest request);
 }

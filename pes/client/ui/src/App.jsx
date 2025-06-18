@@ -21,8 +21,7 @@ import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
 import ChildrenList from "./components/parent/ChildrenList.jsx";
 import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
-import RegisterPage from "./page/RegisterPage.jsx";
-import ParentDetails from "./components/parent/ParentDetails.jsx";
+import ProfileParent from "./components/parent/ProfileParent.jsx";
 
 
 const router = createBrowserRouter([
@@ -30,10 +29,10 @@ const router = createBrowserRouter([
         path: '/login',
         element: <LoginPage/>
     },
-    {
-        path: '/register',
-        element: <RegisterPage/>
-    },
+    // {
+    //     path: '/register',
+    //     element: <RegisterPage/>
+    // },
     {
         path: "/home",
         element: <HomePage/>
@@ -41,7 +40,9 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/home"/>
-    },    {        path: "/admission",
+    },
+    {
+        path: "/admission",
         element: (
             <ProtectRoute allowedRoles={["ADMISSION"]}>
                 <AdmissionLayout/>
@@ -61,7 +62,8 @@ const router = createBrowserRouter([
                 element: <AdmissionTerm/>
             }
         ]
-    },    {        path: "/parent",
+    }, {
+        path: "/parent",
         element: (
             <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
@@ -73,8 +75,8 @@ const router = createBrowserRouter([
                 element: <Navigate to="/parent/form"/>
             },
             {
-                path: ':id',
-                element: <ParentDetails/>
+                path: 'profile',
+                element: <ProfileParent/>
             },
             {
                 path: 'form',
@@ -92,10 +94,10 @@ const router = createBrowserRouter([
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>
             </ProtectRoute>
-        ),        children: [
+        ), children: [
             {
                 index: true,
-                element: <EducationDashboard />
+                element: <EducationDashboard/>
             },
             {
                 path: 'classes',
