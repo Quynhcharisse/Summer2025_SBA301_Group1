@@ -18,7 +18,6 @@ import {Add, Delete, Info, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
 import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
-import '../../styles/manager/ActivityManagement.css';
 
 function ClassList() {
     const navigate = useNavigate();
