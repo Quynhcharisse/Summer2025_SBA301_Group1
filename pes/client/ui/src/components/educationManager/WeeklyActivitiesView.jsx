@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Alert,
     Box,
@@ -20,6 +20,7 @@ import {
     Delete,
     Edit
 } from '@mui/icons-material';
+import ActivityDetailView from './ActivityDetailView';
 
 const WeeklyActivitiesView = ({
     currentWeek,
@@ -35,6 +36,24 @@ const WeeklyActivitiesView = ({
     onEditActivity,
     onDeleteActivity
 }) => {
+    const [selectedActivity, setSelectedActivity] = useState(null);
+    const [detailViewOpen, setDetailViewOpen] = useState(false);
+
+    const handleActivityClick = (activity) => {
+        setSelectedActivity(activity);
+        setDetailViewOpen(true);
+    };
+
+    const handleDetailViewClose = () => {
+        setDetailViewOpen(false);
+        setSelectedActivity(null);
+    };
+
+    const handleEditFromDetail = (activity) => {
+        setDetailViewOpen(false);
+        setSelectedActivity(null);
+        onEditActivity(activity);
+    };
     const days = [
         { key: 'MONDAY', label: 'Monday', color: '#FF6B6B', lightColor: '#FFE5E5' },
         { key: 'TUESDAY', label: 'Tuesday', color: '#4ECDC4', lightColor: '#E5F9F7' },
@@ -333,6 +352,7 @@ const WeeklyActivitiesView = ({
                                                             <Card
                                                                 key={activity.id}
                                                                 variant="outlined"
+                                                                onClick={() => handleActivityClick(activity)}
                                                                 sx={{
                                                                     p: 1.5,
                                                                     borderRadius: 2,
@@ -505,6 +525,14 @@ const WeeklyActivitiesView = ({
                     ))}
                 </Grid>
             )}
+
+            {/* Activity Detail View Dialog */}
+            <ActivityDetailView
+                activity={selectedActivity}
+                open={detailViewOpen}
+                onClose={handleDetailViewClose}
+                onEdit={handleEditFromDetail}
+            />
         </Box>
     );
 };
