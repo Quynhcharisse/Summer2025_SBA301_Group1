@@ -5,54 +5,43 @@ import {
     Button,
     Card,
     CardContent,
-    Chip,
-    Divider,
+    Grid,
     IconButton,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
+    Paper,
     Stack,
-    IconButton,
+    TextField,
     Tooltip,
-    TextField
+    Typography
 } from '@mui/material';
-import {Add, ArrowBack, Assignment, CalendarToday, Delete, Edit, Event, Person, School} from '@mui/icons-material';
+import {
+    Add,
+    ArrowBack,
+    ChevronLeft,
+    ChevronRight,
+    Delete,
+    Edit
+} from '@mui/icons-material';
 import {useNavigate, useParams} from 'react-router-dom';
 import {enqueueSnackbar} from 'notistack';
-import {
-    ArrowBack,
-    School,
-    Event,
-    CalendarToday,
-    Assignment,
-    Person,
-    Room,
-    Schedule,
-    Add,
-    Edit,
-    Delete,
-    Visibility,
-    ChevronLeft,
-    ChevronRight
-} from '@mui/icons-material';
-import { useParams, useNavigate } from 'react-router-dom';
-import { enqueueSnackbar } from 'notistack';
-import ClassesService from '../../services/ClassesService.jsx';
 import {
     getSchedulesByClassId,
     getActivitiesByClassId,
     getAllLessons,
     getLessonsByClassId,
     getClassById,
-    getSchedulesByClassId,
     getSyllabusByClassId,
     updateActivity,
-    getAllLessons,
-    getAllClasses
+    getAllClasses,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    createActivity,
+    deleteActivity
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
+import ClassInformation from './ClassInformation.jsx';
+import ScheduleAndActivitiesSection from './ScheduleAndActivitiesSection.jsx';
 import '../../styles/manager/ScheduleManagement.css';
 
 function ClassDetails() {
@@ -177,24 +166,6 @@ function ClassDetails() {
         navigate('/education/classes');
     };
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active':
-                return 'success';
-            case 'inactive':
-                return 'error';
-            case 'pending':
-                return 'warning';
-            default:
-                return 'default';
-        }
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString();
-    };
-
     // Week navigation functions
     const handlePreviousWeek = () => {
         if (currentWeek > 1) {
@@ -312,9 +283,6 @@ function ClassDetails() {
                 console.error('Error deleting activity:', error);
                 enqueueSnackbar('Error deleting activity', { variant: 'error' });
             }
-        } catch (error) {
-            console.error('Error handling activity form submission:', error);
-            enqueueSnackbar('Error saving activity', { variant: 'error' });
         }
     };
 
@@ -429,454 +397,8 @@ function ClassDetails() {
         }
     };
 
-    const groupActivitiesBySchedule = () => {
-        const grouped = {};
-        schedules.forEach(schedule => {
-            grouped[schedule.id] = {
-                schedule,
-                activities: activities.filter(activity => activity.scheduleId === schedule.id)
-            };
-        });
-        return grouped;
-    };
 
-    const renderClassInformation = () => (
-        <Box sx={{display: 'flex', flexDirection: 'column', gap: 3}}>
-            <Box sx={{
-                display: 'flex',
-                flexDirection: {xs: 'column', md: 'row'},
-                gap: 3
-            }}>
-                <Box sx={{flex: 1}}>
-                    <Stack spacing={2}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <School sx={{color: '#1976d2'}}/>
-                            <Typography variant="h6" color="primary">
-                                Basic Information
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Class Name</Typography>
-                            <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade</Typography>
-                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small"/>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Status</Typography>
-                            <Chip
-                                label={classData?.status || 'Unknown'}
-                                color={getStatusColor(classData?.status)}
-                                size="small"
-                            />
-                        </Box>
-                    </Stack>
-                </Box>
-                <Box sx={{flex: 1}}>
-                    <Stack spacing={2}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <Person sx={{color: '#1976d2'}}/>
-                            <Typography variant="h6" color="primary">
-                                Details
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Teacher</Typography>
-                            <Typography variant="body1">
-                                {classData?.teacher?.name || 'Not assigned'}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Room Number</Typography>
-                            <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Number of Students</Typography>
-                            <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
-                        </Box>
-                    </Stack>
-                </Box>
-            </Box>
-            <Box>
-                <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <CalendarToday sx={{color: '#1976d2'}}/>
-                    <Typography variant="h6" color="primary">
-                        Schedule Period
-                    </Typography>
-                </Box>
-                <Box sx={{display: 'flex', gap: 2}}>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">Start Date</Typography>
-                        <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                    </Box>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">End Date</Typography>
-                        <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
-                    </Box>
-                </Box>
-            </Box>
 
-            {/* Syllabus Section */}
-            <Box>
-                <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <Assignment sx={{color: '#1976d2'}}/>
-                    <Typography variant="h6" color="primary">
-                        Syllabus Information
-                    </Typography>
-                </Box>
-                {syllabus ? (
-                    <Stack spacing={2}>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
-                            <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
-                        </Box>
-                        {syllabus.description && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Description</Typography>
-                                <Typography variant="body1">{syllabus.description}</Typography>
-                            </Box>
-                        )}
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small"/>
-                        </Box>
-                        {classLessons.length > 0 && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
-                                    Associated Lessons ({classLessons.length})
-                                </Typography>
-                                <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
-                                    {classLessons.slice(0, 5).map((lesson) => (
-                                        <Chip
-                                            key={lesson.id}
-                                            label={lesson.topic}
-                                            size="small"
-                                            variant="outlined"
-                                            color="secondary"
-                                        />
-                                    ))}
-                                    {classLessons.length > 5 && (
-                                        <Chip
-                                            label={`+${classLessons.length - 5} more`}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    </Stack>
-                ) : (
-                    <Alert severity="info">
-                        No syllabus assigned to this class yet.
-                    </Alert>
-                )}
-            </Box>
-        </Box>
-    );
-
-    const renderSchedulesAndActivities = () => {
-        const currentWeekSchedule = getCurrentWeekSchedule();
-        const activitiesByDay = groupActivitiesByDay();
-        const days = [
-            { key: 'MONDAY', label: 'Monday' },
-            { key: 'TUESDAY', label: 'Tuesday' },
-            { key: 'WEDNESDAY', label: 'Wednesday' },
-            { key: 'THURSDAY', label: 'Thursday' },
-            { key: 'FRIDAY', label: 'Friday' }
-        ];
-        
-        const maxWeek = Math.max(...schedules.map(s => s.weekNumber), 0);
-        
-        return (
-            <Stack spacing={3}>
-                {/* Header with navigation controls */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                    <Typography variant="h6" color="primary">
-                        Weekly Schedule & Activities
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add/>}
-                        onClick={handleCreateSchedule}
-                        size="small"
-                    >
-                        Create Schedule
-                    </Button>
-                </Box>
-
-                {/* Week Navigation Controls */}
-                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: '#f8f9fa' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <IconButton
-                            onClick={handlePreviousWeek}
-                            disabled={currentWeek <= 1}
-                            sx={{
-                                bgcolor: 'white',
-                                border: '1px solid #e0e0e0',
-                                '&:hover': {
-                                    bgcolor: '#f5f5f5'
-                                },
-                                '&:disabled': {
-                                    bgcolor: '#fafafa',
-                                    color: '#ccc'
-                                }
-                            }}
-                        >
-                            <ChevronLeft />
-                        </IconButton>
-                        
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body1" fontWeight="500">
-                                Week
-                            </Typography>
-                            <TextField
-                                size="small"
-                                value={weekInput}
-                                onChange={handleWeekInputChange}
-                                type="number"
-                                inputProps={{
-                                    min: 1,
-                                    style: { textAlign: 'center', width: '60px' }
-                                }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        bgcolor: 'white',
-                                        height: '40px'
-                                    }
-                                }}
-                            />
-                        </Box>
-                        
-                        <IconButton
-                            onClick={handleNextWeek}
-                            sx={{
-                                bgcolor: 'white',
-                                border: '1px solid #e0e0e0',
-                                '&:hover': {
-                                    bgcolor: '#f5f5f5'
-                                }
-                            }}
-                        >
-                            <ChevronRight />
-                        </IconButton>
-                    </Box>
-                    
-                    {/* Week info and actions */}
-                    {currentWeekSchedule && (
-                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #e0e0e0' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                                <Box>
-                                    <Typography variant="subtitle1" fontWeight="600">
-                                        Week {currentWeek}
-                                    </Typography>
-                                    {currentWeekSchedule.note && (
-                                        <Typography variant="body2" color="text.secondary">
-                                            {currentWeekSchedule.note}
-                                        </Typography>
-                                    )}
-                                </Box>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Tooltip title="Edit Schedule">
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleEditSchedule(currentWeekSchedule)}
-                                            sx={{
-                                                bgcolor: '#1976d2',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    bgcolor: '#1565c0'
-                                                }
-                                            }}
-                                        >
-                                            <Edit />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Delete Schedule">
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleDeleteSchedule(currentWeekSchedule.id, currentWeekSchedule.weekNumber)}
-                                            sx={{
-                                                bgcolor: '#f44336',
-                                                color: 'white',
-                                                '&:hover': {
-                                                    bgcolor: '#d32f2f'
-                                                }
-                                            }}
-                                        >
-                                            <Delete />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Box>
-                            </Box>
-                        </Box>
-                    )}
-                </Paper>
-
-                {/* 5-Column Daily Activities Grid */}
-                {currentWeekSchedule ? (
-                    <Grid container spacing={2}>
-                        {days.map((day) => (
-                            <Grid item xs={12} sm={6} md={2.4} key={day.key}>
-                                <Card sx={{ height: '100%', minHeight: '300px' }}>
-                                    <CardContent sx={{ p: 2 }}>
-                                        <Typography
-                                            variant="h6"
-                                            color="primary"
-                                            sx={{
-                                                mb: 2,
-                                                textAlign: 'center',
-                                                fontSize: '1rem',
-                                                fontWeight: 600
-                                            }}
-                                        >
-                                            {day.label}
-                                        </Typography>
-                                        
-                                        <Stack spacing={1}>
-                                            {activitiesByDay[day.key]?.length > 0 ? (
-                                                activitiesByDay[day.key].map((activity) => (
-                                                    <Card
-                                                        key={activity.id}
-                                                        variant="outlined"
-                                                        sx={{
-                                                            p: 1.5,
-                                                            borderRadius: 2,
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.2s ease',
-                                                            '&:hover': {
-                                                                boxShadow: 2,
-                                                                transform: 'translateY(-2px)'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Typography
-                                                            variant="subtitle2"
-                                                            sx={{
-                                                                fontWeight: 600,
-                                                                color: '#1976d2',
-                                                                mb: 0.5
-                                                            }}
-                                                        >
-                                                            {activity.topic}
-                                                        </Typography>
-                                                        
-                                                        <Typography
-                                                            variant="caption"
-                                                            color="text.secondary"
-                                                            sx={{
-                                                                display: 'block',
-                                                                mb: 0.5,
-                                                                fontWeight: 500
-                                                            }}
-                                                        >
-                                                            {activity.startTime} - {activity.endTime}
-                                                        </Typography>
-                                                        
-                                                        {activity.description && (
-                                                            <Typography
-                                                                variant="caption"
-                                                                color="text.secondary"
-                                                                sx={{
-                                                                    display: 'block',
-                                                                    fontSize: '0.7rem',
-                                                                    lineHeight: 1.2
-                                                                }}
-                                                            >
-                                                                {activity.description}
-                                                            </Typography>
-                                                        )}
-                                                        
-                                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1 }}>
-                                                            <Tooltip title="Edit Activity">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleEditActivity(activity);
-                                                                    }}
-                                                                    sx={{
-                                                                        width: 24,
-                                                                        height: 24,
-                                                                        bgcolor: '#1976d2',
-                                                                        color: 'white',
-                                                                        '&:hover': {
-                                                                            bgcolor: '#1565c0'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Edit sx={{ fontSize: 14 }} />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                            <Tooltip title="Delete Activity">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteActivity(activity.id, activity.topic);
-                                                                    }}
-                                                                    sx={{
-                                                                        width: 24,
-                                                                        height: 24,
-                                                                        bgcolor: '#f44336',
-                                                                        color: 'white',
-                                                                        '&:hover': {
-                                                                            bgcolor: '#d32f2f'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Delete sx={{ fontSize: 14 }} />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        </Box>
-                                                    </Card>
-                                                ))
-                                            ) : (
-                                                <Box sx={{
-                                                    textAlign: 'center',
-                                                    py: 3,
-                                                    color: 'text.secondary'
-                                                }}>
-                                                    <Typography variant="caption">
-                                                        No activities
-                                                    </Typography>
-                                                </Box>
-                                            )}
-                                            
-                                            {/* Add Activity Button for each day */}
-                                            <Button
-                                                variant="outlined"
-                                                size="small"
-                                                startIcon={<Add />}
-                                                onClick={() => handleCreateActivity(currentWeekSchedule.id)}
-                                                sx={{
-                                                    mt: 1,
-                                                    borderStyle: 'dashed',
-                                                    fontSize: '0.7rem',
-                                                    '&:hover': {
-                                                        borderStyle: 'solid'
-                                                    }
-                                                }}
-                                            >
-                                                Add Activity
-                                            </Button>
-                                        </Stack>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                ) : (
-                    <Alert severity="info" sx={{ textAlign: 'center' }}>
-                        No schedule found for Week {currentWeek}. Click "Create Schedule" to add one.
-                    </Alert>
-                )}
-            </Stack>
-        );
-    };
 
     return (
         <Box sx={{p: 3}}>
@@ -913,13 +435,31 @@ function ClassDetails() {
                             <Typography variant="h6" color="primary" sx={{mb: 2}}>
                                 Class Information
                             </Typography>
-                            {renderClassInformation()}
+                            <ClassInformation
+                                classData={classData}
+                                syllabus={syllabus}
+                                classLessons={classLessons}
+                            />
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardContent>
-                            {renderSchedulesAndActivities()}
+                            <ScheduleAndActivitiesSection
+                                currentWeek={currentWeek}
+                                weekInput={weekInput}
+                                currentWeekSchedule={getCurrentWeekSchedule()}
+                                activitiesByDay={groupActivitiesByDay()}
+                                onPreviousWeek={handlePreviousWeek}
+                                onNextWeek={handleNextWeek}
+                                onWeekInputChange={handleWeekInputChange}
+                                onCreateSchedule={handleCreateSchedule}
+                                onEditSchedule={handleEditSchedule}
+                                onDeleteSchedule={handleDeleteSchedule}
+                                onCreateActivity={handleCreateActivity}
+                                onEditActivity={handleEditActivity}
+                                onDeleteActivity={handleDeleteActivity}
+                            />
                         </CardContent>
                     </Card>
                 </Stack>

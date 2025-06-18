@@ -58,6 +58,10 @@ public class PesBeApplication {
 
     private final StudentClassRepo studentClassRepo;
 
+    private final StudentRepo studentRepo;
+
+    private final ParentRepo parentRepo;
+
     private final EntityManager entityManager;
 
     public static void main(String[] args) {
