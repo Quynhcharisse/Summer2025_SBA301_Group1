@@ -18,16 +18,6 @@ function EducationLayout() {
             segment: 'education/lessons',
             title: 'Lessons Management',
             icon: <PlayLesson sx={{ color: '#666' }}/>,
-        },
-        {
-            segment: 'education/schedules',
-            title: 'Schedule Management',
-            icon: <CalendarToday sx={{ color: '#666' }} />,
-        },
-        {
-            segment: 'education/activities',
-            title: 'Activity Management',
-            icon: <Event sx={{ color: '#666' }} />,
         }
     ];
 

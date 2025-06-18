@@ -42,7 +42,6 @@ import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
 import ClassInformation from './ClassInformation.jsx';
 import ScheduleAndActivitiesSection from './ScheduleAndActivitiesSection.jsx';
-import '../../styles/manager/ScheduleManagement.css';
 
 function ClassDetails() {
     const {id: classId} = useParams();
