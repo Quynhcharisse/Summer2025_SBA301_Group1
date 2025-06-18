@@ -92,20 +92,18 @@ async function handleSignIn(email, password) {
 
 const signInPage = async (provider, formData) => {
     if (provider.id === 'credentials') {
-        const parentId = formData.get('parentId'); 
         const email = formData.get('email');
         const password = formData.get('password');
 
-        handleSignIn(email, password).then(res => {   
+        handleSignIn(email, password).then(res => {
             if (res && res.success) {
                 enqueueSnackbar(res.message, {variant: 'success'});
                 const userAcc = {
                     user: {
-                        id: res.data.parentId,
+                        // id: res.data.parentId,
                         name: res.data.name,
                         email: res.data.email,
                     }
-
                 }
                 localStorage.setItem('user', JSON.stringify(userAcc));
                 const accessToken = Cookies.get('access');
@@ -120,16 +118,16 @@ const signInPage = async (provider, formData) => {
 
                         case 'PARENT':
                             setTimeout(() => {
-                                window.location.href = `/parent/${res.data.parentId}`;
+                                window.location.href = "/parent/profile";
                             }, 500)
                             break;
-                        
+
                         case 'EDUCATION':
                             setTimeout(() => {
                                 window.location.href = "/education";
                             }, 500)
                             break;
-                        
+
                         default:
                             window.location.href = "/login";
                     }
@@ -168,7 +166,7 @@ function Login() {
     // Clear local storage only if we're actually on the login page
     // and not being redirected here due to authentication issues
     const isRedirectedFromAuth = new URLSearchParams(window.location.search).get('redirect') === 'auth';
-    
+
     if (!isRedirectedFromAuth && localStorage.length > 0) {
         localStorage.clear()
     }

@@ -1,23 +1,14 @@
 import DashboardUI from "../components/ui/DashhboardUI.jsx";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
-
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import ChildCareIcon from '@mui/icons-material/ChildCare';
 
 function ParentLayout() {
-    // Get parent id from localStorage (set at login)
-    let parentId = null;
-    try {
-        const user = JSON.parse(localStorage.getItem('user'));        
-        parentId = user.user.id;
-    } catch (e) {
-        parentId = '';
-    }
-    console.log(parentId);
-    
     const navigate = [
         {
-            segment: 'parent/'+parentId,
+            segment: 'parent/profile',
             title: 'Profile',
-            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
+            icon: <AccountBoxIcon sx={{ color: '#2c3e50' }} />
         },
         {
             segment: 'parent/form',
@@ -27,13 +18,13 @@ function ParentLayout() {
         {
             segment: 'parent/child',
             title: 'Children',
-            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
+            icon: <ChildCareIcon sx={{ color: '#2c3e50' }}/>
         }
     ];
     return (
         <DashboardUI
             navigate={navigate}
-            homeUrl={parentId ? `/parent/${parentId}` : '/parent/form'}
+            homeUrl={'/parent/form'}
         />
     );
 }

@@ -49,27 +49,21 @@ public class ParentController {
         return parentService.updateChild(request, httpRequest);
     }
 
-
-//    @GetMapping("/child")
-//    @PreAuthorize("hasRole('parent')")
-//    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
-//        return parentService.getChildrenByParent(request);
-//    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ResponseObject> getParentById(@PathVariable int id, HttpServletRequest request) {
-        return parentService.getParentById(id, request);
-    }
-
-    @PutMapping("/update")
-    @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> updateParent(@RequestBody UpdateParentRequest request, HttpServletRequest httpRequest) {
-        return parentService.updateParent(request, httpRequest);
-    }
-
     @GetMapping("/child")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> viewChild(HttpServletRequest request) {
         return parentService.viewChild(request);
+    }
+
+    @GetMapping("/profile")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> viewProfileParent(HttpServletRequest request) {
+        return parentService.viewProfileParent(request);
+    }
+
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> updateProfileParent(@RequestBody UpdateParentRequest request, HttpServletRequest httpRequest) {
+        return parentService.updateProfileParent(request, httpRequest);
     }
 }

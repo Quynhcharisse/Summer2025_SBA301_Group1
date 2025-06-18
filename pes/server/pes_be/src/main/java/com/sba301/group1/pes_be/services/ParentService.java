@@ -17,11 +17,10 @@ public interface ParentService {
 
     ResponseEntity<ResponseObject> updateChild(UpdateChildRequest request, HttpServletRequest httpRequest);
 
-//    ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request);
-
-    ResponseEntity<ResponseObject> getParentById(int id, HttpServletRequest request);
-
-    ResponseEntity<ResponseObject> updateParent(UpdateParentRequest request, HttpServletRequest httpRequest);
-
     ResponseEntity<ResponseObject> viewChild(HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> viewProfileParent(HttpServletRequest request);
+
+    ResponseEntity<ResponseObject> updateProfileParent(UpdateParentRequest request, HttpServletRequest httpRequest);
+
 }
