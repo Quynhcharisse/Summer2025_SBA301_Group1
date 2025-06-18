@@ -1,8 +1,8 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
 import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.CloneAdmissionTermRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import lombok.RequiredArgsConstructor;
@@ -28,16 +28,22 @@ public class AdmissionController {
         return admissionService.createAdmissionTerm(request);
     }
 
-    @PutMapping("/term")
-    @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> cloneAdmissionTerm(@RequestBody CloneAdmissionTermRequest request) {
-        return admissionService.cloneAdmissionTerm(request);
-    }
-
     @GetMapping("/term")
     @PreAuthorize("hasRole('admission')")
     public ResponseEntity<ResponseObject> viewAdmissionTerm() {
         return admissionService.viewAdmissionTerm();
+    }
+
+    @PostMapping("/extra/term")
+    @PreAuthorize("hasRole('admission')")
+    public ResponseEntity<ResponseObject> createExtraTerm(@RequestBody CreateExtraTermRequest request) {
+        return admissionService.createExtraTerm(request);
+    }
+
+    @GetMapping("/extra/term")
+    @PreAuthorize("hasRole('admission')")
+    public ResponseEntity<ResponseObject> viewExtraTerm() {
+        return admissionService.viewExtraTerm();
     }
 
     @GetMapping("/form/list")

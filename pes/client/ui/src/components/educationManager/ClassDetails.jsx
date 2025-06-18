@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
-    Button,
-    Typography,
+    Alert,
     Box,
+    Button,
     Card,
     CardContent,
-    Grid,
     Chip,
+    Divider,
+    IconButton,
     List,
     ListItem,
-    ListItemText,
     ListItemIcon,
-    Divider,
-    Alert,
-    Paper,
+    ListItemText,
     Stack,
     IconButton,
     Tooltip,
     TextField
 } from '@mui/material';
+import {Add, ArrowBack, Assignment, CalendarToday, Delete, Edit, Event, Person, School} from '@mui/icons-material';
+import {useNavigate, useParams} from 'react-router-dom';
+import {enqueueSnackbar} from 'notistack';
 import {
     ArrowBack,
     School,
@@ -41,13 +42,11 @@ import ClassesService from '../../services/ClassesService.jsx';
 import {
     getSchedulesByClassId,
     getActivitiesByClassId,
-    getSyllabusByClassId,
+    getAllLessons,
     getLessonsByClassId,
-    deleteSchedule,
-    deleteActivity,
-    createSchedule,
-    updateSchedule,
-    createActivity,
+    getClassById,
+    getSchedulesByClassId,
+    getSyllabusByClassId,
     updateActivity,
     getAllLessons,
     getAllClasses
@@ -57,7 +56,7 @@ import ActivityForm from './ActivityForm.jsx';
 import '../../styles/manager/ScheduleManagement.css';
 
 function ClassDetails() {
-    const { id: classId } = useParams();
+    const {id: classId} = useParams();
     const navigate = useNavigate();
     const [classData, setClassData] = useState(null);
     const [schedules, setSchedules] = useState([]);
@@ -107,7 +106,7 @@ function ClassDetails() {
     const fetchClassDetails = useCallback(async () => {
         try {
             setLoading(true);
-            
+
             // Fetch all class-related data in parallel
             const [
                 classResponse,
@@ -116,7 +115,7 @@ function ClassDetails() {
                 syllabusResponse,
                 lessonsResponse
             ] = await Promise.all([
-                ClassesService.getById(classId),
+                getClassById(classId),
                 getSchedulesByClassId(classId),
                 getActivitiesByClassId(classId),
                 getSyllabusByClassId(classId),
@@ -145,7 +144,7 @@ function ClassDetails() {
 
         } catch (error) {
             console.error('Error fetching class details:', error);
-            enqueueSnackbar('Failed to load class details', { variant: 'error' });
+            enqueueSnackbar('Failed to load class details', {variant: 'error'});
         } finally {
             setLoading(false);
         }
@@ -159,7 +158,7 @@ function ClassDetails() {
                 await fetchAllClasses();
             }
         };
-        
+
         fetchData();
     }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
 
@@ -180,10 +179,14 @@ function ClassDetails() {
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'active': return 'success';
-            case 'inactive': return 'error';
-            case 'pending': return 'warning';
-            default: return 'default';
+            case 'active':
+                return 'success';
+            case 'inactive':
+                return 'error';
+            case 'pending':
+                return 'warning';
+            default:
+                return 'default';
         }
     };
 
@@ -283,14 +286,14 @@ function ClassDetails() {
             try {
                 const response = await deleteSchedule(scheduleId);
                 if (response && response.success) {
-                    enqueueSnackbar('Schedule deleted successfully', { variant: 'success' });
+                    enqueueSnackbar('Schedule deleted successfully', {variant: 'success'});
                     fetchClassDetails(); // Refresh data
                 } else {
-                    enqueueSnackbar('Failed to delete schedule', { variant: 'error' });
+                    enqueueSnackbar('Failed to delete schedule', {variant: 'error'});
                 }
             } catch (error) {
                 console.error('Error deleting schedule:', error);
-                enqueueSnackbar('Error deleting schedule', { variant: 'error' });
+                enqueueSnackbar('Error deleting schedule', {variant: 'error'});
             }
         }
     };
@@ -300,15 +303,18 @@ function ClassDetails() {
             try {
                 const response = await deleteActivity(activityId);
                 if (response && response.success) {
-                    enqueueSnackbar('Activity deleted successfully', { variant: 'success' });
+                    enqueueSnackbar('Activity deleted successfully', {variant: 'success'});
                     fetchClassDetails(); // Refresh data
                 } else {
-                    enqueueSnackbar('Failed to delete activity', { variant: 'error' });
+                    enqueueSnackbar('Failed to delete activity', {variant: 'error'});
                 }
             } catch (error) {
                 console.error('Error deleting activity:', error);
                 enqueueSnackbar('Error deleting activity', { variant: 'error' });
             }
+        } catch (error) {
+            console.error('Error handling activity form submission:', error);
+            enqueueSnackbar('Error saving activity', { variant: 'error' });
         }
     };
 
@@ -348,7 +354,7 @@ function ClassDetails() {
     const handleScheduleFormSubmit = async (formData) => {
         try {
             let scheduleResponse;
-            
+
             if (scheduleFormMode === 'create') {
                 // Create schedule first
                 scheduleResponse = await createSchedule({
@@ -356,10 +362,10 @@ function ClassDetails() {
                     note: formData.note,
                     classId: formData.classId
                 });
-                
+
                 if (scheduleResponse && scheduleResponse.success) {
                     const newScheduleId = scheduleResponse.data.id;
-                    
+
                     // Create activities for the new schedule
                     if (formData.activities && formData.activities.length > 0) {
                         for (const activity of formData.activities) {
@@ -378,7 +384,7 @@ function ClassDetails() {
                     weekNumber: formData.weekNumber,
                     note: formData.note
                 });
-                
+
                 if (scheduleResponse && scheduleResponse.success) {
                     // Handle activities updates (create new ones, update existing ones)
                     if (formData.activities && formData.activities.length > 0) {
@@ -406,20 +412,20 @@ function ClassDetails() {
                     }
                 }
             }
-            
+
             if (scheduleResponse && scheduleResponse.success) {
                 setScheduleFormOpen(false);
                 await fetchClassDetails();
                 enqueueSnackbar(
                     scheduleFormMode === 'create' ? 'Schedule created successfully' : 'Schedule updated successfully',
-                    { variant: 'success' }
+                    {variant: 'success'}
                 );
             } else {
-                enqueueSnackbar('Failed to save schedule', { variant: 'error' });
+                enqueueSnackbar('Failed to save schedule', {variant: 'error'});
             }
         } catch (error) {
             console.error('Error handling schedule form submission:', error);
-            enqueueSnackbar('Error saving schedule', { variant: 'error' });
+            enqueueSnackbar('Error saving schedule', {variant: 'error'});
         }
     };
 
@@ -435,16 +441,16 @@ function ClassDetails() {
     };
 
     const renderClassInformation = () => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', md: 'row' }, 
-                gap: 3 
+        <Box sx={{display: 'flex', flexDirection: 'column', gap: 3}}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: {xs: 'column', md: 'row'},
+                gap: 3
             }}>
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{flex: 1}}>
                     <Stack spacing={2}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <School sx={{ color: '#1976d2' }} />
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <School sx={{color: '#1976d2'}}/>
                             <Typography variant="h6" color="primary">
                                 Basic Information
                             </Typography>
@@ -455,22 +461,22 @@ function ClassDetails() {
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Grade</Typography>
-                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small" />
+                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small"/>
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Status</Typography>
-                            <Chip 
-                                label={classData?.status || 'Unknown'} 
-                                color={getStatusColor(classData?.status)} 
-                                size="small" 
+                            <Chip
+                                label={classData?.status || 'Unknown'}
+                                color={getStatusColor(classData?.status)}
+                                size="small"
                             />
                         </Box>
                     </Stack>
                 </Box>
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{flex: 1}}>
                     <Stack spacing={2}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Person sx={{ color: '#1976d2' }} />
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                            <Person sx={{color: '#1976d2'}}/>
                             <Typography variant="h6" color="primary">
                                 Details
                             </Typography>
@@ -493,30 +499,30 @@ function ClassDetails() {
                 </Box>
             </Box>
             <Box>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <CalendarToday sx={{ color: '#1976d2' }} />
+                <Divider sx={{my: 2}}/>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
+                    <CalendarToday sx={{color: '#1976d2'}}/>
                     <Typography variant="h6" color="primary">
                         Schedule Period
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Box sx={{ flex: 1 }}>
+                <Box sx={{display: 'flex', gap: 2}}>
+                    <Box sx={{flex: 1}}>
                         <Typography variant="body2" color="text.secondary">Start Date</Typography>
                         <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+                    <Box sx={{flex: 1}}>
                         <Typography variant="body2" color="text.secondary">End Date</Typography>
                         <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
                     </Box>
                 </Box>
             </Box>
-            
+
             {/* Syllabus Section */}
             <Box>
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Assignment sx={{ color: '#1976d2' }} />
+                <Divider sx={{my: 2}}/>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
+                    <Assignment sx={{color: '#1976d2'}}/>
                     <Typography variant="h6" color="primary">
                         Syllabus Information
                     </Typography>
@@ -535,14 +541,14 @@ function ClassDetails() {
                         )}
                         <Box>
                             <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small" />
+                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small"/>
                         </Box>
                         {classLessons.length > 0 && (
                             <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                     Associated Lessons ({classLessons.length})
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
                                     {classLessons.slice(0, 5).map((lesson) => (
                                         <Chip
                                             key={lesson.id}
@@ -594,7 +600,7 @@ function ClassDetails() {
                     </Typography>
                     <Button
                         variant="contained"
-                        startIcon={<Add />}
+                        startIcon={<Add/>}
                         onClick={handleCreateSchedule}
                         size="small"
                     >
@@ -873,12 +879,12 @@ function ClassDetails() {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{p: 3}}>
             {/* Header with Back Button */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mb: 3}}>
                 <Button
                     variant="outlined"
-                    startIcon={<ArrowBack sx={{ color: '#1976d2' }} />}
+                    startIcon={<ArrowBack sx={{color: '#1976d2'}}/>}
                     onClick={handleBackToClasses}
                     sx={{
                         borderColor: '#1976d2',
@@ -891,20 +897,20 @@ function ClassDetails() {
                 >
                     Back to Classes
                 </Button>
-                <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h4" sx={{fontWeight: 'bold'}}>
                     Class Details: {classData?.name || 'Loading...'}
                 </Typography>
             </Box>
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <Box sx={{display: 'flex', justifyContent: 'center', p: 4}}>
                     <Typography>Loading class details...</Typography>
                 </Box>
             ) : (
                 <Stack spacing={3}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+                            <Typography variant="h6" color="primary" sx={{mb: 2}}>
                                 Class Information
                             </Typography>
                             {renderClassInformation()}

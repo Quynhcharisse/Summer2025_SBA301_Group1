@@ -41,7 +41,6 @@ public class HRServiceImpl implements HRService {
         parentData.put("job", parent.getJob());
         parentData.put("relationshipToChild", parent.getRelationshipToChild());
         parentData.put("dayOfBirth", parent.getDayOfBirth());
-        parentData.put("passwordChanged", parent.isPasswordChanged());
         parentData.put("account", parent.getAccount());
         parentData.put("address", parent.getAddress());
         return ResponseEntity.ok(

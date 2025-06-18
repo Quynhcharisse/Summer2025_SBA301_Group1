@@ -48,8 +48,20 @@ public class Student {
     @Column(name = "`place_of_birth`")
     String placeOfBirth;
 
+    @Column(name = "`modified_date`")
+    LocalDate modifiedDate;
+
     @Column(name = "`profile_image`")
     String profileImage;
+
+    @Column(name = "`birth_certificate_img`")
+    String birthCertificateImg;
+
+    @Column(name = "`household_registration_img`")
+    String householdRegistrationImg;
+
+    @Column(name = "update_count")
+    Integer updateCount;
 
     @Column(name = "`is_student`")
     boolean isStudent;

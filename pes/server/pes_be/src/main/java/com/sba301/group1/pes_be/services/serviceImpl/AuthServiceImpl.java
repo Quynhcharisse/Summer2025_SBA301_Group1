@@ -1,14 +1,19 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.requests.LoginRequest;
+import com.sba301.group1.pes_be.requests.RegisterRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.utils.CookieUtil;
 import com.sba301.group1.pes_be.validations.AuthValidation.LoginValidation;
+import com.sba301.group1.pes_be.validations.AuthValidation.RegisterValidation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +38,8 @@ public class AuthServiceImpl implements AuthService {
     private long refreshExpiration;
 
     private final AccountRepo accountRepo;
+
+    private final ParentRepo parentRepo;
 
     private final JWTService jwtService;
 
@@ -50,6 +58,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
+        System.out.println(account);
         assert account != null;
 
         String newAccess = jwtService.generateAccessToken(account);
@@ -68,7 +77,6 @@ public class AuthServiceImpl implements AuthService {
 
     private Map<String, Object> buildLoginBody(Account account) {
         Map<String, Object> body = new HashMap<>();
-        body.put("name", account.getName());
         body.put("email", account.getEmail());
         body.put("role", account.getRole().name());
         return body;
@@ -112,6 +120,69 @@ public class AuthServiceImpl implements AuthService {
                 ResponseObject.builder()
                         .message("Refresh invalid")
                         .success(false)
+                        .data(null)
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> register(RegisterRequest request) {
+
+        String error = RegisterValidation.validate(request, accountRepo);
+        if(!error.isEmpty()){
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Check if email already exists
+        if (accountRepo.existsByEmail(request.getEmail())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message("Email is already in use")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Create Account
+        Account account = Account.builder()
+                .email(request.getEmail())
+                .password(request.getPassword()) // Consider encrypting the password
+                .role(Role.PARENT)
+                .status(Status.ACCOUNT_ACTIVE.getValue())
+                .createdAt(LocalDate.now())
+                .name(request.getName())
+                .phone(request.getPhone())
+                .gender(request.getGender())
+                .identityNumber(request.getIdentityNumber())
+                .build();
+
+        // Save Account
+        accountRepo.save(account);
+
+        // Create Parent
+        Parent parent = Parent.builder()
+                .account(account)
+                .address(request.getAddress())
+                .job(request.getJob())
+                .relationshipToChild(request.getRelationshipToChild())
+                .dayOfBirth(request.getDayOfBirth())
+                .build();
+
+        // Save Parent
+        parentRepo.save(parent);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseObject.builder()
+                        .message("Parent registered successfully")
+                        .success(true)
                         .data(null)
                         .build()
         );

@@ -1,21 +1,13 @@
 package com.sba301.group1.pes_be.controllers;
 
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.ParentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/parent")
@@ -57,9 +49,21 @@ public class ParentController {
         return parentService.updateChild(request, httpRequest);
     }
 
-    @GetMapping("/children")
+    @GetMapping("/child")
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request) {
-        return parentService.getChildrenByParentId(request);
+    public ResponseEntity<ResponseObject> viewChild(HttpServletRequest request) {
+        return parentService.viewChild(request);
+    }
+
+    @GetMapping("/profile")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> viewProfileParent(HttpServletRequest request) {
+        return parentService.viewProfileParent(request);
+    }
+
+    @PutMapping("/profile")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> updateProfileParent(@RequestBody UpdateParentRequest request, HttpServletRequest httpRequest) {
+        return parentService.updateProfileParent(request, httpRequest);
     }
 }

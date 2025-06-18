@@ -1,9 +1,6 @@
 package com.sba301.group1.pes_be.services;
 
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -20,5 +17,10 @@ public interface ParentService {
 
     ResponseEntity<ResponseObject> updateChild(UpdateChildRequest request, HttpServletRequest httpRequest);
 
-    ResponseEntity<ResponseObject> getChildrenByParentId(HttpServletRequest request);
+    ResponseEntity<ResponseObject> viewChild(HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> viewProfileParent(HttpServletRequest request);
+
+    ResponseEntity<ResponseObject> updateProfileParent(UpdateParentRequest request, HttpServletRequest httpRequest);
+
 }

@@ -6,15 +6,15 @@ import {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import AboutUs from "../components/home/AboutUs.jsx";
 
-function RenderDropdown({ index, item, closeFunc, open, openDropdownFunc, anchorEl, listOptions }) {
+function RenderDropdown({index, item, closeFunc, open, openDropdownFunc, anchorEl, listOptions}) {
     const handleClick = (e) => {
         if (listOptions.length > 0) {
             openDropdownFunc(e, item.id);
         } else {
-            if (item.title.toLowerCase() === "giới thiệu") {
+            if (item.title.toLowerCase() === "about us") {
                 const aboutSection = document.getElementById("about");
                 if (aboutSection) {
-                    aboutSection.scrollIntoView({ behavior: "smooth" });
+                    aboutSection.scrollIntoView({behavior: "smooth"});
                 }
             }
             // có thể thêm các điều kiện khác sau này cho "liên hệ", "đội ngũ", v.v.
@@ -23,7 +23,7 @@ function RenderDropdown({ index, item, closeFunc, open, openDropdownFunc, anchor
 
     return (
         <div key={index}>
-            <Button endIcon={listOptions.length > 0 ? <KeyboardArrowDown /> : null} onClick={handleClick}>
+            <Button endIcon={listOptions.length > 0 ? <KeyboardArrowDown/> : null} onClick={handleClick}>
                 {item.title}
             </Button>
             {listOptions.length > 0 && (
@@ -41,13 +41,13 @@ function RenderHeader() {
     const navigate = useNavigate();
     const [dropDownBtn, setDropDownBtn] = useState(
         [
-            {id: 1, title: "giới thiệu", open: false, anchor: null, options: []},
-            {id: 2, title: "đội ngũ", open: false, anchor: null, options: ["Option 1", "Option 2"]},
-            {id: 3, title: "chương trình giáo dục", open: false, anchor: null, options: ["Option 1", "Option 2"]},
-            {id: 4, title: "tuyển sinh", open: false, anchor: null, options: ["Option 1", "Option 2"]},
-            {id: 5, title: "chăm sóc - kết nối", open: false, anchor: null, options: ["Option 1", "Option 2"]},
-            {id: 6, title: "tin tức - sự kiện", open: false, anchor: null, options: ["Option 1", "Option 2"]},
-            {id: 7, title: "liên hệ", open: false, anchor: null, options: ["Option 1", "Option 2"]}
+            {id: 1, title: "About Us", open: false, anchor: null, options: []},
+            {id: 2, title: "Our Team", open: false, anchor: null, options: ["Option 1", "Option 2"]},
+            {id: 3, title: "Educational Program", open: false, anchor: null, options: ["Option 1", "Option 2"]},
+            {id: 4, title: "Admissions", open: false, anchor: null, options: ["Option 1", "Option 2"]},
+            {id: 5, title: "Care & Connection", open: false, anchor: null, options: ["Option 1", "Option 2"]},
+            {id: 6, title: "News & Events", open: false, anchor: null, options: ["Option 1", "Option 2"]},
+            {id: 7, title: "Contact", open: false, anchor: null, options: ["Option 1", "Option 2"]}
         ]
     )
 
@@ -86,8 +86,8 @@ function RenderHeader() {
             </div>
 
             <div className="button-action">
-                <Button variant={"contained"} className={"btn"} onClick={() => navigate("/login")}>Đăng nhập</Button>
-                <Button variant={"contained"} className={"btn"}>Đăng kí</Button>
+                <Button variant={"contained"} className={"btn"} onClick={() => navigate("/login")}>Sign In</Button>
+                <Button variant={"contained"} className={"btn"} onClick={() => navigate("/register")}>Sign Up</Button>
             </div>
         </div>
     )
@@ -95,35 +95,65 @@ function RenderHeader() {
 
 function RenderCarousel() {
     return (
-        <div className="carousel">
+        <div
+            className="carousel"
+            style={{
+                maxHeight: "500px",
+                overflow: "hidden",
+                borderRadius: "12px",
+                width: "100%",
+                margin: "0 auto"
+            }}
+        >
             <Carousel>
                 <Carousel.Item>
                     <img
                         decoding="async"
                         src="/Mam-non-song-ngu-merrystar.webp"
-                        alt="Mam-non-song-ngu-Merrystar-2022 (3)"
+                        alt="Bilingual Kindergarten Slide 1"
                         loading="lazy"
-                        data-default="https://merrystar.edu.vn/wp-content/uploads/2022/02/Mam-non-song-ngu-Merrystar-2022-3-1.jpg"/>
+                        style={{
+                            height: "500px",
+                            width: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                            borderRadius: "12px"
+                        }}
+                    />
                 </Carousel.Item>
                 <Carousel.Item>
                     <img
                         decoding="async"
                         src="/488220712_975051164805057_4560363873878312652_n.jpg"
-                        alt="Mam-non-song-ngu-Merrystar-2022-banner (1)"
+                        alt="Bilingual Kindergarten Slide 2"
                         loading="lazy"
-                        data-default="https://merrystar.edu.vn/wp-content/uploads/2022/03/Mam-non-song-ngu-Merrystar-2022-banner-1.jpg"/>
+                        style={{
+                            height: "500px",
+                            width: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                            borderRadius: "12px"
+                        }}
+                    />
                 </Carousel.Item>
                 <Carousel.Item>
                     <img
                         decoding="async"
                         src="/487870127_975051254805048_6838321561132019387_n.jpg"
-                        alt="merrystar-bo-gddt-toi-tham (1)"
+                        alt="Bilingual Kindergarten Slide 3"
                         loading="lazy"
-                        data-default="https://merrystar.edu.vn/wp-content/uploads/2022/09/merrystar-bo-gddt-toi-tham-1.jpg"/>
+                        style={{
+                            height: "500px",
+                            width: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                            borderRadius: "12px"
+                        }}
+                    />
                 </Carousel.Item>
             </Carousel>
         </div>
-    )
+    );
 }
 
 function RenderFooter() {
@@ -135,7 +165,7 @@ function RenderFooter() {
                     <img className="logo"
                          src="/logo-merrystar-horizontal.png"
                          alt="MerryStar Logo"/>
-                    <p className="school-name">MẦM NON SONG NGỮ MERRYSTAR</p>
+                    <p className="school-name">MERRYSTAR BILINGUAL KINDERGARTEN</p>
                     <div className="languages">
                         <div className="lang-item">
                             <img
@@ -154,7 +184,7 @@ function RenderFooter() {
 
                 {/* Phần ở giữa */}
                 <div className="footer-middle">
-                    <h3>Liên hệ</h3>
+                    <h3>Contact</h3>
 
                     <div className="contact-item">
                         <span className="icon">📞</span>
@@ -168,21 +198,21 @@ function RenderFooter() {
 
                     <div className="contact-item">
                         <span className="icon">📍</span>
-                        <span>Tulip 09-38 & 40, Khu đô thị Vinhomes Riverside<br/>Phường Việt Hưng, Quận Long Biên, TP. Hà Nội</span>
+                        <span>Tulip 09-38 & 40, Vinhomes Riverside Urban Area<br/>Viet Hung Ward, Long Bien District, Hanoi City</span>
                     </div>
                 </div>
 
                 {/* Phần ở bên phải */}
                 <div className="footer-right">
-                    <h3>Liên kết nhanh</h3>
+                    <h3>Quick Links</h3>
                     <ul>
-                        <li><a href="#">Về MerryStar Kindergarten</a></li>
-                        <li><a href="#">Triết lý giáo dục</a></li>
-                        <li><a href="#">Quy chế tuyển sinh</a></li>
-                        <li><a href="#">Sổ tay Phụ huynh</a></li>
-                        <li><a href="#">Cha Mẹ Thông Thái</a></li>
-                        <li><a href="#">Câu hỏi thường gặp</a></li>
-                        <li><a href="#">Chính sách bảo mật & Điều khoản</a></li>
+                        <li><a href="#">About MerryStar Kindergarten</a></li>
+                        <li><a href="#">Educational Philosophy</a></li>
+                        <li><a href="#">Admissions Policy</a></li>
+                        <li><a href="#">Parent Handbook</a></li>
+                        <li><a href="#">Smart Parents</a></li>
+                        <li><a href="#">Frequently Asked Questions</a></li>
+                        <li><a href="#">Privacy Policy & Terms</a></li>
                     </ul>
                 </div>
             </div>

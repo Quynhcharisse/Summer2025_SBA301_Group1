@@ -35,7 +35,7 @@ export const cancelAdmission = async (id) => {
 };
 
 export const getChildrenList = async () => {
-    const response = await axiosClient.get("/parent/children");
+    const response = await axiosClient.get("/parent/child");
     console.log("Response from getChildrenList:", response);
     
     return response ? response.data : null;
@@ -54,5 +54,15 @@ export const updateChild = async (child) => {
     const response = await axiosClient.put("/parent/child", child);
     console.log("Response from updateChild:", response);
 
+    return response ? response.data : null;
+}
+
+export const viewParentProfile = async () => {
+    const response = await axiosClient.get("/parent/profile");
+    return response ? response.data : null;
+}
+
+export const updateParentProfile = async (profileData) => {
+    const response = await axiosClient.put("/parent/profile", profileData);
     return response ? response.data : null;
 }

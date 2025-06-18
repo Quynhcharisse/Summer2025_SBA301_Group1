@@ -1,6 +1,7 @@
 package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.LoginRequest;
+import com.sba301.group1.pes_be.requests.RegisterRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,4 +34,10 @@ public class AuthController {
     public ResponseEntity<ResponseObject> refresh(HttpServletRequest request, HttpServletResponse response) {
         return authService.refresh(request, response);
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<ResponseObject> register(@RequestBody RegisterRequest request) {
+        return authService.register(request);
+    }
+
 }

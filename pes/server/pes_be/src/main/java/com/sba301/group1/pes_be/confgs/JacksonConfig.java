@@ -27,7 +27,11 @@ public class JacksonConfig {
         hibernateModule.enable(Hibernate6Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS);
         
         mapper.registerModule(hibernateModule);
-        
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // để in ra "2024-06-16" thay vì timestamp
+
+        System.out.println("JacksonConfig loaded!");
         return mapper;
+
     }
 }

@@ -14,11 +14,14 @@ import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
 import ClassList from "./components/educationManager/ClassList.jsx";
 import ClassDetails from "./components/educationManager/ClassDetails.jsx";
+import ActivityManagement from "./components/educationManager/ActivityManagement.jsx";
+import ScheduleManagement from "./components/educationManager/ScheduleManagement.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
 import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
 import ChildrenList from "./components/parent/ChildrenList.jsx";
 import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
+import ProfileParent from "./components/parent/ProfileParent.jsx";
 
 
 const router = createBrowserRouter([
@@ -26,6 +29,10 @@ const router = createBrowserRouter([
         path: '/login',
         element: <LoginPage/>
     },
+    // {
+    //     path: '/register',
+    //     element: <RegisterPage/>
+    // },
     {
         path: "/home",
         element: <HomePage/>
@@ -33,7 +40,9 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/home"/>
-    },    {        path: "/admission",
+    },
+    {
+        path: "/admission",
         element: (
             <ProtectRoute allowedRoles={["ADMISSION"]}>
                 <AdmissionLayout/>
@@ -53,7 +62,8 @@ const router = createBrowserRouter([
                 element: <AdmissionTerm/>
             }
         ]
-    },    {        path: "/parent",
+    }, {
+        path: "/parent",
         element: (
             <ProtectRoute allowedRoles={["PARENT"]}>
                 <ParentLayout/>
@@ -65,11 +75,15 @@ const router = createBrowserRouter([
                 element: <Navigate to="/parent/form"/>
             },
             {
+                path: 'profile',
+                element: <ProfileParent/>
+            },
+            {
                 path: 'form',
                 element: <AdmissionForm/>
             },
             {
-                path: 'children',
+                path: 'child',
                 element: <ChildrenList/>
             }
         ]
@@ -80,10 +94,10 @@ const router = createBrowserRouter([
             <ProtectRoute allowedRoles={["EDUCATION"]}>
                 <EducationLayout/>
             </ProtectRoute>
-        ),        children: [
+        ), children: [
             {
                 index: true,
-                element: <EducationDashboard />
+                element: <EducationDashboard/>
             },
             {
                 path: 'classes',
@@ -100,6 +114,14 @@ const router = createBrowserRouter([
             {
                 path: 'lessons',
                 element: <LessonList/>
+            },
+            {
+                path: 'activities',
+                element: <ActivityManagement/>
+            },
+            {
+                path: 'schedules',
+                element: <ScheduleManagement/>
             }
         ]
     },
