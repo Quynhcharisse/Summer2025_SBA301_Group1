@@ -8,14 +8,8 @@ import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Student;
-import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
-import com.sba301.group1.pes_be.repositories.ParentRepo;
-import com.sba301.group1.pes_be.repositories.StudentRepo;
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.repositories.*;
+import com.sba301.group1.pes_be.requests.*;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
@@ -49,6 +43,8 @@ public class ParentServiceImpl implements ParentService {
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
+
+    private final AccountRepo accountRepo;
 
     private final MailService mailService;
 
@@ -314,6 +310,61 @@ public class ParentServiceImpl implements ParentService {
     }
 
     @Override
+    public ResponseEntity<ResponseObject> viewChild(HttpServletRequest httpRequest) {
+        //xac thuc nguoi dung
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    ResponseObject.builder()
+                            .message("Forbidden: Only parents can access this resource")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Tìm parent dựa vào account ID
+        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                            .message("Parent not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Lấy danh sách student của parent đó
+        List<Map<String, Object>> studentList = parent.getStudentList().stream()
+                .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(student -> {
+                    Map<String, Object> studentDetail = new HashMap<>();
+                    studentDetail.put("id", student.getId());
+                    studentDetail.put("name", student.getName());
+                    studentDetail.put("gender", student.getGender());
+                    studentDetail.put("dateOfBirth", student.getProfileImage());
+                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+                    studentDetail.put("profileImage", student.getProfileImage());
+                    studentDetail.put("birthCertificateImg", student.getBirthCertificateImg());
+                    studentDetail.put("householdRegistrationImg", student.getHouseholdRegistrationImg());
+                    studentDetail.put("modifiedDate", student.getModifiedDate());
+                    studentDetail.put("isStudent", student.isStudent());
+                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
+                    return studentDetail;
+                })
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseObject.builder()
+                        .message("")
+                        .success(true)
+                        .data(studentList)
+                        .build()
+        );
+    }
+
+    @Override
     public ResponseEntity<ResponseObject> addChild(AddChildRequest request, HttpServletRequest httpRequest) {
         Account acc = jwtService.extractAccountFromCookie(httpRequest);
         if (acc == null || !acc.getRole().equals(Role.PARENT)) {
@@ -345,29 +396,20 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        Student student = studentRepo.save(
+        studentRepo.save(
                 Student.builder()
                         .name(request.getName())
                         .gender(request.getGender())
                         .dateOfBirth(request.getDateOfBirth())
                         .placeOfBirth(request.getPlaceOfBirth())
+                        .profileImage(request.getProfileImage())
+                        .birthCertificateImg(request.getBirthCertificateImg())
+                        .householdRegistrationImg(request.getHouseholdRegistrationImg())
                         .modifiedDate(LocalDate.now())
                         .isStudent(false)         // mặc định là chưa chính thức
                         .parent(parent)           // gán cha mẹ
                         .build());
 
-
-        // 7. Lưu form mới
-        admissionFormRepo.save(
-                AdmissionForm.builder()
-                        .student(student)
-                        .parent(parent)
-                        .status(Status.DRAFT.getValue()) // add child ==> save thì có status = draft
-                        .profileImage(request.getProfileImage())
-                        .householdRegistrationImg(request.getHouseholdRegistrationImg())
-                        .birthCertificateImg(request.getBirthCertificateImg())
-                        .commitmentImg(request.getCommitmentImg())
-                        .build());
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
@@ -400,7 +442,6 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-
         // Tìm parent từ account
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         if (parent == null) {
@@ -418,6 +459,18 @@ public class ParentServiceImpl implements ParentService {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                             .message("Child not found or access denied")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        // tránh bị null
+        int count = student.getUpdateCount() == null ? 0 : student.getUpdateCount();
+        // Deny if update limit exceeded
+        if (count >= 5) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("This is critical information and can only be updated 5 times. You have reached the limit.")
                             .success(false)
                             .data(null)
                             .build());
@@ -443,46 +496,81 @@ public class ParentServiceImpl implements ParentService {
         student.setGender(request.getGender());
         student.setDateOfBirth(request.getDateOfBirth());
         student.setPlaceOfBirth(request.getPlaceOfBirth());
+        student.setProfileImage(request.getProfileImage());
+        student.setBirthCertificateImg(request.getBirthCertificateImg());
+        student.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
         student.setModifiedDate(LocalDate.now());
+        student.setUpdateCount(count + 1); // safe increment // Tăng số lần cập nhật
         studentRepo.save(student);
 
-        //1 draft
-        AdmissionForm draftForm = student.getAdmissionFormList().stream()
-                .filter(f -> f.getStatus().equals(Status.DRAFT.getValue()))
-                .findFirst().get(); //1 form DRAFT duy nhất cho mỗi student
-
-        draftForm.setProfileImage(request.getProfileImage());
-        draftForm.setBirthCertificateImg(request.getBirthCertificateImg());
-        draftForm.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
-        draftForm.setCommitmentImg(request.getCommitmentImg());
-        admissionFormRepo.save(draftForm);
+        int remaining = 5 - student.getUpdateCount();
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
-                        .message("Child updated successfully")
+                        .message("Update successful. You have " + remaining + " update(s) remaining.")
                         .success(true)
                         .data(null)
                         .build());
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
-        //xac thuc nguoi dung
-        Account account = jwtService.extractAccountFromCookie(request);
-        if (account == null || !account.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    ResponseObject.builder()
-                            .message("Forbidden: Only parents can access this resource")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+//    @Override
+//    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
+//        //xac thuc nguoi dung
+//        Account account = jwtService.extractAccountFromCookie(request);
+//        if (account == null || !account.getRole().equals(Role.PARENT)) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+//                    ResponseObject.builder()
+//                            .message("Forbidden: Only parents can access this resource")
+//                            .success(false)
+//                            .data(null)
+//                            .build()
+//            );
+//        }
+//
+//        // Tìm parent dựa vào account ID
+//        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+//        if (parent == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+//                    ResponseObject.builder()
+//                            .message("Parent not found")
+//                            .success(false)
+//                            .data(null)
+//                            .build()
+//            );
+//        }
+//
+//        // Lấy danh sách student của parent đó
+//        List<Map<String, Object>> studentList = parent.getStudentList().stream()
+//                .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
+//                .map(student -> {
+//                    Map<String, Object> studentDetail = new HashMap<>();
+//                    studentDetail.put("id", student.getId());
+//                    studentDetail.put("name", student.getName());
+//                    studentDetail.put("gender", student.getGender());
+//                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
+//                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+//                    studentDetail.put("modifiedDate", student.getModifiedDate());
+//                    studentDetail.put("isStudent", student.isStudent());
+//                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
+//                    return studentDetail;
+//                })
+//                .toList();
+//
+//        return ResponseEntity.status(HttpStatus.OK).body(
+//                ResponseObject.builder()
+//                        .message("")
+//                        .success(true)
+//                        .data(studentList)
+//                        .build()
+//        );
+//    }
 
-        // Tìm parent dựa vào account ID
-        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+    @Override
+    public ResponseEntity<ResponseObject> getParentById(int id, HttpServletRequest request) {
+        // Retrieve parent by ID
+        Parent parent = parentRepo.findById(id).orElse(null);
         if (parent == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            return ResponseEntity.status(404).body(
                     ResponseObject.builder()
                             .message("Parent not found")
                             .success(false)
@@ -491,28 +579,77 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        // Lấy danh sách student của parent đó
-        List<Map<String, Object>> studentList = parent.getStudentList().stream()
-                .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(student -> {
-                    Map<String, Object> studentDetail = new HashMap<>();
-                    studentDetail.put("id", student.getId());
-                    studentDetail.put("name", student.getName());
-                    studentDetail.put("gender", student.getGender());
-                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
-                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
-                    studentDetail.put("modifiedDate", student.getModifiedDate());
-                    studentDetail.put("isStudent", student.isStudent());
-                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
-                    return studentDetail;
-                })
-                .toList();
+        // Prepare parent details
+        Account account = parent.getAccount();
+        Map<String, Object> parentData = new HashMap<>();
+        parentData.put("id", parent.getId());
+        parentData.put("name", account.getName());
+        parentData.put("email", account.getEmail());
+        parentData.put("phone", account.getPhone());
+        parentData.put("gender", account.getGender());
+        parentData.put("identityNumber", account.getIdentityNumber());
+        parentData.put("address", parent.getAddress());
+        parentData.put("job", parent.getJob());
+        parentData.put("relationshipToChild", parent.getRelationshipToChild());
+        parentData.put("dayOfBirth", parent.getDayOfBirth());
 
-        return ResponseEntity.status(HttpStatus.OK).body(
+        return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("")
+                        .message("Parent retrieved successfully")
                         .success(true)
-                        .data(studentList)
+                        .data(parentData)
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> updateParent(UpdateParentRequest request, HttpServletRequest httpRequest) {
+        // Retrieve parent by ID
+        Parent parent = parentRepo.findById(request.getId()).orElse(null);
+        if (parent == null) {
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("Parent not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        // Update parent details
+        parent.setAddress(request.getAddress());
+        parent.setJob(request.getJob());
+        parent.setRelationshipToChild(request.getRelationshipToChild());
+        parent.setDayOfBirth(request.getDayOfBirth());
+
+        // Update account details
+        Account account = parent.getAccount();
+        account.setName(request.getName());
+        account.setPhone(request.getPhone());
+        account.setGender(request.getGender());
+        account.setIdentityNumber(request.getIdentityNumber());
+
+        // Save updated entities
+        accountRepo.save(account);
+        parentRepo.save(parent);
+
+        Map<String, Object> updatedParentData = new HashMap<>();
+        updatedParentData.put("id", parent.getId());
+        updatedParentData.put("name", account.getName());
+        updatedParentData.put("email", account.getEmail());
+        updatedParentData.put("phone", account.getPhone());
+        updatedParentData.put("gender", account.getGender());
+        updatedParentData.put("identityNumber", account.getIdentityNumber());
+        updatedParentData.put("address", parent.getAddress());
+        updatedParentData.put("job", parent.getJob());
+        updatedParentData.put("relationshipToChild", parent.getRelationshipToChild());
+        updatedParentData.put("dayOfBirth", parent.getDayOfBirth());
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Parent updated successfully")
+                        .success(true)
+                        .data(updatedParentData)
                         .build()
         );
     }

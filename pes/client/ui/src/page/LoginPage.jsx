@@ -91,16 +91,17 @@ async function handleSignIn(email, password) {
 }
 
 const signInPage = async (provider, formData) => {
-
     if (provider.id === 'credentials') {
+        const parentId = formData.get('parentId'); 
         const email = formData.get('email');
         const password = formData.get('password');
 
-        handleSignIn(email, password).then(res => {
+        handleSignIn(email, password).then(res => {   
             if (res && res.success) {
                 enqueueSnackbar(res.message, {variant: 'success'});
                 const userAcc = {
                     user: {
+                        id: res.data.parentId,
                         name: res.data.name,
                         email: res.data.email,
                     }
@@ -119,7 +120,7 @@ const signInPage = async (provider, formData) => {
 
                         case 'PARENT':
                             setTimeout(() => {
-                                window.location.href = "/parent/form";
+                                window.location.href = `/parent/${res.data.parentId}`;
                             }, 500)
                             break;
                         

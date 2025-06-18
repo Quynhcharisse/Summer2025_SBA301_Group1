@@ -7,12 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/parent")
@@ -54,9 +49,27 @@ public class ParentController {
         return parentService.updateChild(request, httpRequest);
     }
 
+
+//    @GetMapping("/child")
+//    @PreAuthorize("hasRole('parent')")
+//    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
+//        return parentService.getChildrenByParent(request);
+//    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseObject> getParentById(@PathVariable int id, HttpServletRequest request) {
+        return parentService.getParentById(id, request);
+    }
+
+    @PutMapping("/update")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> updateParent(@RequestBody UpdateParentRequest request, HttpServletRequest httpRequest) {
+        return parentService.updateParent(request, httpRequest);
+    }
+
     @GetMapping("/child")
     @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> getChildrenByParent(HttpServletRequest request) {
-        return parentService.getChildrenByParent(request);
+    public ResponseEntity<ResponseObject> viewChild(HttpServletRequest request) {
+        return parentService.viewChild(request);
     }
 }

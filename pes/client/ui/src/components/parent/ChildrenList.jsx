@@ -240,7 +240,7 @@ const ChildrenList = () => {
           throw new Error(data.message || "Failed to fetch children data");
         }
 
-        const childrenArr = data.data?.studentList || [];
+        const childrenArr = data.data || [];
         console.log("Children data:", childrenArr);
         setChildren(childrenArr);
       } catch (err) {

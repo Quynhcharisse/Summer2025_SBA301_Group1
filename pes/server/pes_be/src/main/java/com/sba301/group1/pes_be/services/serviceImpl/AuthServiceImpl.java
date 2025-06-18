@@ -57,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
+        System.out.println(account);
         assert account != null;
 
         String newAccess = jwtService.generateAccessToken(account);
@@ -75,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
 
     private Map<String, Object> buildLoginBody(Account account) {
         Map<String, Object> body = new HashMap<>();
+        body.put("parentId", account.getParent().getId());
         body.put("name", account.getName());
         body.put("email", account.getEmail());
         body.put("role", account.getRole().name());
