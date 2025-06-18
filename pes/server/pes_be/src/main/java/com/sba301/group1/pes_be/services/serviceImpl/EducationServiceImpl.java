@@ -33,6 +33,8 @@ public class EducationServiceImpl implements EducationService {
     private final LessonRepo lessonRepo;
     private final ScheduleRepo scheduleRepo;
     private final SyllabusRepo syllabusRepo;
+    private final SyllabusLessonRepo syllabusLessonRepo;
+    private final AccountRepo accountRepo;
 
     // Private helper method to convert Activity entity to Response
     private ActivityResponse convertToResponse(Activity activity) {
@@ -868,6 +870,159 @@ public class EducationServiceImpl implements EducationService {
         }
     }
 
+    @Override
+    public ResponseEntity<ResponseObject> createClass(ClassRequest request) {
+        // Validate teacherId is not null
+        if (request.getTeacherId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Teacher ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        // Validate syllabusId is not null
+        if (request.getSyllabusId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Syllabus ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        Account teacher = accountRepo.findById(request.getTeacherId()).orElse(null);
+        if (teacher == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Teacher not found")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        Syllabus syllabus = syllabusRepo.findById(request.getSyllabusId()).orElse(null);
+        if (syllabus == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Syllabus not found")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        Classes classes = Classes.builder()
+                .name(request.getName())
+                .teacher(teacher)
+                .syllabus(syllabus)
+                .numberStudent(request.getNumberStudent())
+                .roomNumber(request.getRoomNumber())
+                .startDate(request.getStartDate().toString())
+                .endDate(request.getEndDate().toString())
+                .status(request.getStatus())
+                .build();
+
+        classesRepo.save(classes);
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Create class successfully")
+                        .success(true)
+                        .data(classes)
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> updateClass(Integer classId, ClassRequest request) {
+        // Validate teacherId is not null
+        if (request.getTeacherId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Teacher ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        // Validate syllabusId is not null
+        if (request.getSyllabusId() == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Syllabus ID cannot be null")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        return classesRepo.findById(classId)
+                .map(classes -> {
+                    Account teacher = accountRepo.findById(request.getTeacherId()).orElse(null);
+                    if (teacher == null) {
+                        return ResponseEntity.badRequest().body(
+                                ResponseObject.builder()
+                                        .message("Teacher not found")
+                                        .success(false)
+                                        .build()
+                        );
+                    }
+
+                    Syllabus syllabus = syllabusRepo.findById(request.getSyllabusId()).orElse(null);
+                    if (syllabus == null) {
+                        return ResponseEntity.badRequest().body(
+                                ResponseObject.builder()
+                                        .message("Syllabus not found")
+                                        .success(false)
+                                        .build()
+                        );
+                    }
+
+                    classes.setName(request.getName());
+                    classes.setTeacher(teacher);
+                    classes.setSyllabus(syllabus);
+                    classes.setNumberStudent(request.getNumberStudent());
+                    classes.setRoomNumber(request.getRoomNumber());
+                    classes.setStartDate(request.getStartDate().toString());
+                    classes.setEndDate(request.getEndDate().toString());
+                    classes.setStatus(request.getStatus());
+
+                    classesRepo.save(classes);
+                    return ResponseEntity.ok().body(
+                            ResponseObject.builder()
+                                    .message("Update class successfully")
+                                    .success(true)
+                                    .data(classes)
+                                    .build()
+                    );
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> deleteClass(Integer classId) {
+        return classesRepo.findById(classId)
+                .map(classes -> {
+                    try {
+                        classesRepo.delete(classes);
+                        return ResponseEntity.ok().body(
+                                ResponseObject.builder()
+                                        .message("Class deleted successfully")
+                                        .success(true)
+                                        .build()
+                        );
+                    } catch (Exception e) {
+                        // Handle cases where deletion fails due to foreign key constraints
+                        return ResponseEntity.status(409).body(
+                                ResponseObject.builder()
+                                        .message("Cannot delete class. It may have dependencies (students, activities, schedules, etc.)")
+                                        .success(false)
+                                        .build()
+                        );
+                    }
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     // Lesson Service Methods
     @Override
     public ResponseEntity<ResponseObject> getAllLessons() {
@@ -962,6 +1117,87 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error retrieving lessons: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> createLesson(LessonRequest request) {
+        Lesson lesson = Lesson.builder()
+                .topic(request.getTopic())
+                .description(request.getDescription())
+                .duration(request.getDuration())
+                .materials(request.getMaterials())
+                .build();
+
+        lessonRepo.save(lesson);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Create lesson successfully")
+                        .success(true)
+                        .data(LessonResponse.fromEntity(lesson))
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> updateLesson(Integer lessonId, LessonRequest request) {
+        Lesson lesson = lessonRepo.findById(lessonId).orElse(null);
+        if (lesson == null) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Lesson not found")
+                            .success(false)
+                            .build()
+            );
+        }
+
+        lesson.setTopic(request.getTopic());
+        lesson.setDescription(request.getDescription());
+        lesson.setDuration(request.getDuration());
+        lesson.setMaterials(request.getMaterials());
+        lessonRepo.save(lesson);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Update lesson successfully")
+                        .success(true)
+                        .data(LessonResponse.fromEntity(lesson))
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> deleteLesson(Integer lessonId) {
+        try {
+            Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
+            if (lessonOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Lesson not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            lessonRepo.deleteById(lessonId);
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Lesson deleted successfully")
+                    .success(true)
+                    .data(null)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error deleting lesson: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()
@@ -1291,5 +1527,99 @@ public class EducationServiceImpl implements EducationService {
                     .build()
             );
         }
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<ResponseObject> createSyllabus(SyllabusRequest request) {
+        Syllabus syllabus = Syllabus.builder().
+                title(request.getTitle())
+                .description(request.getDescription())
+                .build();
+        updateSyllabusLessons(request, syllabus);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Create syllabus successfully")
+                        .success(true)
+                        .data(SyllabusResponse.fromEntity(syllabus))
+                        .build()
+        );
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<ResponseObject> updateSyllabus(Integer id, SyllabusRequest request) {
+        return syllabusRepo.findById(id)
+                .map(syllabus -> {
+                    syllabus.setTitle(request.getTitle());
+                    syllabus.setDescription(request.getDescription());
+                    updateSyllabusLessons(request, syllabus);
+
+                    return ResponseEntity.ok().body(
+                            ResponseObject.builder()
+                                    .message("Update syllabus successfully")
+                                    .success(true)
+                                    .data(SyllabusResponse.fromEntity(syllabus))
+                                    .build()
+                    );
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Transactional
+    protected void updateSyllabusLessons(SyllabusRequest request, Syllabus syllabus) {
+        syllabusRepo.save(syllabus);
+
+        if (syllabus.getId() != null) {
+            syllabusLessonRepo.deleteSyllabusLessonBySyllabus(syllabus);
+        }
+
+        if (request.getLessons() != null) {
+            List<SyllabusLesson> syllabusLessons = new ArrayList<>();
+
+            for (var lessonReq : request.getLessons()) {
+                Lesson lesson = lessonRepo.findById(lessonReq.getLessonId())
+                        .orElseThrow(() -> new RuntimeException("Lesson not found"));
+
+                SyllabusLesson syllabusLesson = SyllabusLesson.builder()
+                        .syllabus(syllabus)
+                        .lesson(lesson)
+                        .note(lessonReq.getNote())
+                        .build();
+
+                syllabusLessons.add(syllabusLesson);
+            }
+
+            syllabusLessonRepo.saveAll(syllabusLessons);
+
+            syllabus.setSyllabusLessonList(syllabusLessons);
+        } else {
+            syllabus.setSyllabusLessonList(new ArrayList<>());
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> deleteSyllabus(Integer syllabusId) {
+        return syllabusRepo.findById(syllabusId)
+                .map(syllabus -> {
+                    try {
+                        syllabusRepo.delete(syllabus);
+                        return ResponseEntity.ok().body(
+                                ResponseObject.builder()
+                                        .message("Syllabus deleted successfully")
+                                        .success(true)
+                                        .build()
+                        );
+                    } catch (Exception e) {
+                        return ResponseEntity.status(409).body(
+                                ResponseObject.builder()
+                                        .message("Cannot delete syllabus. It may have dependencies (classes, lessons, etc.)")
+                                        .success(false)
+                                        .build()
+                        );
+                    }
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

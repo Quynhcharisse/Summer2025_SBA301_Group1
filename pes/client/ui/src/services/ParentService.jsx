@@ -35,7 +35,7 @@ export const cancelAdmission = async (id) => {
 };
 
 export const getChildrenList = async () => {
-    const response = await axiosClient.get("/parent/children");
+    const response = await axiosClient.get("/parent/child");
     console.log("Response from getChildrenList:", response);
     
     return response ? response.data : null;

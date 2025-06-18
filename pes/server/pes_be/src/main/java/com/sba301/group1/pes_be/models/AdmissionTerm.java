@@ -2,6 +2,7 @@
 package com.sba301.group1.pes_be.models;
 
 import com.sba301.group1.pes_be.enums.Grade;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -55,8 +56,13 @@ public class AdmissionTerm {
 
     String status;
 
-    @OneToMany(mappedBy = "admissionTerm", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "admissionTerm", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     List<AdmissionForm> admissionFormList;
+
+    @OneToMany(mappedBy = "admissionTerm", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    List<ExtraTerm> extraTermList;
 }

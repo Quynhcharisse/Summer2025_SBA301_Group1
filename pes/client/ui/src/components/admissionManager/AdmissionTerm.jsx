@@ -128,21 +128,17 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
 }
 
 function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm, mode}) {
-
-    const isViewMode = mode === 'view'; // TRUE nếu đang xem
-
+    const isViewMode = mode === 'view';
     const {enqueueSnackbar} = useSnackbar();
 
     const [formData, setFormData] = useState({
-        grade: null,
-        startDate: null,
-        endDate: null,
-        maxNumberRegistration: 0,
+        grade: '',
+        startDate: '',
+        endDate: '',
+        maxNumberRegistration: 0
     });
 
-    //Đồng bộ formData từ selectedTerm
     useEffect(() => {
-        console.log("selectedTerm: ", selectedTerm);
         if (selectedTerm) {
             setFormData({
                 grade: selectedTerm.grade ?? '',
@@ -157,49 +153,108 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm
         }
     }, [selectedTerm]);
 
+    // Validate form trước khi update
+    const validateUpdateForm = () => {
+        // Check if term is not INACTIVE
+        if (selectedTerm.status !== 'INACTIVE_TERM') {
+            enqueueSnackbar("Only inactive terms can be updated", {variant: "error"});
+            return false;
+        }
+
+        // 1. Validate các field required
+        if (!formData.startDate) {
+            enqueueSnackbar("Please select start date", {variant: "error"});
+            return false;
+        }
+        if (!formData.endDate) {
+            enqueueSnackbar("Please select end date", {variant: "error"});
+            return false;
+        }
+        if (!formData.maxNumberRegistration || formData.maxNumberRegistration <= 0) {
+            enqueueSnackbar("Max number registration must be greater than 0", {variant: "error"});
+            return false;
+        }
+
+        // 2. Validate thời gian
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+        const now = new Date();
+
+        if (startDate < now) {
+            enqueueSnackbar("Start date must be in the future", {variant: "error"});
+            return false;
+        }
+
+        if (endDate <= startDate) {
+            enqueueSnackbar("End date must be after start date", {variant: "error"});
+            return false;
+        }
+
+        return true;
+    };
 
     const handleUpdateTerm = async () => {
         try {
+            // Validate form trước
+            if (!validateUpdateForm()) {
+                return;
+            }
+
             const response = await updateTerm(
                 selectedTerm.id,
                 formData.grade,
                 formData.startDate,
                 formData.endDate,
-                formData.maxNumberRegistration,
+                formData.maxNumberRegistration
             );
-            enqueueSnackbar("Term updated successfully!", {variant: "success"});
-            handleClosePopUp();
-            GetTerm();
+
+            if (response.success) {
+                enqueueSnackbar("Term updated successfully!", {variant: "success"});
+                handleClosePopUp();
+                GetTerm();
+            } else {
+                // Xử lý các lỗi từ BE
+                if (response.message.includes("overlaps")) {
+                    enqueueSnackbar("Time period overlaps with another term of the same grade", {variant: "error"});
+                } else if (response.message.includes("inactive")) {
+                    enqueueSnackbar("Only inactive terms can be updated", {variant: "error"});
+                } else {
+                    enqueueSnackbar(response.message || "Failed to update term", {variant: "error"});
+                }
+            }
         } catch (error) {
-            enqueueSnackbar("Failed to update term", {variant: "error"});
+            enqueueSnackbar("An error occurred while updating the term", {variant: "error"});
         }
     };
 
-    // hàm cập nhật liên tục, onChange sẽ đc gọi, môix khi có thông tin thay đổi
     function HandleOnChange(e) {
-        console.log('e.target.name: ', e.target.name)
-        console.log('e.target.value: ', e.target.value)
-        setFormData({...formData, [e.target.name]: e.target.value})
+        const {name, value} = e.target;
+        
+        // Validate maxNumberRegistration khi nhập
+        if (name === "maxNumberRegistration") {
+            const numValue = parseInt(value);
+            if (numValue <= 0) {
+                enqueueSnackbar("Max number registration must be greater than 0", {variant: "warning"});
+            }
+        }
+
+        setFormData({...formData, [name]: value});
     }
 
-
     return (
-        <Dialog
-            maxWidth={'md'}
-            fullWidth
-            open={isPopUpOpen}
-            onClose={handleClosePopUp}
-        >
+        <Dialog maxWidth={'md'} fullWidth open={isPopUpOpen} onClose={handleClosePopUp}>
             <AppBar sx={{position: 'relative', backgroundColor: '#2c3e50'}}>
                 <Toolbar>
-                    <IconButton edge="start"
-                                color="inherit"
-                                onClick={handleClosePopUp}
-                                aria-label="close">
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={handleClosePopUp}
+                        aria-label="close"
+                    >
                         <Close/>
                     </IconButton>
                     <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
-                        Admission Term Detail
+                        {isViewMode ? 'View Term Detail' : 'Update Term'}
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -215,31 +270,49 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm
                 <Stack spacing={3}>
                     <Stack>
                         <TextField
-                            label="Start Date"
+                            label="Start Date *"
                             type="datetime-local"
                             required
                             fullWidth
                             name="startDate"
                             value={formData.startDate}
-                            onChange={(e) => HandleOnChange(e)}
+                            onChange={HandleOnChange}
                             disabled={isViewMode}
                             InputLabelProps={{shrink: true}}
+                            helperText={!isViewMode && "Start date must be in the future"}
                         />
                     </Stack>
                     <Stack>
                         <TextField
-                            label="End Date"
+                            label="End Date *"
                             type="datetime-local"
                             name="endDate"
                             value={formData.endDate}
-                            onChange={(e) => HandleOnChange(e)}
+                            onChange={HandleOnChange}
                             disabled={isViewMode}
                             required
                             fullWidth
+                            InputLabelProps={{shrink: true}}
+                            helperText={!isViewMode && "End date must be after start date"}
+                        />
+                    </Stack>
+                    <Stack>
+                        <TextField
+                            label="Max Registrations *"
+                            type="number"
+                            required
+                            fullWidth
+                            name="maxNumberRegistration"
+                            value={formData.maxNumberRegistration}
+                            onChange={HandleOnChange}
+                            disabled={isViewMode}
+                            inputProps={{ min: 1 }}
+                            helperText={!isViewMode && "Must be greater than 0"}
                         />
                     </Stack>
                 </Stack>
             </Box>
+
             <DialogActions sx={{justifyContent: 'flex-end', px: 4, py: 3, gap: '1rem'}}>
                 <Button
                     sx={{minWidth: 120, height: '44px'}}
@@ -250,71 +323,116 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm
                     Close
                 </Button>
 
-                {/* Chỉ hiện nếu không phải chế độ view */}
                 {!isViewMode && (
                     <Button
                         sx={{minWidth: 120, height: '44px'}}
                         variant="contained"
                         color="success"
                         onClick={handleUpdateTerm}
+                        disabled={selectedTerm?.status !== 'INACTIVE_TERM'}
                     >
                         Update
                     </Button>
                 )}
-
             </DialogActions>
-
         </Dialog>
-
-    )
+    );
 }
 
 function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm}) {
-
     const {enqueueSnackbar} = useSnackbar();
+    const currentYear = new Date().getFullYear();
 
     const [formData, setFormData] = useState({
-        grade: null,
-        startDate: null,
-        endDate: null,
-        maxNumberRegistration: 0,
-        reservationFee: 0,
-        serviceFee: 0,
-        uniformFee: 0,
-        learningMaterialFee: 0,
-        facilityFee: 0
+        grade: '',
+        startDate: '',
+        endDate: '',
+        maxNumberRegistration: 0
     });
 
+    // Validate form trước khi gửi request
+    const validateForm = () => {
+        // 1. Check các field required
+        if (!formData.grade) {
+            enqueueSnackbar("Please select a grade", {variant: "error"});
+            return false;
+        }
+        if (!formData.startDate) {
+            enqueueSnackbar("Please select start date", {variant: "error"});
+            return false;
+        }
+        if (!formData.endDate) {
+            enqueueSnackbar("Please select end date", {variant: "error"});
+            return false;
+        }
+        if (!formData.maxNumberRegistration || formData.maxNumberRegistration <= 0) {
+            enqueueSnackbar("Max number registration must be greater than 0", {variant: "error"});
+            return false;
+        }
 
-    const handleCreate = async (
-        formData
-    ) => {
-        const response = await createTerm(
-            formData.grade,
-            formData.startDate,
-            formData.endDate,
-            formData.maxNumberRegistration,
-            formData.reservationFee,
-            formData.serviceFee,
-            formData.uniformFee,
-            formData.learningMaterialFee,
-            formData.facilityFee
-        );
+        // 2. Validate thời gian
+        const startDate = new Date(formData.startDate);
+        const endDate = new Date(formData.endDate);
+        const now = new Date();
 
-        if (response.success) {
-            enqueueSnackbar("Term created successfully!", {variant: "success"});
-            handleClosePopUp();
-            GetTerm(); // reload list
-        } else {
-            enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
+        if (startDate < now) {
+            enqueueSnackbar("Start date must be in the future", {variant: "error"});
+            return false;
+        }
+
+        if (endDate <= startDate) {
+            enqueueSnackbar("End date must be after start date", {variant: "error"});
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleCreate = async () => {
+        try {
+            // Validate form trước
+            if (!validateForm()) {
+                return;
+            }
+
+            const response = await createTerm(
+                formData.grade,
+                formData.startDate,
+                formData.endDate,
+                formData.maxNumberRegistration
+            );
+
+            if (response.success) {
+                enqueueSnackbar("Term created successfully!", {variant: "success"});
+                handleClosePopUp();
+                GetTerm();
+            } else {
+                // Xử lý các lỗi từ BE trả về
+                if (response.message.includes("already exists")) {
+                    enqueueSnackbar(`A term for grade ${formData.grade} already exists in ${currentYear}`, {variant: "error"});
+                } else if (response.message.includes("overlaps")) {
+                    enqueueSnackbar("Time period overlaps with another term of the same grade", {variant: "error"});
+                } else {
+                    enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
+                }
+            }
+        } catch (error) {
+            enqueueSnackbar("An error occurred while creating the term", {variant: "error"});
         }
     };
 
-    console.log("Form data: ", formData)
-
-    // hàm cập nhật liên tục, onChange sẽ đc gọi, môix khi có thông tin thay đổi
     function HandleOnChange(e) {
-        setFormData({...formData, [e.target.name]: e.target.value})
+        const {name, value} = e.target;
+        
+        // Validate maxNumberRegistration khi nhập
+        if (name === "maxNumberRegistration") {
+            const numValue = parseInt(value);
+            if (numValue <= 0) {
+                enqueueSnackbar("Max number registration must be greater than 0", {variant: "warning"});
+            }
+        }
+
+        setFormData({...formData, [name]: value});
     }
 
     return (
@@ -325,130 +443,59 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm}) {
             <DialogContent>
                 <Box sx={{mt: 2, display: 'flex', flexDirection: 'column', gap: 2}}>
                     <FormControl sx={{pl: 1}}>
-                        <FormLabel
-
-                            sx={{
-                                color: '#2c3e50 !important',
-                                '&.Mui-focused': {
-                                    color: '#2c3e50 !important'
-                                }
-                            }}>Grade</FormLabel>
+                        <FormLabel sx={{
+                            color: '#2c3e50 !important',
+                            '&.Mui-focused': {color: '#2c3e50 !important'}
+                        }}>
+                            Grade *
+                        </FormLabel>
                         <RadioGroup
                             row
                             name="grade"
                             value={formData.grade}
-                            onChange={(e) => HandleOnChange(e)}
+                            onChange={HandleOnChange}
                         >
-                            <FormControlLabel value="seed" control={<Radio sx={{
-                                color: '#2c3e50',
-                                '&.Mui-checked': {
-                                    color: '#2c3e50',
-                                },
-                                '&.Mui-focusVisible': {
-                                    outline: 'none',
-                                }
-                            }}
-                            />} label="Seed"/>
-                            <FormControlLabel value="bud" control={<Radio sx={{
-                                color: '#2c3e50',
-                                '&.Mui-checked': {
-                                    color: '#2c3e50',
-                                },
-                                '&.Mui-focusVisible': {
-                                    outline: 'none',
-                                }
-                            }}/>} label="Bud"/>
-                            <FormControlLabel value="leaf" control={<Radio sx={{
-                                color: '#2c3e50',
-                                '&.Mui-checked': {
-                                    color: '#2c3e50',
-                                },
-                                '&.Mui-focusVisible': {
-                                    outline: 'none',
-                                }
-                            }}/>} label="Leaf"/>
+                            <FormControlLabel value="seed" control={<Radio />} label="Seed"/>
+                            <FormControlLabel value="bud" control={<Radio />} label="Bud"/>
+                            <FormControlLabel value="leaf" control={<Radio />} label="Leaf"/>
                         </RadioGroup>
                     </FormControl>
 
                     <Box sx={{display: 'flex', gap: 2}}>
                         <TextField
-                            label="Start Date"
+                            label="Start Date *"
                             type="datetime-local"
                             name="startDate"
                             value={formData.startDate}
-                            onChange={(e) => HandleOnChange(e)}
+                            onChange={HandleOnChange}
                             required
                             fullWidth
                             InputLabelProps={{shrink: true}}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: '12px',
-                                    '& fieldset': {
-                                        borderColor: '#2c3e50',
-                                        borderWidth: 2,
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: '#2c3e50',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#2c3e50',
-                                        boxShadow: '0 0 0 2px #eaf3ed'
-                                    },
-                                }
-                            }}
+                            helperText="Start date must be in the future"
                         />
                         <TextField
-                            label="End Date"
+                            label="End Date *"
                             type="datetime-local"
-                            required
-                            fullWidth
                             name="endDate"
                             value={formData.endDate}
-                            onChange={(e) => HandleOnChange(e)}
+                            onChange={HandleOnChange}
+                            required
+                            fullWidth
                             InputLabelProps={{shrink: true}}
-                            sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: '12px',
-                                    '& fieldset': {
-                                        borderColor: '#2c3e50',
-                                        borderWidth: 2,
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: '#2c3e50',
-                                    },
-                                    '&.Mui-focused fieldset': {
-                                        borderColor: '#2c3e50',
-                                        boxShadow: '0 0 0 2px #eaf3ed'
-                                    },
-                                }
-                            }}
+                            helperText="End date must be after start date"
                         />
                     </Box>
 
                     <TextField
-                        label="Max Registrations"
+                        label="Max Registrations *"
                         type="number"
                         required
                         fullWidth
                         name="maxNumberRegistration"
                         value={formData.maxNumberRegistration}
-                        onChange={(e) => HandleOnChange(e)}
-                        sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                '& fieldset': {
-                                    borderColor: '#2c3e50',
-                                    borderWidth: 2,
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: '#2c3e50',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#2c3e50',
-                                    boxShadow: '0 0 0 2px #eaf3ed'
-                                },
-                            }
-                        }}
+                        onChange={HandleOnChange}
+                        inputProps={{ min: 1 }}
+                        helperText="Must be greater than 0"
                     />
                 </Box>
             </DialogContent>
@@ -478,13 +525,13 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm}) {
                         backgroundColor: '#2c3e50',
                         '&:hover': {backgroundColor: '#2c3e50'}
                     }}
-                    onClick={() => handleCreate(formData)}
+                    onClick={handleCreate}
                 >
-                    Save Change
+                    Create Term
                 </Button>
             </DialogActions>
         </Dialog>
-    )
+    );
 }
 
 

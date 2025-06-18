@@ -11,6 +11,7 @@ public enum Status {
     ACCOUNT_UNBAN("unban"),
 
     PENDING_APPROVAL ("pending approval"),
+    DRAFT ("draft"),
     CANCELLED("cancelled"),
     APPROVED("approved"),
     REJECTED("rejected"),

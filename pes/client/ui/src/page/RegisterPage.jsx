@@ -13,6 +13,7 @@ import {
   Alert
 } from "@mui/material";
 import { register } from "../services/AuthService";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const initialState = {
   email: "",
@@ -30,6 +31,7 @@ const initialState = {
 export default function RegisterPage() {
   const [form, setForm] = useState(initialState);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -51,6 +53,10 @@ export default function RegisterPage() {
     } catch (error) {
       setSnackbar({ open: true, message: "Registration failed!", severity: "error" });
     }
+  };
+
+  const handleCancel = () => {
+    navigate(-1); // Navigate back to the previous page
   };
 
   return (
@@ -188,6 +194,14 @@ export default function RegisterPage() {
               }}
             >
               Register
+            </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={handleCancel} // Add the cancel button
+            >
+              Cancel
             </Button>
           </form>
         </Box>

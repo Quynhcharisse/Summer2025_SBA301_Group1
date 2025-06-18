@@ -1,24 +1,23 @@
+
 package com.sba301.group1.pes_be.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -26,24 +25,27 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "`lesson`")
-public class Lesson {
+@Table(name = "`extra_term`")
+public class ExtraTerm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    String topic;
+    String name;
 
-    String description;
+    @Column(name = "`start_date`")
+    LocalDateTime startDate; //theo ngày + h
 
-    Integer duration;
+    @Column(name = "`end_date`")
+    LocalDateTime endDate; //theo ngày + h
 
-    String materials;
+    @Column(name = "`max_number_registration`")
+    int maxNumberRegistration;
 
-    @OneToMany(mappedBy = "lesson", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @EqualsAndHashCode.Exclude
-    @ToString.Exclude
-    @JsonIgnore
-    List<SyllabusLesson> syllabusLessonList;
+    String reason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "`admission_term_id`")
+    AdmissionTerm admissionTerm;
 }

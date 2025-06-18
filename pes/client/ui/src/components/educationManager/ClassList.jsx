@@ -1,43 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Box,
-    Paper,
-    Typography,
     Button,
-    Card,
-    CardContent,
-    Grid,
     Chip,
     Dialog,
-    DialogTitle,
-    DialogContent,
     DialogActions,
-    List,
-    ListItem,
-    ListItemText,
-    Divider,
-    Alert
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    InputAdornment,
+    Paper,
+    TextField,
+    Typography
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Info, Visibility, Assignment } from '@mui/icons-material';
-
-import { enqueueSnackbar } from 'notistack';
-import {
-    createActivitiesFromLessons, getAllClasses,
-    getLessonsByClassId,
-    getSyllabusByClassId
-} from "../../services/EducationService.jsx";
+import {DataGrid} from '@mui/x-data-grid';
+import {Add, Delete, Info, Search} from '@mui/icons-material';
+import {useNavigate} from 'react-router-dom';
+import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
+import {enqueueSnackbar} from 'notistack';
+import '../../styles/manager/ActivityManagement.css';
 
 function ClassList() {
+    const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedClass, setSelectedClass] = useState(null);
-    const [syllabus, setSyllabus] = useState(null);
-    const [lessons, setLessons] = useState([]);
-    const [detailModal, setDetailModal] = useState({
-        isOpen: false,
-        type: '' // 'info', 'syllabus', 'lessons'
-    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [classToDelete, setClassToDelete] = useState(null);
 
     useEffect(() => {
         fetchClasses();
@@ -46,90 +35,75 @@ function ClassList() {
     const fetchClasses = async () => {
         try {
             setLoading(true);
-            const response = await getAllClasses();
-            if (response && response.success) {
-                setClasses(response.data || []);
+            const classesResponse = await getAllClasses();
+
+            if (classesResponse && classesResponse.success) {
+                // Ensure data is an array and filter out any invalid entries
+                const classData = Array.isArray(classesResponse.data) ? classesResponse.data : [];
+                const validClasses = classData.filter(cls => cls && typeof cls === 'object' && cls.id);
+                setClasses(validClasses);
             } else {
-                enqueueSnackbar('Failed to fetch classes', { variant: 'error' });
+                enqueueSnackbar('Failed to fetch classes', {variant: 'error'});
+                setClasses([]);
             }
         } catch (error) {
-            console.error('Error fetching classes:', error);
-            enqueueSnackbar('Error fetching classes', { variant: 'error' });
+            console.error('Error fetching data:', error);
+            enqueueSnackbar('Error fetching data', {variant: 'error'});
+            setClasses([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleViewDetails = async (classData, type) => {
-        setSelectedClass(classData);
-        
-        if (type === 'syllabus') {
-            try {
-                const syllabusResponse = await getSyllabusByClassId(classData.id);
-                if (syllabusResponse && syllabusResponse.success) {
-                    setSyllabus(syllabusResponse.data);
-                } else {
-                    enqueueSnackbar('Failed to fetch syllabus', { variant: 'error' });
-                }
-            } catch (error) {
-                console.error('Error fetching syllabus:', error);
-                enqueueSnackbar('Error fetching syllabus', { variant: 'error' });
-            }
-        } else if (type === 'lessons') {
-            try {
-                const lessonsResponse = await getLessonsByClassId(classData.id);
-                if (lessonsResponse && lessonsResponse.success) {
-                    setLessons(lessonsResponse.data || []);
-                } else {
-                    enqueueSnackbar('Failed to fetch lessons', { variant: 'error' });
-                }
-            } catch (error) {
-                console.error('Error fetching lessons:', error);
-                enqueueSnackbar('Error fetching lessons', { variant: 'error' });
-            }
-        }
-        
-        setDetailModal({ isOpen: true, type });
+    const handleViewInfo = (classData) => {
+        navigate(`/education/classes/${classData.id}`);
     };
 
-    const handleCreateActivitiesFromLessons = async () => {
-        if (!selectedClass || lessons.length === 0) {
-            enqueueSnackbar('No lessons available to create activities', { variant: 'warning' });
-            return;
-        }
+    const handleDeleteClick = (classData) => {
+        setClassToDelete(classData);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!classToDelete) return;
 
         try {
-            const requestData = {
-                classId: selectedClass.id,
-                lessonIds: lessons.map(lesson => lesson.id)
-            };
-            
-            const response = await createActivitiesFromLessons(requestData);
+            const response = await removeClass(classToDelete.id);
             if (response && response.success) {
-                enqueueSnackbar('Activities created successfully from lessons', { variant: 'success' });
-                setDetailModal({ isOpen: false, type: '' });
+                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, {variant: 'success'});
+                // Refresh the class list
+                fetchClasses();
             } else {
-                enqueueSnackbar('Failed to create activities from lessons', { variant: 'error' });
+                enqueueSnackbar('Failed to delete class', {variant: 'error'});
             }
         } catch (error) {
-            console.error('Error creating activities:', error);
-            enqueueSnackbar('Error creating activities from lessons', { variant: 'error' });
+            console.error('Error deleting class:', error);
+            if (error.response?.status === 409) {
+                enqueueSnackbar('Cannot delete class. It may have dependencies (students, activities, etc.)', {variant: 'error'});
+            } else {
+                enqueueSnackbar('Error deleting class', {variant: 'error'});
+            }
+        } finally {
+            setDeleteDialogOpen(false);
+            setClassToDelete(null);
         }
     };
 
-    const handleCloseModal = () => {
-        setDetailModal({ isOpen: false, type: '' });
-        setSelectedClass(null);
-        setSyllabus(null);
-        setLessons([]);
+    const handleDeleteCancel = () => {
+        setDeleteDialogOpen(false);
+        setClassToDelete(null);
     };
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
-            case 'active': return 'success';
-            case 'inactive': return 'error';
-            case 'pending': return 'warning';
-            default: return 'default';
+            case 'active':
+                return 'success';
+            case 'inactive':
+                return 'error';
+            case 'pending':
+                return 'warning';
+            default:
+                return 'default';
         }
     };
 
@@ -142,7 +116,7 @@ function ClassList() {
             align: 'center'
         },
         {
-            field: 'className',
+            field: 'name',
             headerName: 'Class Name',
             width: 200,
             headerAlign: 'center'
@@ -161,22 +135,28 @@ function ClassList() {
             headerAlign: 'center',
             align: 'center',
             renderCell: (params) => (
-                <Chip 
-                    label={params.value} 
-                    color={getStatusColor(params.value)}
+                <Chip
+                    label={params?.value || 'Unknown'}
+                    color={getStatusColor(params?.value)}
                     size="small"
                 />
             )
         },
         {
-            field: 'teacherId',
-            headerName: 'Teacher ID',
-            width: 120,
+            field: 'teacher',
+            headerName: 'Teacher',
+            width: 150,
             headerAlign: 'center',
-            align: 'center'
+            align: 'center',
+            valueGetter: (params) => {
+                if (params && params.row && params.row.teacher) {
+                    return params.row.teacher.name || 'No Teacher';
+                }
+                return 'No Teacher';
+            }
         },
         {
-            field: 'capacity',
+            field: 'numberStudent',
             headerName: 'Capacity',
             width: 100,
             headerAlign: 'center',
@@ -185,202 +165,176 @@ function ClassList() {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 300,
+            width: 200,
             headerAlign: 'center',
             align: 'center',
             sortable: false,
             renderCell: (params) => (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%'
+                    }}
+                >
                     <Button
                         size="small"
-                        variant="outlined"
-                        startIcon={<Info />}
-                        onClick={() => handleViewDetails(params.row, 'info')}
+                        variant="contained"
+                        startIcon={<Info/>}
+                        onClick={() => params?.row && handleViewInfo(params.row)}
+                        disabled={!params?.row}
+                        sx={{
+                            backgroundColor: '#1976d2',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#1565c0',
+                            },
+                            '&:disabled': {
+                                backgroundColor: '#ccc',
+                            }
+                        }}
                     >
                         Info
                     </Button>
                     <Button
                         size="small"
-                        variant="outlined"
-                        startIcon={<Visibility />}
-                        onClick={() => handleViewDetails(params.row, 'syllabus')}
+                        variant="contained"
+                        startIcon={<Delete/>}
+                        onClick={() => params?.row && handleDeleteClick(params.row)}
+                        disabled={!params?.row}
+                        sx={{
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#d32f2f',
+                            },
+                            '&:disabled': {
+                                backgroundColor: '#ccc',
+                            }
+                        }}
                     >
-                        Syllabus
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Assignment />}
-                        onClick={() => handleViewDetails(params.row, 'lessons')}
-                    >
-                        Lessons
+                        Delete
                     </Button>
                 </Box>
             )
         }
     ];
 
-    const renderModalContent = () => {
-        switch (detailModal.type) {
-            case 'info':
-                return (
-                    <>
-                        <DialogTitle>Class Information</DialogTitle>
-                        <DialogContent>
-                            {selectedClass && (
-                                <Card>
-                                    <CardContent>
-                                        <Grid container spacing={2}>
-                                            <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Class Name:</Typography>
-                                                <Typography variant="body1">{selectedClass.className}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Grade:</Typography>
-                                                <Typography variant="body1">{selectedClass.grade}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Status:</Typography>
-                                                <Chip 
-                                                    label={selectedClass.status} 
-                                                    color={getStatusColor(selectedClass.status)}
-                                                    size="small"
-                                                />
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Teacher ID:</Typography>
-                                                <Typography variant="body1">{selectedClass.teacherId}</Typography>
-                                            </Grid>
-                                            <Grid item xs={6}>
-                                                <Typography variant="subtitle2">Capacity:</Typography>
-                                                <Typography variant="body1">{selectedClass.capacity}</Typography>
-                                            </Grid>
-                                            {selectedClass.description && (
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle2">Description:</Typography>
-                                                    <Typography variant="body1">{selectedClass.description}</Typography>
-                                                </Grid>
-                                            )}
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </DialogContent>
-                    </>
-                );
+    // Filter classes based on search term
+    const filteredClasses = classes.filter(classItem => {
+        if (!searchTerm) return true;
 
-            case 'syllabus':
-                return (
-                    <>
-                        <DialogTitle>Class Syllabus</DialogTitle>
-                        <DialogContent>
-                            {syllabus ? (
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom>
-                                            {syllabus.title}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" paragraph>
-                                            {syllabus.description}
-                                        </Typography>
-                                        <Typography variant="subtitle2">Duration: {syllabus.duration} weeks</Typography>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <Alert severity="info">No syllabus found for this class</Alert>
-                            )}
-                        </DialogContent>
-                    </>
-                );
-
-            case 'lessons':
-                return (
-                    <>
-                        <DialogTitle>
-                            Class Lessons
-                            {lessons.length > 0 && (
-                                <Button
-                                    sx={{ ml: 2 }}
-                                    variant="contained"
-                                    color="primary"
-                                    startIcon={<Assignment />}
-                                    onClick={handleCreateActivitiesFromLessons}
-                                >
-                                    Create Activities from Lessons
-                                </Button>
-                            )}
-                        </DialogTitle>
-                        <DialogContent>
-                            {lessons.length > 0 ? (
-                                <List>
-                                    {lessons.map((lesson, index) => (
-                                        <React.Fragment key={lesson.id}>
-                                            <ListItem>
-                                                <ListItemText
-                                                    primary={lesson.topic}
-                                                    secondary={
-                                                        <>
-                                                            <Typography variant="body2">
-                                                                Duration: {lesson.duration} minutes
-                                                            </Typography>
-                                                            {lesson.description && (
-                                                                <Typography variant="body2">
-                                                                    {lesson.description}
-                                                                </Typography>
-                                                            )}
-                                                        </>
-                                                    }
-                                                />
-                                            </ListItem>
-                                            {index < lessons.length - 1 && <Divider />}
-                                        </React.Fragment>
-                                    ))}
-                                </List>
-                            ) : (
-                                <Alert severity="info">No lessons found for this class</Alert>
-                            )}
-                        </DialogContent>
-                    </>
-                );
-
-            default:
-                return null;
-        }
-    };
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            classItem.name?.toLowerCase().includes(searchLower) ||
+            classItem.grade?.toLowerCase().includes(searchLower) ||
+            classItem.status?.toLowerCase().includes(searchLower) ||
+            classItem.teacher?.name?.toLowerCase().includes(searchLower) ||
+            classItem.numberStudent?.toString().includes(searchLower)
+        );
+    });
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-                Class Management
-            </Typography>
+        <Box sx={{p: 3}}>
+            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+                <Typography variant="h4" sx={{fontWeight: 'bold'}}>
+                    Class Management
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<Add/>}
+                    sx={{
+                        background: 'linear-gradient(135deg, var(--success-color), #45a049)',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
+                        }
+                    }}
+                >
+                    Create Class
+                </Button>
+            </Box>
 
-            <Paper sx={{ height: 600, width: '100%', mb: 2 }}>
+            {/* Search Bar */}
+            <Box sx={{mb: 3}}>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Search classes by name, grade, status, teacher, or capacity..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <Search/>
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{
+                        maxWidth: 600,
+                        '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                        }
+                    }}
+                />
+            </Box>
+
+            <Paper sx={{height: 600, width: '100%'}}>
                 <DataGrid
-                    rows={classes}
+                    rows={filteredClasses || []}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[5, 10, 20]}
                     loading={loading}
                     disableSelectionOnClick
+                    getRowId={(row) => row?.id || Math.random()}
                     sx={{
                         '& .MuiDataGrid-header': {
                             backgroundColor: '#f5f5f5',
                             fontWeight: 'bold'
+                        },
+                        '& .MuiDataGrid-cell': {
+                            display: 'flex',
+                            alignItems: 'center'
                         }
                     }}
                 />
             </Paper>
 
+            {/* Delete Confirmation Dialog */}
             <Dialog
-                open={detailModal.isOpen}
-                onClose={handleCloseModal}
-                maxWidth="md"
-                fullWidth
+                open={deleteDialogOpen}
+                onClose={handleDeleteCancel}
+                aria-labelledby="delete-dialog-title"
+                aria-describedby="delete-dialog-description"
             >
-                {renderModalContent()}
+                <DialogTitle id="delete-dialog-title">
+                    Confirm Delete
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="delete-dialog-description">
+                        Are you sure you want to delete the class "{classToDelete?.name}"?
+                        This action cannot be undone and may affect related data such as students, activities, and
+                        schedules.
+                    </DialogContentText>
+                </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseModal} color="primary">
-                        Close
+                    <Button
+                        onClick={handleDeleteCancel}
+                        color="primary"
+                        variant="outlined"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        color="error"
+                        variant="contained"
+                        autoFocus
+                    >
+                        Delete
                     </Button>
                 </DialogActions>
             </Dialog>

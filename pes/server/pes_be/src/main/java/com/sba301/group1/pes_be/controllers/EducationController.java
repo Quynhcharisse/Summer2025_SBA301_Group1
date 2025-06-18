@@ -2,9 +2,12 @@ package com.sba301.group1.pes_be.controllers;
 
 import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
 import com.sba301.group1.pes_be.requests.BulkCreateActivityRequest;
+import com.sba301.group1.pes_be.requests.ClassRequest;
 import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
+import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
@@ -175,7 +178,7 @@ public class EducationController {
         return educationService.getAllSchedules();
     }
 
-    // Classes Viewing Methods
+    // Classes Management Methods
     @GetMapping("/classes/{classId}")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Get class by ID")
@@ -225,7 +228,28 @@ public class EducationController {
         return educationService.getAllClasses();
     }
 
-    // Lesson Viewing Methods
+    @PostMapping("/classes")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a class", description = "Allows educations to create a new class")
+    public ResponseEntity<ResponseObject> createClass(@RequestBody ClassRequest request) {
+        return educationService.createClass(request);
+    }
+
+    @PutMapping("/classes/{classId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Update a class", description = "Allows educations to update an existing class")
+    public ResponseEntity<ResponseObject> updateClass(@PathVariable Integer classId, @RequestBody ClassRequest request) {
+        return educationService.updateClass(classId, request);
+    }
+
+    @DeleteMapping("/classes/{classId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Delete a class", description = "Allows education staff to delete a class")
+    public ResponseEntity<ResponseObject> deleteClass(@PathVariable Integer classId) {
+        return educationService.deleteClass(classId);
+    }
+
+    // Lesson Management Methods
     @GetMapping("/lessons/{lessonId}")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Get lesson by ID")
@@ -238,6 +262,27 @@ public class EducationController {
     @Operation(summary = "Search lessons by topic")
     public ResponseEntity<ResponseObject> getLessonsByTopic(@RequestParam String topic) {
         return educationService.getLessonsByTopic(topic);
+    }
+
+    @PostMapping("/lessons")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a new lesson", description = "Allows education staff to create a new lesson")
+    public ResponseEntity<ResponseObject> createLesson(@RequestBody LessonRequest request) {
+        return educationService.createLesson(request);
+    }
+
+    @PutMapping("/lessons/{lessonId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Update a lesson", description = "Allows education staff to update an existing lesson")
+    public ResponseEntity<ResponseObject> updateLesson(@PathVariable Integer lessonId, @RequestBody LessonRequest request) {
+        return educationService.updateLesson(lessonId, request);
+    }
+
+    @DeleteMapping("/lessons/{lessonId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Delete a lesson", description = "Allows education staff to delete an existing lesson")
+    public ResponseEntity<ResponseObject> updateLesson(@PathVariable Integer lessonId) {
+        return educationService.deleteLesson(lessonId);
     }
 
     @GetMapping("/lessons/syllabus/{syllabusId}")
@@ -296,5 +341,27 @@ public class EducationController {
     public ResponseEntity<ResponseObject> getAllSyllabi() {
         return educationService.getAllSyllabi();
     }
+
+    @PostMapping("/syllabus")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a syllabus", description = "Allows education staff to create a new syllabus")
+    public ResponseEntity<ResponseObject> createSyllabus(@RequestBody SyllabusRequest request) {
+        return educationService.createSyllabus(request);
+    }
+
+    @PutMapping("/syllabus/{syllabusId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Update a syllabus", description = "Allows education staff to update an existing syllabus")
+    public ResponseEntity<ResponseObject> updateSyllabus(@PathVariable Integer syllabusId, @RequestBody SyllabusRequest request) {
+        return educationService.updateSyllabus(syllabusId, request);
+    }
+
+    @DeleteMapping("/syllabus/{syllabusId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Delete a syllabus", description = "Allows education staff to delete a syllabus")
+    public ResponseEntity<ResponseObject> deleteSyllabus(@PathVariable Integer syllabusId) {
+        return educationService.deleteSyllabus(syllabusId);
+    }
+
 
 }

@@ -25,7 +25,7 @@ function ParentLayout() {
             icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
         },
         {
-            segment: 'parent/children',
+            segment: 'parent/child',
             title: 'Children',
             icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
         }

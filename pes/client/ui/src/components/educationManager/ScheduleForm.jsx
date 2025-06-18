@@ -1,38 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Button,
-    Stack,
-    Typography,
-    Box,
-    Card,
-    IconButton,
     Accordion,
-    AccordionSummary,
     AccordionDetails,
+    AccordionSummary,
     Alert,
-    Chip
+    Box,
+    Button,
+    Card,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Select,
+    Stack,
+    TextField,
+    Typography
 } from '@mui/material';
-import { Add, Remove, ExpandMore } from '@mui/icons-material';
+import {Add, ExpandMore, Remove} from '@mui/icons-material';
 
 function ScheduleForm({
-    open,
-    onClose,
-    onSubmit,
-    mode,
-    initialData,
-    classes,
-    lessons,
-    loading
-}) {
+                          open,
+                          onClose,
+                          onSubmit,
+                          mode,
+                          initialData,
+                          classes,
+                          lessons,
+                          loading
+                      }) {
     const [formData, setFormData] = useState({
         weekNumber: 1,
         note: '',
@@ -73,7 +73,7 @@ function ScheduleForm({
                     endTime: activity.endTime || '',
                     lessonId: activity.lessonId || (activity.lesson?.id) || ''
                 }));
-                
+
                 // If no activities exist, provide one empty template
                 const activitiesArray = processedActivities.length > 0 ? processedActivities : [{
                     topic: '',
@@ -83,7 +83,7 @@ function ScheduleForm({
                     endTime: '',
                     lessonId: ''
                 }];
-                
+
                 const newFormData = {
                     weekNumber: initialData.weekNumber || 1,
                     note: initialData.note || '',
@@ -98,35 +98,35 @@ function ScheduleForm({
 
     const validateActivities = () => {
         const errors = [];
-        
+
         formData.activities.forEach((activity, index) => {
             const activityErrors = [];
-            
+
             if (!activity.topic?.trim()) {
                 activityErrors.push('Topic is required');
             }
-            
+
             if (!activity.dayOfWeek) {
                 activityErrors.push('Day of Week is required');
             }
-            
+
             if (!activity.startTime) {
                 activityErrors.push('Start Time is required');
             }
-            
+
             if (!activity.endTime) {
                 activityErrors.push('End Time is required');
             }
-            
+
             if (activity.startTime && activity.endTime && activity.startTime >= activity.endTime) {
                 activityErrors.push('End Time must be after Start Time');
             }
-            
+
             if (activityErrors.length > 0) {
                 errors[index] = activityErrors;
             }
         });
-        
+
         return errors;
     };
 
@@ -153,7 +153,7 @@ function ScheduleForm({
             ...formData,
             activities: newActivities
         });
-        
+
         // Remove errors for this activity
         const newErrors = [...activityErrors];
         newErrors.splice(index, 1);
@@ -167,7 +167,7 @@ function ScheduleForm({
             ...formData,
             activities: newActivities
         });
-        
+
         // Clear errors for this field
         if (activityErrors[index]) {
             const newErrors = [...activityErrors];
@@ -212,14 +212,14 @@ function ScheduleForm({
                 {mode === 'create' ? 'Create New Schedule' : 'Edit Schedule'}
             </DialogTitle>
             <DialogContent>
-                <Stack spacing={3} sx={{ mt: 2 }}>
+                <Stack spacing={3} sx={{mt: 2}}>
                     <TextField
                         fullWidth
                         label="Week Number"
                         type="number"
                         value={formData.weekNumber}
-                        onChange={(e) => setFormData({ ...formData, weekNumber: parseInt(e.target.value) || 1 })}
-                        inputProps={{ min: 1 }}
+                        onChange={(e) => setFormData({...formData, weekNumber: parseInt(e.target.value) || 1})}
+                        inputProps={{min: 1}}
                         required
                         helperText="Enter the week number for this schedule (e.g., 1, 2, 3...)"
                     />
@@ -228,7 +228,7 @@ function ScheduleForm({
                         <InputLabel>Class</InputLabel>
                         <Select
                             value={formData.classId}
-                            onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                            onChange={(e) => setFormData({...formData, classId: e.target.value})}
                             label="Class"
                         >
                             {classes.map((cls) => (
@@ -245,7 +245,7 @@ function ScheduleForm({
                         multiline
                         rows={4}
                         value={formData.note}
-                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                        onChange={(e) => setFormData({...formData, note: e.target.value})}
                         placeholder="Add any notes about this schedule (optional)..."
                         helperText="You can add location, special instructions, or any other relevant information"
                     />
@@ -253,7 +253,7 @@ function ScheduleForm({
                     {/* Activities Section - Show for both create and edit modes */}
                     {(mode === 'create' || mode === 'edit') && (
                         <Accordion>
-                            <AccordionSummary expandIcon={<ExpandMore />}>
+                            <AccordionSummary expandIcon={<ExpandMore/>}>
                                 <Typography variant="h6" color="primary">
                                     Activities ({formData.activities.length})
                                 </Typography>
@@ -273,8 +273,13 @@ function ScheduleForm({
                                             border: activity.id ? '2px solid #4caf50' : '1px solid #e0e0e0',
                                             backgroundColor: activity.id ? '#f8fff8' : 'white'
                                         }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                mb: 2
+                                            }}>
+                                                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                                                     <Typography variant="subtitle1" color="primary">
                                                         Activity {index + 1}
                                                     </Typography>
@@ -302,13 +307,13 @@ function ScheduleForm({
                                                         onClick={() => removeActivity(index)}
                                                         title={activity.id ? "Delete existing activity" : "Remove new activity"}
                                                     >
-                                                        <Remove />
+                                                        <Remove/>
                                                     </IconButton>
                                                 )}
                                             </Box>
 
                                             {activityErrors[index] && (
-                                                <Alert severity="error" sx={{ mb: 2 }}>
+                                                <Alert severity="error" sx={{mb: 2}}>
                                                     {activityErrors[index].join(', ')}
                                                 </Alert>
                                             )}
@@ -347,7 +352,7 @@ function ScheduleForm({
                                                     </Select>
                                                 </FormControl>
 
-                                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                                <Box sx={{display: 'flex', gap: 2}}>
                                                     <TextField
                                                         fullWidth
                                                         label="Start Time"
@@ -396,7 +401,7 @@ function ScheduleForm({
                                     <Button
                                         fullWidth
                                         variant="outlined"
-                                        startIcon={<Add />}
+                                        startIcon={<Add/>}
                                         onClick={addActivity}
                                         sx={{
                                             mt: 2,
@@ -419,8 +424,8 @@ function ScheduleForm({
                 <Button onClick={handleClose} disabled={loading}>
                     Cancel
                 </Button>
-                <Button 
-                    onClick={handleSubmit} 
+                <Button
+                    onClick={handleSubmit}
                     variant="contained"
                     disabled={loading}
                 >
