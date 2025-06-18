@@ -24,7 +24,8 @@ function ActivityForm({
     initialData,
     lessons,
     loading,
-    scheduleId
+    scheduleId,
+    slotContext // { dayOfWeek, startTime, endTime } - auto-populated from slot selection
 }) {
     const [formData, setFormData] = useState({
         topic: '',
@@ -38,8 +39,6 @@ function ActivityForm({
 
     const [errors, setErrors] = useState([]);
 
-    const daysOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
-
     // Initialize form data when dialog opens or initialData changes
     useEffect(() => {
         if (open) {
@@ -47,9 +46,9 @@ function ActivityForm({
                 setFormData({
                     topic: '',
                     description: '',
-                    dayOfWeek: '',
-                    startTime: '',
-                    endTime: '',
+                    dayOfWeek: slotContext?.dayOfWeek || '',
+                    startTime: slotContext?.startTime || '',
+                    endTime: slotContext?.endTime || '',
                     lessonId: '',
                     scheduleId: scheduleId || ''
                 });
@@ -67,7 +66,7 @@ function ActivityForm({
             }
             setErrors([]);
         }
-    }, [open, mode, initialData, scheduleId]);
+    }, [open, mode, initialData, scheduleId, slotContext]);
 
     const validateActivity = () => {
         const validationErrors = [];
@@ -76,21 +75,8 @@ function ActivityForm({
             validationErrors.push('Topic is required');
         }
         
-        if (!formData.dayOfWeek) {
-            validationErrors.push('Day of Week is required');
-        }
-        
-        if (!formData.startTime) {
-            validationErrors.push('Start Time is required');
-        }
-        
-        if (!formData.endTime) {
-            validationErrors.push('End Time is required');
-        }
-        
-        if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
-            validationErrors.push('End Time must be after Start Time');
-        }
+        // Day, start time, and end time are automatically set from slot context
+        // No need to validate them manually as they're pre-determined
         
         return validationErrors;
     };
@@ -123,17 +109,40 @@ function ActivityForm({
             if (field === 'topic' && errors.some(error => error.includes('Topic'))) {
                 updatedErrors = updatedErrors.filter(error => !error.includes('Topic'));
             }
-            if (field === 'dayOfWeek' && errors.some(error => error.includes('Day of Week'))) {
-                updatedErrors = updatedErrors.filter(error => !error.includes('Day of Week'));
-            }
-            if (field === 'startTime' && errors.some(error => error.includes('Start Time'))) {
-                updatedErrors = updatedErrors.filter(error => !error.includes('Start Time'));
-            }
-            if (field === 'endTime' && errors.some(error => error.includes('End Time'))) {
-                updatedErrors = updatedErrors.filter(error => !error.includes('End Time'));
-            }
             setErrors(updatedErrors);
         }
+    };
+
+    // Calculate end time when lesson is selected (for display purposes)
+    const calculateEndTime = () => {
+        if (!formData.startTime) return '';
+        
+        const selectedLesson = lessons.find(lesson => lesson.id === formData.lessonId);
+        if (selectedLesson?.duration) {
+            const startTime = new Date(`2000-01-01 ${formData.startTime}`);
+            const endTime = new Date(startTime.getTime() + selectedLesson.duration * 60000);
+            return endTime.toTimeString().slice(0, 5);
+        }
+        
+        return formData.endTime;
+    };
+
+    // Update end time when lesson changes
+    const handleLessonChange = (lessonId) => {
+        const selectedLesson = lessons.find(lesson => lesson.id === lessonId);
+        let newEndTime = formData.endTime;
+        
+        if (selectedLesson?.duration && formData.startTime) {
+            const startTime = new Date(`2000-01-01 ${formData.startTime}`);
+            const endTime = new Date(startTime.getTime() + selectedLesson.duration * 60000);
+            newEndTime = endTime.toTimeString().slice(0, 5);
+        }
+        
+        setFormData({
+            ...formData,
+            lessonId: lessonId,
+            endTime: newEndTime
+        });
     };
 
     return (
@@ -175,63 +184,58 @@ function ActivityForm({
                         helperText="Provide additional details about the activity"
                     />
 
-                    <FormControl fullWidth required>
-                        <InputLabel>Day of Week</InputLabel>
-                        <Select
-                            value={formData.dayOfWeek}
-                            onChange={(e) => handleFieldChange('dayOfWeek', e.target.value)}
-                            label="Day of Week"
-                            error={errors.some(error => error.includes('Day of Week'))}
-                        >
-                            {daysOfWeek.map((day) => (
-                                <MenuItem key={day} value={day}>
-                                    {day.charAt(0) + day.slice(1).toLowerCase()}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
-                            fullWidth
-                            label="Start Time"
-                            type="time"
-                            value={formData.startTime}
-                            onChange={(e) => handleFieldChange('startTime', e.target.value)}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            required
-                            error={errors.some(error => error.includes('Start Time'))}
-                        />
-                        <TextField
-                            fullWidth
-                            label="End Time"
-                            type="time"
-                            value={formData.endTime}
-                            onChange={(e) => handleFieldChange('endTime', e.target.value)}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            required
-                            error={errors.some(error => error.includes('End Time'))}
-                        />
-                    </Box>
+                    {/* Display slot context information (read-only) */}
+                    {(slotContext || mode === 'edit') && (
+                        <Box sx={{
+                            p: 2,
+                            bgcolor: 'background.paper',
+                            borderRadius: 1,
+                            border: '1px solid',
+                            borderColor: 'divider'
+                        }}>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                Time Slot Information
+                            </Typography>
+                            <Stack spacing={1}>
+                                <Typography variant="body2">
+                                    <strong>Day:</strong> {formData.dayOfWeek?.charAt(0) + formData.dayOfWeek?.slice(1).toLowerCase()}
+                                </Typography>
+                                <Typography variant="body2">
+                                    <strong>Time:</strong> {formData.startTime} - {calculateEndTime() || formData.endTime}
+                                </Typography>
+                                {mode === 'create' && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        Time slot is automatically set based on your selection
+                                    </Typography>
+                                )}
+                            </Stack>
+                        </Box>
+                    )}
 
                     <FormControl fullWidth>
                         <InputLabel>Lesson (Optional)</InputLabel>
                         <Select
                             value={formData.lessonId}
-                            onChange={(e) => handleFieldChange('lessonId', e.target.value)}
+                            onChange={(e) => handleLessonChange(e.target.value)}
                             label="Lesson (Optional)"
                         >
                             <MenuItem value="">None</MenuItem>
                             {lessons.map((lesson) => (
                                 <MenuItem key={lesson.id} value={lesson.id}>
                                     {lesson.topic}
+                                    {lesson.duration && (
+                                        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                            ({lesson.duration} min)
+                                        </Typography>
+                                    )}
                                 </MenuItem>
                             ))}
                         </Select>
+                        {formData.lessonId && (
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                End time will be calculated based on lesson duration
+                            </Typography>
+                        )}
                     </FormControl>
                 </Stack>
             </DialogContent>

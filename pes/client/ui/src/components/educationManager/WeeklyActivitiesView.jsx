@@ -54,6 +54,16 @@ const WeeklyActivitiesView = ({
         setSelectedActivity(null);
         onEditActivity(activity);
     };
+
+    // Helper function to create slot context for activity creation
+    const handleCreateActivityInSlot = (scheduleId, dayKey, slot) => {
+        const slotContext = {
+            dayOfWeek: dayKey,
+            startTime: slot.startTime,
+            endTime: slot.endTime
+        };
+        onCreateActivity(scheduleId, slotContext);
+    };
     const days = [
         { key: 'MONDAY', label: 'Monday', color: '#FF6B6B', lightColor: '#FFE5E5' },
         { key: 'TUESDAY', label: 'Tuesday', color: '#4ECDC4', lightColor: '#E5F9F7' },
@@ -487,7 +497,7 @@ const WeeklyActivitiesView = ({
                                                                 justifyContent: 'center',
                                                                 minHeight: '60px'
                                                             }}
-                                                            onClick={() => onCreateActivity(currentWeekSchedule.id)}
+                                                            onClick={() => handleCreateActivityInSlot(currentWeekSchedule.id, day.key, slot)}
                                                         >
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                 <IconButton
