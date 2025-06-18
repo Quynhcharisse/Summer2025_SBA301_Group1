@@ -6,8 +6,7 @@ import {
     Typography
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
-import WeekNavigationControls from './WeekNavigationControls.jsx';
-import DailyActivitiesGrid from './DailyActivitiesGrid.jsx';
+import WeeklyActivitiesView from './WeeklyActivitiesView.jsx';
 
 const ScheduleAndActivitiesSection = ({
     currentWeek,
@@ -41,22 +40,17 @@ const ScheduleAndActivitiesSection = ({
                 </Button>
             </Box>
 
-            {/* Week Navigation Controls */}
-            <WeekNavigationControls
+            {/* Merged Week Navigation and Daily Activities */}
+            <WeeklyActivitiesView
                 currentWeek={currentWeek}
                 weekInput={weekInput}
                 currentWeekSchedule={currentWeekSchedule}
+                activitiesByDay={activitiesByDay}
                 onPreviousWeek={onPreviousWeek}
                 onNextWeek={onNextWeek}
                 onWeekInputChange={onWeekInputChange}
                 onEditSchedule={onEditSchedule}
                 onDeleteSchedule={onDeleteSchedule}
-            />
-
-            {/* 5-Column Daily Activities Grid */}
-            <DailyActivitiesGrid
-                currentWeekSchedule={currentWeekSchedule}
-                activitiesByDay={activitiesByDay}
                 onCreateActivity={onCreateActivity}
                 onEditActivity={onEditActivity}
                 onDeleteActivity={onDeleteActivity}
