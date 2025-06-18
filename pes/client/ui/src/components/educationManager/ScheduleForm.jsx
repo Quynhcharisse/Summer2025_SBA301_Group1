@@ -56,10 +56,20 @@ function ScheduleForm({
                 setFormData(newFormData);
                 setSelectedSchedule(null);
             } else if (mode === 'edit' && initialData) {
+                // Handle different possible data structures from backend
+                let classId = '';
+                if (initialData.classId) {
+                    classId = initialData.classId;
+                } else if (initialData.classes?.id) {
+                    classId = initialData.classes.id;
+                } else if (typeof initialData.getClassId === 'function') {
+                    classId = initialData.getClassId();
+                }
+                
                 const newFormData = {
                     weekNumber: initialData.weekNumber || 1,
                     note: initialData.note || '',
-                    classId: initialData.classId || initialData.classes?.id || ''
+                    classId: classId
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(initialData);

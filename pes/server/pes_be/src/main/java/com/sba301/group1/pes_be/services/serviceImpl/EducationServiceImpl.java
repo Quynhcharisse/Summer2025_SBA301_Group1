@@ -13,6 +13,7 @@ import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;
+import com.sba301.group1.pes_be.validations.ScheduleValidation.UpdateScheduleValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -1211,25 +1212,12 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> createSchedule(CreateScheduleRequest request) {
         try {
-            // Validate request
-            String validationError = CreateScheduleValidation.validate(request, classesRepo);
+            // Validate request (includes duplicate check)
+            String validationError = CreateScheduleValidation.validate(request, classesRepo, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                         .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
-                );
-            }
-
-            // Check if schedule already exists for this week and class
-            Optional<Schedule> existingSchedule = scheduleRepo.findByClassesIdAndWeekNumber(
-                request.getClassId(), request.getWeekNumber());
-            if (existingSchedule.isPresent()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    ResponseObject.builder()
-                        .message("Schedule already exists for this week and class")
                         .success(false)
                         .data(null)
                         .build()
@@ -1246,11 +1234,12 @@ public class EducationServiceImpl implements EducationService {
                 .build();
 
             Schedule savedSchedule = scheduleRepo.save(schedule);
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(savedSchedule);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Schedule created successfully")
                     .success(true)
-                    .data(savedSchedule)
+                    .data(scheduleResponse)
                     .build()
             );
 
@@ -1281,20 +1270,16 @@ public class EducationServiceImpl implements EducationService {
 
             Schedule schedule = scheduleOpt.get();
             
-            // Check if updating to a week number that already exists for the same class
-            // Only check if the week number is actually changing
-            if (schedule.getWeekNumber() != request.getWeekNumber()) {
-                Optional<Schedule> existingSchedule = scheduleRepo.findByClassesIdAndWeekNumber(
-                    schedule.getClasses().getId(), request.getWeekNumber());
-                if (existingSchedule.isPresent()) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                        ResponseObject.builder()
-                            .message("A schedule already exists for week " + request.getWeekNumber() + " in this class")
-                            .success(false)
-                            .data(null)
-                            .build()
-                    );
-                }
+            // Validate request (includes duplicate check)
+            String validationError = UpdateScheduleValidation.validate(request, schedule, scheduleRepo);
+            if (!validationError.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                        .message(validationError)
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
             }
             
             schedule.setWeekNumber(request.getWeekNumber());
@@ -1335,11 +1320,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedule retrieved successfully")
                     .success(true)
-                    .data(scheduleOpt.get())
+                    .data(scheduleResponse)
                     .build()
             );
 
@@ -1358,11 +1344,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getSchedulesByClassId(Integer classId) {
         try {
             List<Schedule> schedules = scheduleRepo.findByClassesIdOrderByWeekNumber(classId);
+            List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedules retrieved successfully")
                     .success(true)
-                    .data(schedules)
+                    .data(scheduleResponses)
                     .build()
             );
 
@@ -1391,11 +1378,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Weekly schedule retrieved successfully")
                     .success(true)
-                    .data(scheduleOpt.get())
+                    .data(scheduleResponse)
                     .build()
             );
 
