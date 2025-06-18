@@ -254,20 +254,6 @@ export const assignActivityToClass = async (assignData) => {
     return response ? response.data : null
 }
 
-export const bulkCreateActivities = async (bulkData) => {
-    try {
-        const response = await axiosClient.post('/education/activities/bulk-create', bulkData)
-        return response ? response.data : null
-    } catch (error) {
-        throw {
-            error: true,
-            message: 'Failed to bulk create activities',
-            status: error.response?.status,
-            details: error.response?.data || error.message
-        }
-    }
-}
-
 export const createActivitiesFromLessons = async (lessonsData) => {
     const response = await axiosClient.post('/education/activities/create-from-lessons', lessonsData)
     return response ? response.data : null
@@ -275,24 +261,42 @@ export const createActivitiesFromLessons = async (lessonsData) => {
 
 // Schedule APIs
 export const createSchedule = async (scheduleData) => {
-    // Transform frontend data to match backend CreateScheduleRequest
-    const transformedData = {
-        weekNumber: scheduleData.weekNumber,
-        note: scheduleData.note || scheduleData.location || '',
-        classId: scheduleData.classId
+    try {
+        // Transform frontend data to match backend CreateScheduleRequest
+        const transformedData = {
+            weekNumber: scheduleData.weekNumber,
+            note: scheduleData.note || scheduleData.location || '',
+            classId: scheduleData.classId
+        }
+        const response = await axiosClient.post('/education/schedules', transformedData)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to create schedule',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
     }
-    const response = await axiosClient.post('/education/schedules', transformedData)
-    return response ? response.data : null
 }
 
 export const updateSchedule = async (scheduleId, scheduleData) => {
-    // Transform frontend data to match backend UpdateScheduleRequest
-    const transformedData = {
-        weekNumber: scheduleData.weekNumber,
-        note: scheduleData.note || scheduleData.location || ''
+    try {
+        // Transform frontend data to match backend UpdateScheduleRequest
+        const transformedData = {
+            weekNumber: scheduleData.weekNumber,
+            note: scheduleData.note || scheduleData.location || ''
+        }
+        const response = await axiosClient.put(`/education/schedules/${scheduleId}`, transformedData)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to update schedule',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
     }
-    const response = await axiosClient.put(`/education/schedules/${scheduleId}`, transformedData)
-    return response ? response.data : null
 }
 
 export const getScheduleById = async (scheduleId) => {

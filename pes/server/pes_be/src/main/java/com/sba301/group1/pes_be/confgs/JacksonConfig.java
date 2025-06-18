@@ -16,6 +16,11 @@ public class JacksonConfig {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         
+        // Register JavaTimeModule for LocalDate, LocalDateTime, etc.
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        
+        // Register Hibernate6Module for lazy loading handling
         Hibernate6Module hibernateModule = new Hibernate6Module();
         hibernateModule.disable(Hibernate6Module.Feature.USE_TRANSIENT_ANNOTATION);
         hibernateModule.disable(Hibernate6Module.Feature.FORCE_LAZY_LOADING);

@@ -44,6 +44,18 @@ public class ClassesResponse {
         private String email;
         private String firstName;
         private String lastName;
+        private String name;
+        
+        // Add a name property for frontend compatibility
+        public String getName() {
+            if (name != null && !name.trim().isEmpty()) {
+                return name;
+            }
+            if (firstName != null && !firstName.trim().isEmpty()) {
+                return firstName;
+            }
+            return null;
+        }
     }
 
     public static ClassesResponse fromEntity(Classes classes) {
@@ -65,13 +77,17 @@ public class ClassesResponse {
                 .email(classes.getTeacher().getEmail())
                 .firstName(classes.getTeacher().getName())
                 .lastName("") // Account model only has name field
+                .name(classes.getTeacher().getName()) // Set explicit name field
                 .build();
         }
+
+        // Calculate the actual number of students dynamically from the StudentClass relationship
+        int actualStudentCount = classes.getStudentClassList() != null ? classes.getStudentClassList().size() : 0;
 
         return ClassesResponse.builder()
             .id(classes.getId())
             .name(classes.getName())
-            .numberStudent(classes.getNumberStudent())
+            .numberStudent(actualStudentCount) // Use calculated student count instead of static field
             .roomNumber(classes.getRoomNumber())
             .startDate(classes.getStartDate())
             .endDate(classes.getEndDate())

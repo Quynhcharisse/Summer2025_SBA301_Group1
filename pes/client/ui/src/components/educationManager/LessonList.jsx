@@ -16,7 +16,6 @@ import {Add, Delete, Edit} from '@mui/icons-material';
 import {enqueueSnackbar} from 'notistack';
 import {useForm} from 'react-hook-form';
 import {DataGrid} from '@mui/x-data-grid';
-import '../../styles/manager/ActivityManagement.css';
 import {createLesson, getAllLessons, removeLesson, updateLesson} from "../../services/EducationService.jsx";
 
 export default function LessonList() {

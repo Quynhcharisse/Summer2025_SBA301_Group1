@@ -13,6 +13,7 @@ import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;
+import com.sba301.group1.pes_be.validations.ScheduleValidation.UpdateScheduleValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -136,7 +137,7 @@ public class EducationServiceImpl implements EducationService {
             activity.setStartTime(request.getStartTime());
             activity.setEndTime(request.getEndTime());
 
-            // Update lesson if provided
+            // Update lesson if provided, or set to null if not provided
             if (request.getLessonId() != null) {
                 if (lessonRepo.existsById(request.getLessonId())) {
                     activity.setLesson(Lesson.builder().id(request.getLessonId()).build());
@@ -149,6 +150,9 @@ public class EducationServiceImpl implements EducationService {
                             .build()
                     );
                 }
+            } else {
+                // Set lesson to null when no lesson is selected
+                activity.setLesson(null);
             }
 
             Activity updatedActivity = activityRepo.save(activity);
@@ -492,72 +496,6 @@ public class EducationServiceImpl implements EducationService {
         }
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> bulkCreateActivities(BulkCreateActivityRequest request) {
-        try {
-            // Validate schedule exists
-            Optional<Schedule> scheduleOpt = scheduleRepo.findById(request.getScheduleId());
-            if (scheduleOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
-                );
-            }
-
-            Schedule schedule = scheduleOpt.get();
-            List<Activity> activities = new ArrayList<>();
-
-            for (BulkCreateActivityRequest.ActivityData activityData : request.getActivities()) {
-                Activity activity = Activity.builder()
-                    .topic(activityData.getTopic())
-                    .description(activityData.getDescription())
-                    .dayOfWeek(activityData.getDayOfWeek())
-                    .startTime(activityData.getStartTime())
-                    .endTime(activityData.getEndTime())
-                    .schedule(schedule)
-                    .build();
-
-                // Set lesson if provided
-                if (activityData.getLessonId() != null) {
-                    if (lessonRepo.existsById(activityData.getLessonId())) {
-                        activity.setLesson(Lesson.builder().id(activityData.getLessonId()).build());
-                    } else {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                            ResponseObject.builder()
-                                .message("Lesson with ID " + activityData.getLessonId() + " not found")
-                                .success(false)
-                                .data(null)
-                                .build()
-                        );
-                    }
-                }
-
-                activities.add(activity);
-            }
-
-            List<Activity> savedActivities = activityRepo.saveAll(activities);
-            List<ActivityResponse> activityResponses = convertToResponse(savedActivities);
-            return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Activities created successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
-            );
-        }
-    }
 
     @Override
     public ResponseEntity<ResponseObject> createActivitiesFromLessons(CreateActivitiesFromLessonsRequest request) {
@@ -662,7 +600,7 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllClasses() {
         try {
-            List<Classes> classes = classesRepo.findAll();
+            List<Classes> classes = classesRepo.findAllWithFullDetails();
             List<ClassesResponse> classesResponses = ClassesResponse.fromEntityList(classes);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -685,8 +623,8 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getClassById(Integer classId) {
         try {
-            Optional<Classes> classOpt = classesRepo.findById(classId);
-            if (classOpt.isEmpty()) {
+            Classes classEntity = classesRepo.findByIdWithFullDetails(classId);
+            if (classEntity == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("Class not found")
@@ -696,7 +634,7 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
-            ClassesResponse classResponse = ClassesResponse.fromEntity(classOpt.get());
+            ClassesResponse classResponse = ClassesResponse.fromEntity(classEntity);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Class retrieved successfully")
@@ -921,6 +859,7 @@ public class EducationServiceImpl implements EducationService {
                 .startDate(request.getStartDate().toString())
                 .endDate(request.getEndDate().toString())
                 .status(request.getStatus())
+                .grade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null)
                 .build();
 
         classesRepo.save(classes);
@@ -985,6 +924,7 @@ public class EducationServiceImpl implements EducationService {
                     classes.setStartDate(request.getStartDate().toString());
                     classes.setEndDate(request.getEndDate().toString());
                     classes.setStatus(request.getStatus());
+                    classes.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
                     classesRepo.save(classes);
                     return ResponseEntity.ok().body(
@@ -1209,25 +1149,12 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> createSchedule(CreateScheduleRequest request) {
         try {
-            // Validate request
-            String validationError = CreateScheduleValidation.validate(request, classesRepo);
+            // Validate request (includes duplicate check)
+            String validationError = CreateScheduleValidation.validate(request, classesRepo, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                         .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
-                );
-            }
-
-            // Check if schedule already exists for this week and class
-            Optional<Schedule> existingSchedule = scheduleRepo.findByClassesIdAndWeekNumber(
-                request.getClassId(), request.getWeekNumber());
-            if (existingSchedule.isPresent()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    ResponseObject.builder()
-                        .message("Schedule already exists for this week and class")
                         .success(false)
                         .data(null)
                         .build()
@@ -1244,11 +1171,12 @@ public class EducationServiceImpl implements EducationService {
                 .build();
 
             Schedule savedSchedule = scheduleRepo.save(schedule);
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(savedSchedule);
             return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
                     .message("Schedule created successfully")
                     .success(true)
-                    .data(savedSchedule)
+                    .data(scheduleResponse)
                     .build()
             );
 
@@ -1278,6 +1206,19 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Schedule schedule = scheduleOpt.get();
+            
+            // Validate request (includes duplicate check)
+            String validationError = UpdateScheduleValidation.validate(request, schedule, scheduleRepo);
+            if (!validationError.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                        .message(validationError)
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+            
             schedule.setWeekNumber(request.getWeekNumber());
             schedule.setNote(request.getNote());
 
@@ -1316,11 +1257,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedule retrieved successfully")
                     .success(true)
-                    .data(scheduleOpt.get())
+                    .data(scheduleResponse)
                     .build()
             );
 
@@ -1339,11 +1281,12 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getSchedulesByClassId(Integer classId) {
         try {
             List<Schedule> schedules = scheduleRepo.findByClassesIdOrderByWeekNumber(classId);
+            List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Schedules retrieved successfully")
                     .success(true)
-                    .data(schedules)
+                    .data(scheduleResponses)
                     .build()
             );
 
@@ -1372,11 +1315,12 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Weekly schedule retrieved successfully")
                     .success(true)
-                    .data(scheduleOpt.get())
+                    .data(scheduleResponse)
                     .build()
             );
 

@@ -18,7 +18,6 @@ import {Add, Delete, Info, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
 import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
-import '../../styles/manager/ActivityManagement.css';
 
 function ClassList() {
     const navigate = useNavigate();
@@ -149,16 +148,24 @@ function ClassList() {
             headerAlign: 'center',
             align: 'center',
             valueGetter: (params) => {
+                // DataGrid passes the teacher object directly as params for this field
+                if (params && params.name) {
+                    return params.name;
+                }
+                if (params && params.firstName) {
+                    return params.firstName;
+                }
+                // Fallback to check if it's the full row object
                 if (params && params.row && params.row.teacher) {
-                    return params.row.teacher.name || 'No Teacher';
+                    return params.row.teacher.name || params.row.teacher.firstName || 'No Teacher';
                 }
                 return 'No Teacher';
             }
         },
         {
             field: 'numberStudent',
-            headerName: 'Capacity',
-            width: 100,
+            headerName: 'Number of Students',
+            width: 180,
             headerAlign: 'center',
             align: 'center'
         },

@@ -5,35 +5,43 @@ import {
     Button,
     Card,
     CardContent,
-    Chip,
-    Divider,
+    Grid,
     IconButton,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
+    Paper,
     Stack,
+    TextField,
     Tooltip,
     Typography
 } from '@mui/material';
-import {Add, ArrowBack, Assignment, CalendarToday, Delete, Edit, Event, Person, School} from '@mui/icons-material';
+import {
+    Add,
+    ArrowBack,
+    ChevronLeft,
+    ChevronRight,
+    Delete,
+    Edit
+} from '@mui/icons-material';
 import {useNavigate, useParams} from 'react-router-dom';
 import {enqueueSnackbar} from 'notistack';
 import {
-    createActivity,
-    createSchedule,
-    deleteActivity,
-    deleteSchedule,
+    getSchedulesByClassId,
     getActivitiesByClassId,
     getAllLessons,
     getLessonsByClassId,
     getClassById,
-    getSchedulesByClassId,
     getSyllabusByClassId,
     updateActivity,
-    updateSchedule
+    getAllClasses,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    createActivity,
+    deleteActivity
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
+import ActivityForm from './ActivityForm.jsx';
+import ClassInformation from './ClassInformation.jsx';
+import ScheduleAndActivitiesSection from './ScheduleAndActivitiesSection.jsx';
 
 function ClassDetails() {
     const {id: classId} = useParams();
@@ -44,13 +52,22 @@ function ClassDetails() {
     const [syllabus, setSyllabus] = useState(null);
     const [classLessons, setClassLessons] = useState([]);
     const [allLessons, setAllLessons] = useState([]);
-    const [allClasses] = useState([]);
+    const [allClasses, setAllClasses] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    
+    // Week navigation state
+    const [currentWeek, setCurrentWeek] = useState(1);
+    const [weekInput, setWeekInput] = useState('1');
+    
     // Schedule form modal state
     const [scheduleFormOpen, setScheduleFormOpen] = useState(false);
     const [scheduleFormMode, setScheduleFormMode] = useState('create');
     const [selectedSchedule, setSelectedSchedule] = useState(null);
+    
+    // Activity form modal state
+    const [activityFormOpen, setActivityFormOpen] = useState(false);
+    const [activityFormMode, setActivityFormMode] = useState('create');
+    const [selectedActivity, setSelectedActivity] = useState(null);
 
     const fetchAllLessons = useCallback(async () => {
         try {
@@ -60,6 +77,17 @@ function ClassDetails() {
             }
         } catch (error) {
             console.error('Error fetching lessons:', error);
+        }
+    }, []);
+
+    const fetchAllClasses = useCallback(async () => {
+        try {
+            const response = await getAllClasses();
+            if (response && response.success) {
+                setAllClasses(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching classes:', error);
         }
     }, []);
 
@@ -115,38 +143,99 @@ function ClassDetails() {
             if (classId) {
                 await fetchClassDetails();
                 await fetchAllLessons();
+                await fetchAllClasses();
             }
         };
 
         fetchData();
-    }, [classId, fetchClassDetails, fetchAllLessons]);
+    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
+
+    // Initialize current week when schedules are loaded
+    useEffect(() => {
+        if (schedules.length > 0) {
+            const firstWeek = Math.min(...schedules.map(s => s.weekNumber));
+            if (currentWeek === 1 && firstWeek !== 1) {
+                setCurrentWeek(firstWeek);
+                setWeekInput(firstWeek.toString());
+            }
+        }
+    }, [schedules, currentWeek]);
 
     const handleBackToClasses = () => {
         navigate('/education/classes');
     };
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active':
-                return 'success';
-            case 'inactive':
-                return 'error';
-            case 'pending':
-                return 'warning';
-            default:
-                return 'default';
+    // Week navigation functions
+    const handlePreviousWeek = () => {
+        if (currentWeek > 1) {
+            const newWeek = currentWeek - 1;
+            setCurrentWeek(newWeek);
+            setWeekInput(newWeek.toString());
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString();
+    const handleNextWeek = () => {
+        const maxWeek = Math.max(...schedules.map(s => s.weekNumber), 0);
+        if (currentWeek < maxWeek + 1) {
+            const newWeek = currentWeek + 1;
+            setCurrentWeek(newWeek);
+            setWeekInput(newWeek.toString());
+        }
+    };
+
+    const handleWeekInputChange = (event) => {
+        const value = event.target.value;
+        setWeekInput(value);
+        
+        const weekNum = parseInt(value);
+        if (!isNaN(weekNum) && weekNum > 0) {
+            setCurrentWeek(weekNum);
+        }
+    };
+
+    const getCurrentWeekSchedule = () => {
+        return schedules.find(schedule => schedule.weekNumber === currentWeek);
+    };
+
+    const getCurrentWeekActivities = () => {
+        const weekSchedule = getCurrentWeekSchedule();
+        if (!weekSchedule) return [];
+        return activities.filter(activity => activity.scheduleId === weekSchedule.id);
+    };
+
+    const groupActivitiesByDay = () => {
+        const weekActivities = getCurrentWeekActivities();
+        const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+        const grouped = {};
+        
+        days.forEach(day => {
+            grouped[day] = weekActivities.filter(activity =>
+                activity.dayOfWeek?.toUpperCase() === day
+            );
+        });
+        
+        return grouped;
+    };
+
+    // Helper function to group activities by day for a specific schedule
+    const groupActivitiesByDayForSchedule = (scheduleId) => {
+        const scheduleActivities = activities.filter(activity => activity.scheduleId === scheduleId);
+        const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+        const grouped = {};
+        
+        days.forEach(day => {
+            grouped[day] = scheduleActivities.filter(activity =>
+                activity.dayOfWeek?.toUpperCase() === day
+            );
+        });
+        
+        return grouped;
     };
 
     const handleCreateSchedule = () => {
         setSelectedSchedule({
             classId: classId,
-            weekNumber: schedules.length + 1,
+            weekNumber: currentWeek,
             note: '',
             activities: []
         });
@@ -154,15 +243,86 @@ function ClassDetails() {
         setScheduleFormOpen(true);
     };
 
-    const handleEditSchedule = (schedule) => {
-        // Include activities for editing
-        const scheduleWithActivities = {
-            ...schedule,
-            activities: activities.filter(activity => activity.scheduleId === schedule.id)
-        };
-        setSelectedSchedule(scheduleWithActivities);
-        setScheduleFormMode('edit');
-        setScheduleFormOpen(true);
+    const handleEditSchedule = async (schedule) => {
+        try {
+            // Fetch the latest activities for this schedule to ensure we have current data
+            const activitiesResponse = await getActivitiesByClassId(classId);
+            if (activitiesResponse && activitiesResponse.success) {
+                setActivities(activitiesResponse.data || []);
+            }
+            
+            // Include activities for editing - use the freshly fetched activities
+            const freshActivities = activitiesResponse?.data || activities;
+            const scheduleWithActivities = {
+                ...schedule,
+                activities: freshActivities.filter(activity => activity.scheduleId === schedule.id)
+            };
+            setSelectedSchedule(scheduleWithActivities);
+            setScheduleFormMode('edit');
+            setScheduleFormOpen(true);
+        } catch (error) {
+            console.error('Error fetching fresh activities for schedule edit:', error);
+            // Fallback to using existing activities
+            const scheduleWithActivities = {
+                ...schedule,
+                activities: activities.filter(activity => activity.scheduleId === schedule.id)
+            };
+            setSelectedSchedule(scheduleWithActivities);
+            setScheduleFormMode('edit');
+            setScheduleFormOpen(true);
+        }
+    };
+
+    const handleEditActivity = (activity) => {
+        setSelectedActivity(activity);
+        setActivityFormMode('edit');
+        setActivityFormOpen(true);
+    };
+
+    const handleCreateActivity = (scheduleId, slotContext) => {
+        setSelectedActivity({ 
+            scheduleId,
+            slotContext 
+        });
+        setActivityFormMode('create');
+        setActivityFormOpen(true);
+    };
+
+    // These handlers are for activities created/edited from the schedule form
+    const handleCreateActivityFromForm = async (activityData) => {
+        try {
+            const response = await createActivity(activityData);
+            if (response && response.success) {
+                await fetchClassDetails(); // Refresh all data
+                enqueueSnackbar('Activity created successfully', { variant: 'success' });
+                return response;
+            } else {
+                enqueueSnackbar('Failed to create activity', { variant: 'error' });
+                throw new Error('Failed to create activity');
+            }
+        } catch (error) {
+            console.error('Error creating activity:', error);
+            enqueueSnackbar('Error creating activity', { variant: 'error' });
+            throw error;
+        }
+    };
+
+    const handleEditActivityFromForm = async (activityId, activityData) => {
+        try {
+            const response = await updateActivity(activityId, activityData);
+            if (response && response.success) {
+                await fetchClassDetails(); // Refresh all data
+                enqueueSnackbar('Activity updated successfully', { variant: 'success' });
+                return response;
+            } else {
+                enqueueSnackbar('Failed to update activity', { variant: 'error' });
+                throw new Error('Failed to update activity');
+            }
+        } catch (error) {
+            console.error('Error updating activity:', error);
+            enqueueSnackbar('Error updating activity', { variant: 'error' });
+            throw error;
+        }
     };
 
     const handleDeleteSchedule = async (scheduleId, weekNumber) => {
@@ -194,8 +354,41 @@ function ClassDetails() {
                 }
             } catch (error) {
                 console.error('Error deleting activity:', error);
-                enqueueSnackbar('Error deleting activity', {variant: 'error'});
+                enqueueSnackbar('Error deleting activity', { variant: 'error' });
             }
+        }
+    };
+
+    const handleActivityFormSubmit = async (activityData) => {
+        try {
+            let response;
+            
+            if (activityFormMode === 'create') {
+                response = await createActivity(activityData);
+            } else if (activityFormMode === 'edit') {
+                response = await updateActivity(selectedActivity.id, {
+                    topic: activityData.topic,
+                    description: activityData.description,
+                    dayOfWeek: activityData.dayOfWeek,
+                    startTime: activityData.startTime,
+                    endTime: activityData.endTime,
+                    lessonId: activityData.lessonId
+                });
+            }
+            
+            if (response && response.success) {
+                setActivityFormOpen(false);
+                await fetchClassDetails();
+                enqueueSnackbar(
+                    activityFormMode === 'create' ? 'Activity created successfully' : 'Activity updated successfully',
+                    { variant: 'success' }
+                );
+            } else {
+                enqueueSnackbar('Failed to save activity', { variant: 'error' });
+            }
+        } catch (error) {
+            console.error('Error handling activity form submission:', error);
+            enqueueSnackbar('Error saving activity', { variant: 'error' });
         }
     };
 
@@ -268,288 +461,29 @@ function ClassDetails() {
                     scheduleFormMode === 'create' ? 'Schedule created successfully' : 'Schedule updated successfully',
                     {variant: 'success'}
                 );
+                return scheduleResponse; // Return the response for ScheduleForm to use
             } else {
-                enqueueSnackbar('Failed to save schedule', {variant: 'error'});
+                // Handle specific error messages from backend
+                const errorMessage = scheduleResponse?.message || 'Failed to save schedule';
+                enqueueSnackbar(errorMessage, {variant: 'error'});
+                throw new Error(errorMessage); // Throw error so ScheduleForm can handle it
             }
         } catch (error) {
             console.error('Error handling schedule form submission:', error);
-            enqueueSnackbar('Error saving schedule', {variant: 'error'});
+            // Check if it's a duplicate schedule error or other specific errors
+            if (error.details && error.details.message) {
+                enqueueSnackbar(error.details.message, {variant: 'error'});
+            } else if (error.message && error.message.includes('already exists')) {
+                enqueueSnackbar('A schedule already exists for this week and class. Please choose a different week number.', {variant: 'warning'});
+            } else {
+                enqueueSnackbar('Error saving schedule', {variant: 'error'});
+            }
+            throw error; // Re-throw so ScheduleForm knows there was an error
         }
     };
 
-    const groupActivitiesBySchedule = () => {
-        const grouped = {};
-        schedules.forEach(schedule => {
-            grouped[schedule.id] = {
-                schedule,
-                activities: activities.filter(activity => activity.scheduleId === schedule.id)
-            };
-        });
-        return grouped;
-    };
 
-    const renderClassInformation = () => (
-        <Box sx={{display: 'flex', flexDirection: 'column', gap: 3}}>
-            <Box sx={{
-                display: 'flex',
-                flexDirection: {xs: 'column', md: 'row'},
-                gap: 3
-            }}>
-                <Box sx={{flex: 1}}>
-                    <Stack spacing={2}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <School sx={{color: '#1976d2'}}/>
-                            <Typography variant="h6" color="primary">
-                                Basic Information
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Class Name</Typography>
-                            <Typography variant="h6">{classData?.name || 'Unknown'}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade</Typography>
-                            <Chip label={classData?.grade || 'Not set'} color="primary" size="small"/>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Status</Typography>
-                            <Chip
-                                label={classData?.status || 'Unknown'}
-                                color={getStatusColor(classData?.status)}
-                                size="small"
-                            />
-                        </Box>
-                    </Stack>
-                </Box>
-                <Box sx={{flex: 1}}>
-                    <Stack spacing={2}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <Person sx={{color: '#1976d2'}}/>
-                            <Typography variant="h6" color="primary">
-                                Details
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Teacher</Typography>
-                            <Typography variant="body1">
-                                {classData?.teacher?.name || 'Not assigned'}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Room Number</Typography>
-                            <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Capacity</Typography>
-                            <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
-                        </Box>
-                    </Stack>
-                </Box>
-            </Box>
-            <Box>
-                <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <CalendarToday sx={{color: '#1976d2'}}/>
-                    <Typography variant="h6" color="primary">
-                        Schedule Period
-                    </Typography>
-                </Box>
-                <Box sx={{display: 'flex', gap: 2}}>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">Start Date</Typography>
-                        <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                    </Box>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">End Date</Typography>
-                        <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
-                    </Box>
-                </Box>
-            </Box>
 
-            {/* Syllabus Section */}
-            <Box>
-                <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <Assignment sx={{color: '#1976d2'}}/>
-                    <Typography variant="h6" color="primary">
-                        Syllabus Information
-                    </Typography>
-                </Box>
-                {syllabus ? (
-                    <Stack spacing={2}>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
-                            <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
-                        </Box>
-                        {syllabus.description && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Description</Typography>
-                                <Typography variant="body1">{syllabus.description}</Typography>
-                            </Box>
-                        )}
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Grade Level</Typography>
-                            <Chip label={syllabus.grade || 'Not specified'} color="primary" size="small"/>
-                        </Box>
-                        {classLessons.length > 0 && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
-                                    Associated Lessons ({classLessons.length})
-                                </Typography>
-                                <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
-                                    {classLessons.slice(0, 5).map((lesson) => (
-                                        <Chip
-                                            key={lesson.id}
-                                            label={lesson.topic}
-                                            size="small"
-                                            variant="outlined"
-                                            color="secondary"
-                                        />
-                                    ))}
-                                    {classLessons.length > 5 && (
-                                        <Chip
-                                            label={`+${classLessons.length - 5} more`}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    </Stack>
-                ) : (
-                    <Alert severity="info">
-                        No syllabus assigned to this class yet.
-                    </Alert>
-                )}
-            </Box>
-        </Box>
-    );
-
-    const renderSchedulesAndActivities = () => {
-        const groupedData = groupActivitiesBySchedule();
-
-        return (
-            <Stack spacing={2}>
-                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <Typography variant="h6" color="primary">
-                        Schedules & Activities ({schedules.length} schedules)
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add/>}
-                        onClick={handleCreateSchedule}
-                        size="small"
-                    >
-                        Create Schedule
-                    </Button>
-                </Box>
-
-                {schedules.length === 0 ? (
-                    <Alert severity="info">
-                        No schedules found for this class. Click "Create Schedule" to add one.
-                    </Alert>
-                ) : (
-                    schedules.map((schedule) => {
-                        const scheduleActivities = groupedData[schedule.id]?.activities || [];
-                        return (
-                            <Card key={schedule.id} sx={{mb: 2}}>
-                                <CardContent>
-                                    <Box sx={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        mb: 2
-                                    }}>
-                                        <Box>
-                                            <Typography variant="h6">
-                                                Week {schedule.weekNumber}
-                                            </Typography>
-                                            {schedule.note && (
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {schedule.note}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Box>
-                                            <Tooltip title="Edit Schedule">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleEditSchedule(schedule)}
-                                                    sx={{color: '#ff9800'}}
-                                                >
-                                                    <Edit/>
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete Schedule">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleDeleteSchedule(schedule.id, schedule.weekNumber)}
-                                                    sx={{color: '#f44336'}}
-                                                >
-                                                    <Delete/>
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                    </Box>
-
-                                    {scheduleActivities.length > 0 ? (
-                                        <List dense>
-                                            {scheduleActivities.map((activity) => (
-                                                <ListItem
-                                                    key={activity.id}
-                                                    sx={{
-                                                        border: '1px solid #e0e0e0',
-                                                        borderRadius: 1,
-                                                        mb: 1,
-                                                        backgroundColor: '#fafafa'
-                                                    }}
-                                                    secondaryAction={
-                                                        <IconButton
-                                                            edge="end"
-                                                            size="small"
-                                                            onClick={() => handleDeleteActivity(activity.id, activity.topic)}
-                                                            sx={{color: '#f44336'}}
-                                                        >
-                                                            <Delete/>
-                                                        </IconButton>
-                                                    }
-                                                >
-                                                    <ListItemIcon>
-                                                        <Event sx={{color: '#1976d2'}}/>
-                                                    </ListItemIcon>
-                                                    <ListItemText
-                                                        primary={activity.topic}
-                                                        secondary={
-                                                            <>
-                                                                {activity.dayOfWeek} • {activity.startTime} - {activity.endTime}
-                                                                {activity.description && (
-                                                                    <br/>
-                                                                )}
-                                                                {activity.description}
-                                                            </>
-                                                        }
-                                                        secondaryTypographyProps={{
-                                                            variant: 'caption',
-                                                            color: 'text.secondary'
-                                                        }}
-                                                    />
-                                                </ListItem>
-                                            ))}
-                                        </List>
-                                    ) : (
-                                        <Alert severity="info" sx={{mt: 1}}>
-                                            No activities scheduled for this week
-                                        </Alert>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        );
-                    })
-                )}
-            </Stack>
-        );
-    };
 
     return (
         <Box sx={{p: 3}}>
@@ -586,13 +520,31 @@ function ClassDetails() {
                             <Typography variant="h6" color="primary" sx={{mb: 2}}>
                                 Class Information
                             </Typography>
-                            {renderClassInformation()}
+                            <ClassInformation
+                                classData={classData}
+                                syllabus={syllabus}
+                                classLessons={classLessons}
+                            />
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardContent>
-                            {renderSchedulesAndActivities()}
+                            <ScheduleAndActivitiesSection
+                                currentWeek={currentWeek}
+                                weekInput={weekInput}
+                                currentWeekSchedule={getCurrentWeekSchedule()}
+                                activitiesByDay={groupActivitiesByDay()}
+                                onPreviousWeek={handlePreviousWeek}
+                                onNextWeek={handleNextWeek}
+                                onWeekInputChange={handleWeekInputChange}
+                                onCreateSchedule={handleCreateSchedule}
+                                onEditSchedule={handleEditSchedule}
+                                onDeleteSchedule={handleDeleteSchedule}
+                                onCreateActivity={handleCreateActivity}
+                                onEditActivity={handleEditActivity}
+                                onDeleteActivity={handleDeleteActivity}
+                            />
                         </CardContent>
                     </Card>
                 </Stack>
@@ -611,6 +563,23 @@ function ClassDetails() {
                 }))}
                 lessons={allLessons}
                 loading={false}
+                onCreateActivity={handleCreateActivityFromForm}
+                onEditActivity={handleEditActivityFromForm}
+                onDeleteActivity={handleDeleteActivity}
+                activitiesByDay={selectedSchedule?.id ? groupActivitiesByDayForSchedule(selectedSchedule.id) : {}}
+            />
+
+            {/* Activity Form Modal */}
+            <ActivityForm
+                open={activityFormOpen}
+                onClose={() => setActivityFormOpen(false)}
+                onSubmit={handleActivityFormSubmit}
+                mode={activityFormMode}
+                initialData={selectedActivity}
+                lessons={allLessons}
+                loading={false}
+                scheduleId={selectedActivity?.scheduleId}
+                slotContext={selectedActivity?.slotContext}
             />
         </Box>
     );
