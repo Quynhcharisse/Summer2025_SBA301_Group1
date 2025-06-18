@@ -14,8 +14,6 @@ import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ActivityRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
@@ -34,9 +32,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @SpringBootApplication
 @RequiredArgsConstructor
