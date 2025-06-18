@@ -43,6 +43,7 @@ function ScheduleForm({
     const [editingActivity, setEditingActivity] = useState(null);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [slotContext, setSlotContext] = useState(null);
+    const [currentActivitiesByDay, setCurrentActivitiesByDay] = useState({});
 
     // Initialize form data when dialog opens or initialData changes
     useEffect(() => {
@@ -55,6 +56,7 @@ function ScheduleForm({
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(null);
+                setCurrentActivitiesByDay({});
             } else if (mode === 'edit' && initialData) {
                 // Handle different possible data structures from backend
                 let classId = '';
@@ -73,9 +75,18 @@ function ScheduleForm({
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(initialData);
+                // Update activities by day when editing
+                setCurrentActivitiesByDay(activitiesByDay || {});
             }
         }
-    }, [open, mode, initialData]);
+    }, [open, mode, initialData, activitiesByDay]);
+
+    // Update currentActivitiesByDay when the prop changes
+    useEffect(() => {
+        if (mode === 'edit' && selectedSchedule) {
+            setCurrentActivitiesByDay(activitiesByDay || {});
+        }
+    }, [activitiesByDay, mode, selectedSchedule]);
 
     const handleCreateActivity = (scheduleId, slotContextData) => {
         setEditingActivity(null);
@@ -108,6 +119,9 @@ function ScheduleForm({
             setActivityFormOpen(false);
             setEditingActivity(null);
             setSlotContext(null);
+            
+            // Trigger a refresh of activities in the parent component
+            // The parent should update the activitiesByDay prop which will update our local state
         } catch (error) {
             console.error('Error saving activity:', error);
         }
@@ -204,7 +218,7 @@ function ScheduleForm({
                                         currentWeek={selectedSchedule.weekNumber}
                                         weekInput={selectedSchedule.weekNumber}
                                         currentWeekSchedule={selectedSchedule}
-                                        activitiesByDay={activitiesByDay || {}}
+                                        activitiesByDay={currentActivitiesByDay}
                                         onPreviousWeek={() => {}} // Disabled in schedule form
                                         onNextWeek={() => {}} // Disabled in schedule form
                                         onWeekInputChange={() => {}} // Disabled in schedule form

@@ -81,10 +81,13 @@ public class ClassesResponse {
                 .build();
         }
 
+        // Calculate the actual number of students dynamically from the StudentClass relationship
+        int actualStudentCount = classes.getStudentClassList() != null ? classes.getStudentClassList().size() : 0;
+
         return ClassesResponse.builder()
             .id(classes.getId())
             .name(classes.getName())
-            .numberStudent(classes.getNumberStudent())
+            .numberStudent(actualStudentCount) // Use calculated student count instead of static field
             .roomNumber(classes.getRoomNumber())
             .startDate(classes.getStartDate())
             .endDate(classes.getEndDate())

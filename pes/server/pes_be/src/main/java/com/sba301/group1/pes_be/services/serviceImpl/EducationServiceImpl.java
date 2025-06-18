@@ -600,7 +600,7 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllClasses() {
         try {
-            List<Classes> classes = classesRepo.findAll();
+            List<Classes> classes = classesRepo.findAllWithFullDetails();
             List<ClassesResponse> classesResponses = ClassesResponse.fromEntityList(classes);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -623,8 +623,8 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getClassById(Integer classId) {
         try {
-            Optional<Classes> classOpt = classesRepo.findById(classId);
-            if (classOpt.isEmpty()) {
+            Classes classEntity = classesRepo.findByIdWithFullDetails(classId);
+            if (classEntity == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("Class not found")
@@ -634,7 +634,7 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
-            ClassesResponse classResponse = ClassesResponse.fromEntity(classOpt.get());
+            ClassesResponse classResponse = ClassesResponse.fromEntity(classEntity);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Class retrieved successfully")

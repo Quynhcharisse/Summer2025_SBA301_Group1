@@ -377,6 +377,101 @@ public class PesBeApplication {
     }
 
     @Bean
+    public CommandLineRunner initSampleStudents() {
+        return args -> {
+            // Check if students already exist to avoid duplicates
+            if (!studentRepo.findAll().isEmpty()) {
+                System.out.println("Students already exist, skipping student initialization");
+                return;
+            }
+
+            // Create sample parents first
+            String[] parentEmails = {
+                "parent1@gmail.com", "parent2@gmail.com", "parent3@gmail.com", 
+                "parent4@gmail.com", "parent5@gmail.com", "parent6@gmail.com",
+                "parent7@gmail.com", "parent8@gmail.com", "parent9@gmail.com"
+            };
+
+            String[] parentNames = {
+                "John Smith", "Mary Johnson", "David Wilson", 
+                "Lisa Brown", "Michael Davis", "Sarah Miller",
+                "Robert Taylor", "Jennifer Anderson", "William Thomas"
+            };
+
+            for (int i = 0; i < parentEmails.length; i++) {
+                if (!accountRepo.existsByEmail(parentEmails[i])) {
+                    Account parentAccount = Account.builder()
+                            .email(parentEmails[i])
+                            .password("parent@123")
+                            .name(parentNames[i])
+                            .phone(generateRandomPhone())
+                            .identityNumber(generateRandomCCCD())
+                            .gender(i % 2 == 0 ? "male" : "female")
+                            .role(Role.PARENT)
+                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .createdAt(LocalDate.now())
+                            .build();
+                    accountRepo.save(parentAccount);
+
+                    // Create parent profile
+                    Parent parent = Parent.builder()
+                            .account(parentAccount)
+                            .build();
+                    parentRepo.save(parent);
+                    System.out.println("Created parent: " + parentEmails[i]);
+                }
+            }
+
+            // Create sample students
+            String[] studentNames = {
+                "Emma Smith", "Liam Johnson", "Olivia Wilson", 
+                "Noah Brown", "Ava Davis", "Lucas Miller",
+                "Sophia Taylor", "Mason Anderson", "Isabella Thomas",
+                "Ethan Garcia", "Mia Martinez", "Alexander Lopez"
+            };
+
+            LocalDate[] birthDates = {
+                LocalDate.of(2022, 3, 15), // Age 3 - SEED
+                LocalDate.of(2022, 6, 20), // Age 3 - SEED  
+                LocalDate.of(2021, 9, 10), // Age 4 - BUD
+                LocalDate.of(2021, 12, 5), // Age 4 - BUD
+                LocalDate.of(2020, 4, 25), // Age 5 - LEAF
+                LocalDate.of(2020, 8, 30), // Age 5 - LEAF
+                LocalDate.of(2022, 1, 12), // Age 3 - SEED
+                LocalDate.of(2021, 7, 18), // Age 4 - BUD
+                LocalDate.of(2020, 11, 22), // Age 5 - LEAF
+                LocalDate.of(2022, 5, 8),  // Age 3 - SEED
+                LocalDate.of(2021, 10, 14), // Age 4 - BUD
+                LocalDate.of(2020, 2, 28)  // Age 5 - LEAF
+            };
+
+            String[] genders = {"male", "female"};
+            
+            for (int i = 0; i < studentNames.length; i++) {
+                // Get parent account for this student (cycle through parents)
+                Account parentAccount = accountRepo.findByEmail(parentEmails[i % parentEmails.length]).orElse(null);
+                if (parentAccount != null) {
+                    Parent parent = parentRepo.findByAccount_Id(parentAccount.getId()).orElse(null);
+                    if (parent != null) {
+                        Student student = Student.builder()
+                                .name(studentNames[i])
+                                .dateOfBirth(birthDates[i])
+                                .gender(genders[i % 2])
+                                .placeOfBirth("Test City")
+                                .isStudent(false) // Will be set to true when assigned to class
+                                .parent(parent)
+                                .build();
+                        studentRepo.save(student);
+                        System.out.println("Created student: " + studentNames[i] + " (born " + birthDates[i] + ")");
+                    }
+                }
+            }
+
+            System.out.println("Sample students initialization completed successfully!");
+        };
+    }
+
+    @Bean
     @Transactional
     public CommandLineRunner assignStudentsToClasses() {
         return args -> {

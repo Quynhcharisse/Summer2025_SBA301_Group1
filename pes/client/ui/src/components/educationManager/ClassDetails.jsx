@@ -217,6 +217,21 @@ function ClassDetails() {
         return grouped;
     };
 
+    // Helper function to group activities by day for a specific schedule
+    const groupActivitiesByDayForSchedule = (scheduleId) => {
+        const scheduleActivities = activities.filter(activity => activity.scheduleId === scheduleId);
+        const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
+        const grouped = {};
+        
+        days.forEach(day => {
+            grouped[day] = scheduleActivities.filter(activity =>
+                activity.dayOfWeek?.toUpperCase() === day
+            );
+        });
+        
+        return grouped;
+    };
+
     const handleCreateSchedule = () => {
         setSelectedSchedule({
             classId: classId,
@@ -228,15 +243,34 @@ function ClassDetails() {
         setScheduleFormOpen(true);
     };
 
-    const handleEditSchedule = (schedule) => {
-        // Include activities for editing
-        const scheduleWithActivities = {
-            ...schedule,
-            activities: activities.filter(activity => activity.scheduleId === schedule.id)
-        };
-        setSelectedSchedule(scheduleWithActivities);
-        setScheduleFormMode('edit');
-        setScheduleFormOpen(true);
+    const handleEditSchedule = async (schedule) => {
+        try {
+            // Fetch the latest activities for this schedule to ensure we have current data
+            const activitiesResponse = await getActivitiesByClassId(classId);
+            if (activitiesResponse && activitiesResponse.success) {
+                setActivities(activitiesResponse.data || []);
+            }
+            
+            // Include activities for editing - use the freshly fetched activities
+            const freshActivities = activitiesResponse?.data || activities;
+            const scheduleWithActivities = {
+                ...schedule,
+                activities: freshActivities.filter(activity => activity.scheduleId === schedule.id)
+            };
+            setSelectedSchedule(scheduleWithActivities);
+            setScheduleFormMode('edit');
+            setScheduleFormOpen(true);
+        } catch (error) {
+            console.error('Error fetching fresh activities for schedule edit:', error);
+            // Fallback to using existing activities
+            const scheduleWithActivities = {
+                ...schedule,
+                activities: activities.filter(activity => activity.scheduleId === schedule.id)
+            };
+            setSelectedSchedule(scheduleWithActivities);
+            setScheduleFormMode('edit');
+            setScheduleFormOpen(true);
+        }
     };
 
     const handleEditActivity = (activity) => {
@@ -245,10 +279,50 @@ function ClassDetails() {
         setActivityFormOpen(true);
     };
 
-    const handleCreateActivity = (scheduleId) => {
-        setSelectedActivity({ scheduleId });
+    const handleCreateActivity = (scheduleId, slotContext) => {
+        setSelectedActivity({ 
+            scheduleId,
+            slotContext 
+        });
         setActivityFormMode('create');
         setActivityFormOpen(true);
+    };
+
+    // These handlers are for activities created/edited from the schedule form
+    const handleCreateActivityFromForm = async (activityData) => {
+        try {
+            const response = await createActivity(activityData);
+            if (response && response.success) {
+                await fetchClassDetails(); // Refresh all data
+                enqueueSnackbar('Activity created successfully', { variant: 'success' });
+                return response;
+            } else {
+                enqueueSnackbar('Failed to create activity', { variant: 'error' });
+                throw new Error('Failed to create activity');
+            }
+        } catch (error) {
+            console.error('Error creating activity:', error);
+            enqueueSnackbar('Error creating activity', { variant: 'error' });
+            throw error;
+        }
+    };
+
+    const handleEditActivityFromForm = async (activityId, activityData) => {
+        try {
+            const response = await updateActivity(activityId, activityData);
+            if (response && response.success) {
+                await fetchClassDetails(); // Refresh all data
+                enqueueSnackbar('Activity updated successfully', { variant: 'success' });
+                return response;
+            } else {
+                enqueueSnackbar('Failed to update activity', { variant: 'error' });
+                throw new Error('Failed to update activity');
+            }
+        } catch (error) {
+            console.error('Error updating activity:', error);
+            enqueueSnackbar('Error updating activity', { variant: 'error' });
+            throw error;
+        }
     };
 
     const handleDeleteSchedule = async (scheduleId, weekNumber) => {
@@ -489,6 +563,10 @@ function ClassDetails() {
                 }))}
                 lessons={allLessons}
                 loading={false}
+                onCreateActivity={handleCreateActivityFromForm}
+                onEditActivity={handleEditActivityFromForm}
+                onDeleteActivity={handleDeleteActivity}
+                activitiesByDay={selectedSchedule?.id ? groupActivitiesByDayForSchedule(selectedSchedule.id) : {}}
             />
 
             {/* Activity Form Modal */}
@@ -501,6 +579,7 @@ function ClassDetails() {
                 lessons={allLessons}
                 loading={false}
                 scheduleId={selectedActivity?.scheduleId}
+                slotContext={selectedActivity?.slotContext}
             />
         </Box>
     );

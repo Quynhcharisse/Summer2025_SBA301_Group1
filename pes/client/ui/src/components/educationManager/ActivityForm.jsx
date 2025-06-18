@@ -88,8 +88,32 @@ function ActivityForm({
             return;
         }
 
-        // Call the onSubmit prop with form data
-        await onSubmit(formData);
+        // Prepare the final data with calculated end time if lesson is selected
+        const finalFormData = { ...formData };
+        
+        // If a lesson is selected and has duration, calculate the end time
+        if (formData.lessonId && formData.startTime) {
+            const selectedLesson = lessons.find(lesson => lesson.id === formData.lessonId);
+            if (selectedLesson?.duration) {
+                const startTime = new Date(`2000-01-01 ${formData.startTime}`);
+                const endTime = new Date(startTime.getTime() + selectedLesson.duration * 60000);
+                finalFormData.endTime = endTime.toTimeString().slice(0, 5);
+            }
+        }
+
+        // Ensure all required backend fields are present
+        const submissionData = {
+            topic: finalFormData.topic,
+            description: finalFormData.description || '',
+            dayOfWeek: finalFormData.dayOfWeek,
+            startTime: finalFormData.startTime,
+            endTime: finalFormData.endTime,
+            scheduleId: parseInt(finalFormData.scheduleId),
+            lessonId: finalFormData.lessonId ? parseInt(finalFormData.lessonId) : null
+        };
+
+        // Call the onSubmit prop with prepared data
+        await onSubmit(submissionData);
     };
 
     const handleClose = () => {
@@ -115,7 +139,7 @@ function ActivityForm({
 
     // Calculate end time when lesson is selected (for display purposes)
     const calculateEndTime = () => {
-        if (!formData.startTime) return '';
+        if (!formData.startTime) return formData.endTime || '';
         
         const selectedLesson = lessons.find(lesson => lesson.id === formData.lessonId);
         if (selectedLesson?.duration) {
@@ -124,7 +148,7 @@ function ActivityForm({
             return endTime.toTimeString().slice(0, 5);
         }
         
-        return formData.endTime;
+        return formData.endTime || '';
     };
 
     // Update end time when lesson changes
@@ -136,6 +160,9 @@ function ActivityForm({
             const startTime = new Date(`2000-01-01 ${formData.startTime}`);
             const endTime = new Date(startTime.getTime() + selectedLesson.duration * 60000);
             newEndTime = endTime.toTimeString().slice(0, 5);
+        } else if (!selectedLesson && slotContext?.endTime) {
+            // If no lesson is selected, use the original slot end time
+            newEndTime = slotContext.endTime;
         }
         
         setFormData({
