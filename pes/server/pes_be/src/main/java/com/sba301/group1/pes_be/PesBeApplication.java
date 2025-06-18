@@ -234,8 +234,8 @@ public class PesBeApplication {
                     lessons[i] = Lesson.builder()
                             .topic(topic)
                             .description(description)
-                        .duration(30)
-                        .materials("Basic materials")
+                            .duration(90) // Update to 90 minutes to match time slots
+                            .materials("Basic materials")
                             .build();
                     lessons[i] = lessonRepo.save(lessons[i]);
                     System.out.println("Created Lesson: " + topic);
@@ -339,14 +339,14 @@ public class PesBeApplication {
                         schedule = scheduleRepo.save(schedule);
                         System.out.println("Created Schedule for " + classEntity.getName() + " - Week " + week);
 
-                        // Create activities for each day of the week
-                        String[] daysOfWeek = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
-                        String[] timeSlots = {"08:00", "09:30", "10:30", "14:00", "15:30"};
-                        String[] endTimes = {"09:00", "10:30", "11:30", "15:00", "16:30"};
+                        // Create activities for each day of the week using the new 4-slot system
+                        String[] daysOfWeek = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"};
+                        String[] timeSlots = {"08:00", "09:30", "13:00", "14:30"};
+                        String[] endTimes = {"09:30", "11:00", "14:30", "16:00"};
 
                         for (int day = 0; day < daysOfWeek.length; day++) {
-                            // Create 2-3 activities per day
-                            int activitiesPerDay = 2 + (int) (Math.random() * 2); // 2 or 3 activities
+                            // Create 2-4 activities per day (some slots may be empty)
+                            int activitiesPerDay = 2 + (int) (Math.random() * 3); // 2, 3, or 4 activities
 
                             for (int activityIndex = 0; activityIndex < activitiesPerDay && activityIndex < timeSlots.length; activityIndex++) {
                                 // Select a random lesson from available lessons

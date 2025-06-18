@@ -43,6 +43,54 @@ const WeeklyActivitiesView = ({
         { key: 'FRIDAY', label: 'Friday', color: '#FECA57', lightColor: '#FEF7E5' }
     ];
 
+    const timeSlots = [
+        { id: 1, label: 'Slot 1', startTime: '08:00', endTime: '09:30', displayTime: '8:00 - 9:30 AM' },
+        { id: 2, label: 'Slot 2', startTime: '09:30', endTime: '11:00', displayTime: '9:30 - 11:00 AM' },
+        { id: 3, label: 'Slot 3', startTime: '13:00', endTime: '14:30', displayTime: '1:00 - 2:30 PM' },
+        { id: 4, label: 'Slot 4', startTime: '14:30', endTime: '16:00', displayTime: '2:30 - 4:00 PM' }
+    ];
+
+    // Helper function to check if an activity falls within a time slot
+    const isActivityInSlot = (activity, slot) => {
+        const activityStart = activity.startTime;
+        const slotStart = slot.startTime;
+        const slotEnd = slot.endTime;
+        
+        // Check if activity overlaps with the slot
+        return activityStart >= slotStart && activityStart < slotEnd;
+    };
+
+    // Helper function to get activities for a specific day and slot
+    const getActivitiesForSlot = (dayKey, slot) => {
+        const dayActivities = activitiesByDay[dayKey] || [];
+        return dayActivities.filter(activity => isActivityInSlot(activity, slot));
+    };
+
+    // Helper function to format activity time display
+    const formatActivityTime = (activity) => {
+        const startTime = new Date(`2000-01-01 ${activity.startTime}`);
+        let endTime;
+        
+        // If activity has an endTime, use it. Otherwise calculate from lesson duration
+        if (activity.endTime) {
+            endTime = new Date(`2000-01-01 ${activity.endTime}`);
+        } else {
+            // Use lesson duration or default to 90 minutes
+            const durationInMinutes = activity.lesson?.duration || 90;
+            endTime = new Date(startTime.getTime() + durationInMinutes * 60000);
+        }
+        
+        const formatTime = (time) => {
+            return time.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        };
+        
+        return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    };
+
     return (
         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
             {/* Week Navigation Header */}
@@ -216,10 +264,10 @@ const WeeklyActivitiesView = ({
                 <Grid container spacing={2} sx={{ width: '100%' }}>
                     {days.map((day) => (
                         <Grid xs={12} md key={day.key} sx={{ flex: 1 }}>
-                            <Card 
-                                sx={{ 
-                                    height: '100%', 
-                                    minHeight: '300px',
+                            <Card
+                                sx={{
+                                    height: '100%',
+                                    minHeight: '600px',
                                     borderRadius: 3,
                                     background: `linear-gradient(135deg, ${day.lightColor} 0%, white 50%, ${day.lightColor} 100%)`,
                                     border: `2px solid ${day.color}`,
@@ -257,167 +305,199 @@ const WeeklyActivitiesView = ({
                                     </Box>
                                     
                                     <Stack spacing={1.5}>
-                                        {activitiesByDay[day.key]?.length > 0 ? (
-                                            activitiesByDay[day.key].map((activity) => (
-                                                <Card
-                                                    key={activity.id}
-                                                    variant="outlined"
-                                                    sx={{
-                                                        p: 1.5,
-                                                        borderRadius: 2,
-                                                        cursor: 'pointer',
-                                                        background: 'rgba(255, 255, 255, 0.8)',
-                                                        backdropFilter: 'blur(10px)',
-                                                        border: `1px solid ${day.color}30`,
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': {
-                                                            boxShadow: `0 8px 20px ${day.color}20`,
-                                                            transform: 'translateY(-2px)',
-                                                            background: 'rgba(255, 255, 255, 0.95)',
-                                                            borderColor: day.color
-                                                        }
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="subtitle2"
-                                                        sx={{
-                                                            fontWeight: 700,
-                                                            color: day.color,
-                                                            mb: 0.5,
-                                                            fontSize: '0.9rem',
-                                                            lineHeight: 1.2
-                                                        }}
-                                                    >
-                                                        {activity.topic}
-                                                    </Typography>
-                                                    
+                                        {timeSlots.map((slot) => {
+                                            const slotActivities = getActivitiesForSlot(day.key, slot);
+                                            const hasActivity = slotActivities.length > 0;
+                                            
+                                            return (
+                                                <Box key={slot.id} sx={{ mb: 1 }}>
+                                                    {/* Time Slot Header */}
                                                     <Typography
                                                         variant="caption"
                                                         sx={{
-                                                            mb: 0.5,
                                                             fontWeight: 600,
-                                                            fontSize: '0.75rem',
-                                                            color: '#666',
-                                                            background: `${day.color}15`,
-                                                            padding: '2px 8px',
+                                                            fontSize: '0.7rem',
+                                                            color: day.color,
+                                                            background: `${day.color}10`,
+                                                            padding: '4px 8px',
                                                             borderRadius: 1,
-                                                            display: 'inline-block'
+                                                            display: 'inline-block',
+                                                            mb: 1
                                                         }}
                                                     >
-                                                        {activity.startTime} - {activity.endTime}
+                                                        {slot.displayTime}
                                                     </Typography>
                                                     
-                                                    {activity.description && (
-                                                        <Typography
-                                                            variant="caption"
-                                                            color="text.secondary"
+                                                    {hasActivity ? (
+                                                        slotActivities.map((activity) => (
+                                                            <Card
+                                                                key={activity.id}
+                                                                variant="outlined"
+                                                                sx={{
+                                                                    p: 1.5,
+                                                                    borderRadius: 2,
+                                                                    cursor: 'pointer',
+                                                                    background: 'rgba(255, 255, 255, 0.8)',
+                                                                    backdropFilter: 'blur(10px)',
+                                                                    border: `2px solid ${day.color}`,
+                                                                    transition: 'all 0.3s ease',
+                                                                    '&:hover': {
+                                                                        boxShadow: `0 8px 20px ${day.color}20`,
+                                                                        transform: 'translateY(-2px)',
+                                                                        background: 'rgba(255, 255, 255, 0.95)',
+                                                                        borderColor: day.color
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Typography
+                                                                    variant="subtitle2"
+                                                                    sx={{
+                                                                        fontWeight: 700,
+                                                                        color: day.color,
+                                                                        mb: 0.5,
+                                                                        fontSize: '0.9rem',
+                                                                        lineHeight: 1.2
+                                                                    }}
+                                                                >
+                                                                    {activity.topic}
+                                                                </Typography>
+                                                                
+                                                                <Typography
+                                                                    variant="caption"
+                                                                    sx={{
+                                                                        mb: 0.5,
+                                                                        fontWeight: 600,
+                                                                        fontSize: '0.75rem',
+                                                                        color: '#666',
+                                                                        background: `${day.color}15`,
+                                                                        padding: '2px 8px',
+                                                                        borderRadius: 1,
+                                                                        display: 'inline-block'
+                                                                    }}
+                                                                >
+                                                                    {formatActivityTime(activity)}
+                                                                </Typography>
+                                                                
+                                                                {activity.description && (
+                                                                    <Typography
+                                                                        variant="caption"
+                                                                        color="text.secondary"
+                                                                        sx={{
+                                                                            display: 'block',
+                                                                            fontSize: '0.7rem',
+                                                                            lineHeight: 1.3,
+                                                                            mt: 0.5
+                                                                        }}
+                                                                    >
+                                                                        {activity.description}
+                                                                    </Typography>
+                                                                )}
+                                                                
+                                                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1.5 }}>
+                                                                    <Tooltip title="Edit Activity">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                onEditActivity(activity);
+                                                                            }}
+                                                                            sx={{
+                                                                                width: 28,
+                                                                                height: 28,
+                                                                                bgcolor: '#4CAF50',
+                                                                                color: 'white',
+                                                                                boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
+                                                                                '&:hover': {
+                                                                                    bgcolor: '#45a049',
+                                                                                    transform: 'scale(1.1)',
+                                                                                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)'
+                                                                                },
+                                                                                transition: 'all 0.2s ease'
+                                                                            }}
+                                                                        >
+                                                                            <Edit sx={{ fontSize: 16 }} />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                    <Tooltip title="Delete Activity">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                onDeleteActivity(activity.id, activity.topic);
+                                                                            }}
+                                                                            sx={{
+                                                                                width: 28,
+                                                                                height: 28,
+                                                                                bgcolor: '#f44336',
+                                                                                color: 'white',
+                                                                                boxShadow: '0 2px 8px rgba(244, 67, 54, 0.3)',
+                                                                                '&:hover': {
+                                                                                    bgcolor: '#d32f2f',
+                                                                                    transform: 'scale(1.1)',
+                                                                                    boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)'
+                                                                                },
+                                                                                transition: 'all 0.2s ease'
+                                                                            }}
+                                                                        >
+                                                                            <Delete sx={{ fontSize: 16 }} />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                </Box>
+                                                            </Card>
+                                                        ))
+                                                    ) : (
+                                                        <Card
+                                                            variant="outlined"
                                                             sx={{
-                                                                display: 'block',
-                                                                fontSize: '0.7rem',
-                                                                lineHeight: 1.3,
-                                                                mt: 0.5
+                                                                p: 1.5,
+                                                                borderRadius: 2,
+                                                                cursor: 'pointer',
+                                                                background: 'rgba(255, 255, 255, 0.5)',
+                                                                backdropFilter: 'blur(10px)',
+                                                                border: `2px dashed ${day.color}60`,
+                                                                transition: 'all 0.3s ease',
+                                                                '&:hover': {
+                                                                    borderStyle: 'solid',
+                                                                    bgcolor: `${day.color}05`,
+                                                                    transform: 'translateY(-1px)',
+                                                                    boxShadow: `0 4px 12px ${day.color}20`
+                                                                },
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                minHeight: '60px'
                                                             }}
+                                                            onClick={() => onCreateActivity(currentWeekSchedule.id)}
                                                         >
-                                                            {activity.description}
-                                                        </Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    sx={{
+                                                                        bgcolor: `${day.color}20`,
+                                                                        color: day.color,
+                                                                        '&:hover': {
+                                                                            bgcolor: `${day.color}30`,
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Add sx={{ fontSize: 18 }} />
+                                                                </IconButton>
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    sx={{
+                                                                        color: day.color,
+                                                                        fontWeight: 500,
+                                                                        fontSize: '0.8rem'
+                                                                    }}
+                                                                >
+                                                                    Add Activity
+                                                                </Typography>
+                                                            </Box>
+                                                        </Card>
                                                     )}
-                                                    
-                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 1.5 }}>
-                                                        <Tooltip title="Edit Activity">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onEditActivity(activity);
-                                                                }}
-                                                                sx={{
-                                                                    width: 28,
-                                                                    height: 28,
-                                                                    bgcolor: '#4CAF50',
-                                                                    color: 'white',
-                                                                    boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
-                                                                    '&:hover': {
-                                                                        bgcolor: '#45a049',
-                                                                        transform: 'scale(1.1)',
-                                                                        boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)'
-                                                                    },
-                                                                    transition: 'all 0.2s ease'
-                                                                }}
-                                                            >
-                                                                <Edit sx={{ fontSize: 16 }} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Delete Activity">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    onDeleteActivity(activity.id, activity.topic);
-                                                                }}
-                                                                sx={{
-                                                                    width: 28,
-                                                                    height: 28,
-                                                                    bgcolor: '#f44336',
-                                                                    color: 'white',
-                                                                    boxShadow: '0 2px 8px rgba(244, 67, 54, 0.3)',
-                                                                    '&:hover': {
-                                                                        bgcolor: '#d32f2f',
-                                                                        transform: 'scale(1.1)',
-                                                                        boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)'
-                                                                    },
-                                                                    transition: 'all 0.2s ease'
-                                                                }}
-                                                            >
-                                                                <Delete sx={{ fontSize: 16 }} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                </Card>
-                                            ))
-                                        ) : (
-                                            <Box sx={{
-                                                textAlign: 'center',
-                                                py: 2,
-                                                color: 'text.secondary',
-                                                background: 'rgba(255, 255, 255, 0.6)',
-                                                borderRadius: 2,
-                                                border: `1px dashed ${day.color}50`
-                                            }}>
-                                                <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
-                                                    No activities scheduled
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                        
-                                        {/* Add Activity Button for each day */}
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            startIcon={<Add sx={{ fontSize: '16px' }} />}
-                                            onClick={() => onCreateActivity(currentWeekSchedule.id)}
-                                            sx={{
-                                                mt: 1,
-                                                borderStyle: 'dashed',
-                                                borderColor: day.color,
-                                                color: day.color,
-                                                fontSize: '0.75rem',
-                                                height: '32px',
-                                                minHeight: '32px',
-                                                px: 1.5,
-                                                borderRadius: 2,
-                                                background: 'rgba(255, 255, 255, 0.8)',
-                                                backdropFilter: 'blur(10px)',
-                                                '&:hover': {
-                                                    borderStyle: 'solid',
-                                                    bgcolor: `${day.color}10`,
-                                                    transform: 'translateY(-1px)',
-                                                    boxShadow: `0 4px 12px ${day.color}20`
-                                                },
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            Add Activity
-                                        </Button>
+                                                </Box>
+                                            );
+                                        })}
                                     </Stack>
                                 </CardContent>
                             </Card>
