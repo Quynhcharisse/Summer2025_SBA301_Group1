@@ -19,5 +19,4 @@ public class CreateExtraTermRequest {
     LocalDateTime startDate;
     LocalDateTime endDate;
     int maxNumberRegistration;
-    String reason;
 }

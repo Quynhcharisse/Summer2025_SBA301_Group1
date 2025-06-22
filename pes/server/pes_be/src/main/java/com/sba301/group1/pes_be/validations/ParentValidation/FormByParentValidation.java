@@ -10,53 +10,40 @@ import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
 public class FormByParentValidation {
     public static String submittedForm(SubmitAdmissionFormRequest request) {
 
-        // Không được để trống
-        if (request.getHouseholdRegistrationAddress() == null || request.getHouseholdRegistrationAddress().isEmpty()) {
+        // 1. Địa chỉ hộ khẩu
+        if (request.getHouseholdRegistrationAddress() == null || request.getHouseholdRegistrationAddress().trim().isEmpty()) {
             return "Household registration address is required.";
         }
 
-        // Không được để trống
         if (request.getHouseholdRegistrationAddress().length() > 150) {
             return "Household registration address must not exceed 150 characters.";
         }
 
-        // Không được để trống
-        if (request.getProfileImage() == null || request.getProfileImage().isEmpty()) {
-            return "Profile image is required.";
-        }
-
-        // Không được để trống
-        if (request.getHouseholdRegistrationImg() == null || request.getHouseholdRegistrationImg().isEmpty()) {
-            return "Household registration image is required.";
-        }
-
-        // Không được để trống
-        if (request.getBirthCertificateImg() == null || request.getBirthCertificateImg().isEmpty()) {
-            return "Birth certificate image is required.";
-        }
-
-        // Không được để trống
-        if (request.getCommitmentImg() == null || request.getCommitmentImg().isEmpty()) {
+        // 2. Hình cam kết
+        if (request.getCommitmentImg() == null || request.getCommitmentImg().trim().isEmpty()) {
             return "Commitment image is required.";
         }
 
-        String imgError;
+        if (!isValidImage(request.getCommitmentImg())) {
+            return "Commitment image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp)";
+        }
 
-        imgError = validateImageField("Profile image", request.getProfileImage());
-        if (!imgError.isEmpty()) return imgError;
+        // 3. Hình đánh giá đặc điểm trẻ
+        if (request.getChildCharacteristicsFormImg() == null || request.getChildCharacteristicsFormImg().trim().isEmpty()) {
+            return "Child characteristics form image is required.";
+        }
 
-        imgError = validateImageField("Household registration image", request.getHouseholdRegistrationImg());
-        if (!imgError.isEmpty()) return imgError;
+        if (!isValidImage(request.getChildCharacteristicsFormImg())) {
+            return "Child characteristics form image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp)";
+        }
 
-        imgError = validateImageField("Birth certificate image", request.getBirthCertificateImg());
-        if (!imgError.isEmpty()) return imgError;
-
-        imgError = validateImageField("Commitment image", request.getCommitmentImg());
-        if (!imgError.isEmpty()) return imgError;
+        // 4. Ghi chú (không bắt buộc nhưng có thể giới hạn độ dài)
+        if (request.getNote() != null && request.getNote().length() > 300) {
+            return "Note must not exceed 300 characters.";
+        }
 
         return "";
     }
-
 
     public static String canceledValidate(CancelAdmissionForm request, Account account, AdmissionFormRepo admissionFormRepo) {
         AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
@@ -76,19 +63,8 @@ public class FormByParentValidation {
         return "";
     }
 
-
-    private static String validateImageField(String img, String value) {
-        //ko để trống
-        if (value == null || value.isEmpty()) {
-            return img + " is required.";
-        }
-
-        //Chỉ cho phép định dạng file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .bmp)
-        if (!value.matches("(?i)^.+\\.(jpg|jpeg|png|gif|bmp)$")) {
-            return img + " must be a valid image file (.jpg, .png, .jpeg, .gif, .bmp).";
-        }
-
-        return "";
+    private static boolean isValidImage(String fileName) {
+        return fileName.matches("(?i)^.+\\.(jpg|jpeg|png|gif|bmp)$");
     }
 }
 

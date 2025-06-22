@@ -1,6 +1,5 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
-import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
@@ -33,11 +32,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -88,6 +87,9 @@ public class ParentServiceImpl implements ParentService {
                     studentDetail.put("gender", student.getGender().toLowerCase());
                     studentDetail.put("dateOfBirth", student.getDateOfBirth());
                     studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
+                    studentDetail.put("profileImage", student.getProfileImage());
+                    studentDetail.put("householdRegistrationImg", student.getHouseholdRegistrationImg());
+                    studentDetail.put("birthCertificateImg", student.getBirthCertificateImg());
                     studentDetail.put("isStudent", student.isStudent());
                     studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());//trong từng học sinh check đã tạo form chưa
                     return studentDetail;
@@ -116,11 +118,12 @@ public class ParentServiceImpl implements ParentService {
         data.put("studentGender", form.getStudent().getGender());
         data.put("studentDateOfBirth", form.getStudent().getDateOfBirth());
         data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
-        data.put("profileImage", form.getProfileImage());
-        data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
+        data.put("profileImage", form.getStudent().getProfileImage());
         data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
         data.put("birthCertificateImg", form.getBirthCertificateImg());
+        data.put("childCharacteristicsFormImg", form.getChildCharacteristicsFormImg());
         data.put("commitmentImg", form.getCommitmentImg());
+        data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
         data.put("submittedDate", form.getSubmittedDate());
         data.put("cancelReason", form.getCancelReason());
         data.put("note", form.getNote());
@@ -183,7 +186,7 @@ public class ParentServiceImpl implements ParentService {
         }
 
         // 5. Kiểm tra độ tuổi phù hợp
-        if (!isAgeValidForGrade(student.getDateOfBirth(), activeTerm.getGrade())) {
+        if (!isAgeValidForGrade(student.getDateOfBirth(), activeTerm.getYear())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message("Student's age does not match the required grade for current term")
@@ -196,11 +199,11 @@ public class ParentServiceImpl implements ParentService {
         // 6. Kiểm tra xem học sinh đã nộp form kỳ này chưa
         List<AdmissionForm> existingForms = admissionFormRepo
                 .findAllByParent_IdAndStudent_Id(account.getParent().getId(), student.getId()).stream()
-                .filter(form -> form.getAdmissionTerm() != null && form.getAdmissionTerm().getId() == activeTerm.getId())
+                .filter(form -> form.getAdmissionTerm() != null && Objects.equals(form.getAdmissionTerm().getId(), activeTerm.getId()))
                 .toList();
 
         boolean hasSubmittedForm = existingForms.stream()
-                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED.getValue()) && form.getStatus().equals(Status.CANCELLED.getValue()));
+                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED.getValue()) && !form.getStatus().equals(Status.CANCELLED.getValue()));
 
         if (hasSubmittedForm) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -231,6 +234,8 @@ public class ParentServiceImpl implements ParentService {
                 .student(student)
                 .admissionTerm(activeTerm)
                 .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                .commitmentImg(request.getCommitmentImg())
+                .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
                 .note(request.getNote())
                 .submittedDate(LocalDate.now())
                 .status(Status.PENDING_APPROVAL.getValue())
@@ -259,9 +264,13 @@ public class ParentServiceImpl implements ParentService {
         );
     }
 
-    private boolean isAgeValidForGrade(LocalDate dateOfBirth, Grade grade) {
-        int exactAge = Period.between(dateOfBirth, LocalDate.now()).getYears();
-        return exactAge == grade.getAge();
+    private boolean isAgeValidForGrade(LocalDate dob, int admissionYear) {
+        int birthYear = dob.getYear();
+        int ageAtAdmission = admissionYear - birthYear;
+
+        System.out.println(birthYear);
+        System.out.println(ageAtAdmission);
+        return ageAtAdmission >= 3 && ageAtAdmission <= 5;
     }
 
 
@@ -352,7 +361,7 @@ public class ParentServiceImpl implements ParentService {
                     studentDetail.put("id", student.getId());
                     studentDetail.put("name", student.getName());
                     studentDetail.put("gender", student.getGender());
-                    studentDetail.put("dateOfBirth", student.getProfileImage());
+                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
                     studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
                     studentDetail.put("profileImage", student.getProfileImage());
                     studentDetail.put("birthCertificateImg", student.getBirthCertificateImg());
@@ -360,6 +369,7 @@ public class ParentServiceImpl implements ParentService {
                     studentDetail.put("modifiedDate", student.getModifiedDate());
                     studentDetail.put("isStudent", student.isStudent());
                     studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
+                    studentDetail.put("updateCount", student.getUpdateCount() != null ? student.getUpdateCount() : 0);
                     return studentDetail;
                 })
                 .toList();
@@ -417,6 +427,7 @@ public class ParentServiceImpl implements ParentService {
                         .modifiedDate(LocalDate.now())
                         .isStudent(false)         // mặc định là chưa chính thức
                         .parent(parent)           // gán cha mẹ
+                        .updateCount(0)           // khởi tạo số lần cập nhật là 0
                         .build());
 
 

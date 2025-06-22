@@ -11,6 +11,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -56,13 +58,15 @@ public class AdmissionTerm {
 
     String status;
 
-    @OneToMany(mappedBy = "admissionTerm", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    //join chính nó
+    @ManyToOne
+    @JoinColumn(name = "parent_term_id")
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    List<AdmissionForm> admissionFormList;
+    AdmissionTerm parentTerm;
 
     @OneToMany(mappedBy = "admissionTerm", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
-    List<ExtraTerm> extraTermList;
+    List<AdmissionForm> admissionFormList;
 }

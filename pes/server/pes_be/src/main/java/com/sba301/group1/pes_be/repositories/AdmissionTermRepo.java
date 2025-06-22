@@ -9,4 +9,5 @@ import java.util.List;
 public interface AdmissionTermRepo extends JpaRepository<AdmissionTerm, Integer> {
     List<AdmissionTerm> findByGrade(Grade grade);
     long countByYearAndGrade(int year, Grade grade);
+    List<AdmissionTerm> findAllByParentTerm_Id(int parentTermId);
 }
