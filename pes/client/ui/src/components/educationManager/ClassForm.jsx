@@ -29,7 +29,7 @@ function ClassForm({
         name: '',
         teacherId: '',
         syllabusId: '',
-        numberStudent: 0,
+        numberStudent: 1,
         roomNumber: '',
         startDate: '',
         endDate: '',
@@ -46,7 +46,7 @@ function ClassForm({
                     name: '',
                     teacherId: '',
                     syllabusId: '',
-                    numberStudent: 0,
+                    numberStudent: 1,
                     roomNumber: '',
                     startDate: '',
                     endDate: '',
@@ -58,7 +58,7 @@ function ClassForm({
                     name: initialData.name || '',
                     teacherId: initialData.teacher?.id || initialData.teacherId || '',
                     syllabusId: initialData.syllabus?.id || initialData.syllabusId || '',
-                    numberStudent: initialData.numberStudent || 0,
+                    numberStudent: initialData.numberStudent > 0 ? initialData.numberStudent : 1,
                     roomNumber: initialData.roomNumber || '',
                     startDate: initialData.startDate || '',
                     endDate: initialData.endDate || '',
@@ -101,12 +101,22 @@ function ClassForm({
             validationErrors.push('End date is required');
         }
         
+        if (formData.numberStudent <= 0) {
+            validationErrors.push('Number of students must be greater than 0');
+        }
+        
         if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
             validationErrors.push('End date must be after start date');
         }
         
-        if (formData.numberStudent < 0) {
-            validationErrors.push('Number of students must be 0 or greater');
+        if (formData.startDate) {
+            const today = new Date();
+            const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const startDate = new Date(formData.startDate);
+            
+            if (startDate < oneWeekFromNow) {
+                validationErrors.push('Start date must be at least 1 week from now');
+            }
         }
         
         return validationErrors;
@@ -255,9 +265,9 @@ function ClassForm({
                             type="number"
                             value={formData.numberStudent}
                             onChange={(e) => handleFieldChange('numberStudent', e.target.value)}
-                            inputProps={{ min: 0 }}
+                            inputProps={{ min: 1 }}
                             error={errors.some(error => error.includes('Number of students'))}
-                            helperText="Maximum capacity for this class"
+                            helperText="Maximum capacity for this class (must be greater than 0)"
                         />
 
                         <FormControl>
