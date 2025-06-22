@@ -1,6 +1,7 @@
 package com.sba301.group1.pes_be.response;
 
 import com.sba301.group1.pes_be.models.Classes;
+import com.sba301.group1.pes_be.models.Student;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class ClassesResponse {
     private String grade;
     private SimpleSyllabusResponse syllabus;
     private SimpleTeacherResponse teacher;
+    private List<SimpleStudentResponse> students;
 
     @Data
     @NoArgsConstructor
@@ -45,7 +47,7 @@ public class ClassesResponse {
         private String firstName;
         private String lastName;
         private String name;
-        
+
         // Add a name property for frontend compatibility
         public String getName() {
             if (name != null && !name.trim().isEmpty()) {
@@ -80,6 +82,22 @@ public class ClassesResponse {
                 .name(classes.getTeacher().getName()) // Set explicit name field
                 .build();
         }
+        List<SimpleStudentResponse> studentResponse = null;
+        if (classes.getStudentClassList() != null) {
+            studentResponse = classes.getStudentClassList().stream()
+                .map(studentClass -> {
+                    Student student = studentClass.getStudent();
+                    return SimpleStudentResponse.builder()
+                            .id(student.getId())
+                    .name(student.getName())
+                    .gender(student.getGender())
+                    .placeOfBirth(student.getPlaceOfBirth())
+                    .dateOfBirth(student.getDateOfBirth())
+                        .profileImage(student.getProfileImage())
+                    .isStudent(true) // Assuming all students in this context are active students
+                    .build();
+                }).toList();
+        }
 
         // Calculate the actual number of students dynamically from the StudentClass relationship
         int actualStudentCount = classes.getStudentClassList() != null ? classes.getStudentClassList().size() : 0;
@@ -95,6 +113,7 @@ public class ClassesResponse {
             .grade(classes.getGrade() != null ? classes.getGrade().toString() : null)
             .syllabus(syllabusResponse)
             .teacher(teacherResponse)
+            .students(studentResponse)
             .build();
     }
 

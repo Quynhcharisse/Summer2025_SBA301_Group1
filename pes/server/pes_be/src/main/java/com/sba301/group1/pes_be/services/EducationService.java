@@ -6,6 +6,7 @@ import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
 import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.requests.StudentClassRequest;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
@@ -182,6 +183,9 @@ public interface EducationService {
     ResponseEntity<ResponseObject> deleteClass(Integer classId);
 
     // Lesson Service Methods
+
+    //assign student to class
+    ResponseEntity<ResponseObject> assignStudentsToClass(StudentClassRequest request);
 
     /**
      * Retrieves all lessons in the system

@@ -36,6 +36,8 @@ public class EducationServiceImpl implements EducationService {
     private final SyllabusRepo syllabusRepo;
     private final SyllabusLessonRepo syllabusLessonRepo;
     private final AccountRepo accountRepo;
+    private final StudentRepo studentRepo;
+    private final StudentClassRepo studentClassRepo;
 
     // Private helper method to convert Activity entity to Response
     private ActivityResponse convertToResponse(Activity activity) {
@@ -1039,6 +1041,82 @@ public class EducationServiceImpl implements EducationService {
                     .success(false)
                     .data(null)
                     .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> assignStudentsToClass(StudentClassRequest request) {
+        try {
+            Integer classId = request.getClassId();
+            List<Integer> studentIds = request.getStudentIds();
+
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Classes classEntity = classOpt.get();
+            List<String> errors = new ArrayList<>();
+            List<StudentClass> newStudentClasses = new ArrayList<>();
+
+            for (Integer studentId : studentIds) {
+                Optional<Student> studentOpt = studentRepo.findById(studentId);
+                if (studentOpt.isEmpty()) {
+                    errors.add("Student not found: " + studentId);
+                    continue;
+                }
+                Student student = studentOpt.get();
+
+                boolean alreadyAssigned = classEntity.getStudentClassList().stream()
+                        .anyMatch(s -> s.getStudent().getId().equals(studentId));
+                if (alreadyAssigned) {
+                    errors.add("Student already assigned: " + studentId);
+                    continue;
+                }
+
+                if (!errors.isEmpty()) {
+                    String message = "Some errors occurred: " + String.join("; ", errors);
+                    return ResponseEntity.badRequest().body(
+                            ResponseObject.builder()
+                                    .message(message)
+                                    .success(false)
+                                    .data(ClassesResponse.fromEntity(classEntity))
+                                    .build()
+                    );
+                }
+
+                StudentClass studentClass = StudentClass.builder()
+                        .student(student)
+                        .classes(classEntity)
+                        .build();
+                studentClassRepo.save(studentClass);
+
+                student.setStudent(true);
+                studentRepo.save(student);
+            }
+
+            String message = "Students assigned to class successfully";
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(message)
+                            .success(true)
+                            .data(ClassesResponse.fromEntity(classEntity))
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error assigning students to class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
