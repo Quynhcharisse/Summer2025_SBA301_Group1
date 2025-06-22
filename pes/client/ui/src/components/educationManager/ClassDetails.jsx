@@ -1,26 +1,14 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-    Alert,
     Box,
     Button,
     Card,
     CardContent,
-    Grid,
-    IconButton,
-    Paper,
     Stack,
-    TextField,
-    Tooltip,
     Typography
 } from '@mui/material';
 import {
-    Add,
-    ArrowBack,
-    ChevronLeft,
-    ChevronRight,
-    Delete,
-    Edit
-} from '@mui/icons-material';
+    ArrowBack} from '@mui/icons-material';
 import {useNavigate, useParams} from 'react-router-dom';
 import {enqueueSnackbar} from 'notistack';
 import {
