@@ -181,38 +181,6 @@ const ClassInformation = ({
                     {errors.join(', ')}
                 </Alert>
             )}
-            
-            {/* Edit button */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                {!isEditing ? (
-                    <Button
-                        variant="outlined"
-                        startIcon={<Edit />}
-                        onClick={handleEdit}
-                        sx={{ borderColor: '#1976d2', color: '#1976d2' }}
-                    >
-                        Edit Class
-                    </Button>
-                ) : (
-                    <Stack direction="row" spacing={1}>
-                        <Button
-                            variant="contained"
-                            startIcon={<Save />}
-                            onClick={handleSave}
-                            color="primary"
-                        >
-                            Save
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Cancel />}
-                            onClick={handleCancel}
-                        >
-                            Cancel
-                        </Button>
-                    </Stack>
-                )}
-            </Box>
 
             <Box sx={{
                 display: 'flex',
@@ -221,11 +189,60 @@ const ClassInformation = ({
             }}>
                 <Box sx={{flex: 1}}>
                     <Stack spacing={2}>
-                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <School sx={{color: '#1976d2'}}/>
-                            <Typography variant="h6" color="primary">
-                                Basic Information
-                            </Typography>
+                        <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                <School sx={{color: '#1976d2'}}/>
+                                <Typography variant="h6" color="primary">
+                                    Basic Information
+                                </Typography>
+                            </Box>
+                            {/* Edit button positioned inline with Basic Information heading */}
+                            {!isEditing ? (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<Edit sx={{ color: '#1976d2' }} />}
+                                    onClick={handleEdit}
+                                    size="small"
+                                    sx={{
+                                        borderColor: '#1976d2',
+                                        color: '#1976d2',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                            borderColor: '#1976d2'
+                                        }
+                                    }}
+                                >
+                                    Edit Class
+                                </Button>
+                            ) : (
+                                <Stack direction="row" spacing={1}>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<Save sx={{ color: 'white' }} />}
+                                        onClick={handleSave}
+                                        size="small"
+                                        color="primary"
+                                    >
+                                        Save
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Cancel sx={{ color: '#666' }} />}
+                                        onClick={handleCancel}
+                                        size="small"
+                                        sx={{
+                                            borderColor: '#666',
+                                            color: '#666',
+                                            '&:hover': {
+                                                backgroundColor: 'rgba(102, 102, 102, 0.08)',
+                                                borderColor: '#666'
+                                            }
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </Stack>
+                            )}
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Class Name</Typography>

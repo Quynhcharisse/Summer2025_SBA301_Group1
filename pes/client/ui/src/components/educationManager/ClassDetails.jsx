@@ -564,9 +564,6 @@ function ClassDetails() {
                 <Stack spacing={3}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" color="primary" sx={{mb: 2}}>
-                                Class Information
-                            </Typography>
                             <ClassInformation
                                 classData={classData}
                                 syllabus={syllabus}
