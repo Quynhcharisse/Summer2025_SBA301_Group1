@@ -300,7 +300,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity activity = activityOpt.get();
-            
+
             // Check if activity is part of a schedule and gather information for response
             String scheduleInfo = "";
             Schedule schedule = null;
@@ -328,7 +328,7 @@ public class EducationServiceImpl implements EducationService {
                 // Activity has no schedule, safe to delete directly
                 activityRepo.deleteById(activityId);
             }
-            
+
             String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -364,29 +364,29 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity activity = activityOpt.get();
-            
+
             // Build impact information
             java.util.Map<String, Object> impactInfo = new java.util.HashMap<>();
             impactInfo.put("activityId", activityId);
             impactInfo.put("activityTopic", activity.getTopic());
             impactInfo.put("hasScheduleImpact", activity.getSchedule() != null);
-            
+
             if (activity.getSchedule() != null) {
                 Schedule schedule = activity.getSchedule();
                 impactInfo.put("scheduleId", schedule.getId());
                 impactInfo.put("weekNumber", schedule.getWeekNumber());
-                
+
                 if (schedule.getClasses() != null) {
                     impactInfo.put("className", schedule.getClasses().getName());
                     impactInfo.put("classId", schedule.getClasses().getId());
                 }
-                
+
                 // Count other activities in the same schedule
                 List<Activity> scheduleActivities = activityRepo.findByScheduleId(schedule.getId());
                 impactInfo.put("totalActivitiesInSchedule", scheduleActivities.size());
                 impactInfo.put("isLastActivityInSchedule", scheduleActivities.size() == 1);
             }
-            
+
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity deletion impact analysis completed")
@@ -436,7 +436,7 @@ public class EducationServiceImpl implements EducationService {
             // Find or create schedule for the specified week
             Optional<Schedule> scheduleOpt = scheduleRepo.findByClassesIdAndWeekNumber(
                 request.getClassId(), request.getWeekNumber());
-            
+
             Schedule schedule;
             if (scheduleOpt.isEmpty()) {
                 // Create new schedule if it doesn't exist
@@ -1046,6 +1046,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> assignStudentsToClass(StudentClassRequest request) {
         try {
             Integer classId = request.getClassId();
@@ -1064,7 +1065,6 @@ public class EducationServiceImpl implements EducationService {
 
             Classes classEntity = classOpt.get();
             List<String> errors = new ArrayList<>();
-            List<StudentClass> newStudentClasses = new ArrayList<>();
 
             for (Integer studentId : studentIds) {
                 Optional<Student> studentOpt = studentRepo.findById(studentId);
@@ -1074,22 +1074,10 @@ public class EducationServiceImpl implements EducationService {
                 }
                 Student student = studentOpt.get();
 
-                boolean alreadyAssigned = classEntity.getStudentClassList().stream()
-                        .anyMatch(s -> s.getStudent().getId().equals(studentId));
+                boolean alreadyAssigned = studentClassRepo.existsByStudentIdAndClassesId(studentId, classId);
                 if (alreadyAssigned) {
                     errors.add("Student already assigned: " + studentId);
                     continue;
-                }
-
-                if (!errors.isEmpty()) {
-                    String message = "Some errors occurred: " + String.join("; ", errors);
-                    return ResponseEntity.badRequest().body(
-                            ResponseObject.builder()
-                                    .message(message)
-                                    .success(false)
-                                    .data(ClassesResponse.fromEntity(classEntity))
-                                    .build()
-                    );
                 }
 
                 StudentClass studentClass = StudentClass.builder()
@@ -1103,6 +1091,10 @@ public class EducationServiceImpl implements EducationService {
                 classEntity.getStudentClassList().add(studentClass);
             }
 
+            if (!errors.isEmpty()) {
+                throw new RuntimeException(String.join("; ", errors));
+            }
+
             String message = "Students assigned to class successfully";
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
@@ -1112,7 +1104,7 @@ public class EducationServiceImpl implements EducationService {
                             .build()
             );
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     ResponseObject.builder()
                             .message("Error assigning students to class: " + e.getMessage())
                             .success(false)
@@ -1418,7 +1410,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Schedule schedule = scheduleOpt.get();
-            
+
             // Validate request (includes duplicate check)
             String validationError = UpdateScheduleValidation.validate(request, schedule, scheduleRepo);
             if (!validationError.isEmpty()) {
@@ -1430,7 +1422,7 @@ public class EducationServiceImpl implements EducationService {
                         .build()
                 );
             }
-            
+
             schedule.setWeekNumber(request.getWeekNumber());
             schedule.setNote(request.getNote());
 
