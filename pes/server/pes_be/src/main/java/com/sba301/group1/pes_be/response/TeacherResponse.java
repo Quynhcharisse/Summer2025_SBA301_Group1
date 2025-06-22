@@ -29,6 +29,7 @@ public class TeacherResponse {
     String gender;
     String identityNumber;
     ClassInfo classes;
+    Boolean isOccupied;
 
     @Data
     @NoArgsConstructor
@@ -58,9 +59,12 @@ public class TeacherResponse {
                 .gender(account.getGender())
                 .identityNumber(account.getIdentityNumber());
 
-        // Add class information if available
+        // Add class information if available and check if teacher is occupied
+        boolean isOccupied = false;
         if (account.getClasses() != null) {
             Classes classEntity = account.getClasses();
+            isOccupied = "active".equalsIgnoreCase(classEntity.getStatus());
+            
             ClassInfo classInfo = ClassInfo.builder()
                     .id(classEntity.getId())
                     .name(classEntity.getName())
@@ -73,6 +77,8 @@ public class TeacherResponse {
                     .build();
             builder.classes(classInfo);
         }
+        
+        builder.isOccupied(isOccupied);
 
         return builder.build();
     }

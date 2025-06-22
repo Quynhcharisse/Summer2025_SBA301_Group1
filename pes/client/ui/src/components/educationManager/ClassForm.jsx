@@ -209,11 +209,31 @@ function ClassForm({
                                 label="Teacher"
                                 error={errors.some(error => error.includes('Teacher'))}
                             >
-                                {teachers && teachers.map((teacher) => (
-                                    <MenuItem key={teacher.id} value={teacher.id}>
-                                        {teacher.name || teacher.firstName || teacher.email}
-                                    </MenuItem>
-                                ))}
+                                {teachers && teachers
+                                    .sort((a, b) => {
+                                        if (a.isOccupied === b.isOccupied) return 0;
+                                        return a.isOccupied ? 1 : -1;
+                                    })
+                                    .map((teacher) => {
+                                        const isCurrentTeacher = mode === 'edit' && teacher.id === initialData?.teacher?.id;
+                                        const isDisabled = teacher.isOccupied && mode === 'create';
+                                        const showOccupied = teacher.isOccupied && !isCurrentTeacher;
+                                        
+                                        return (
+                                            <MenuItem
+                                                key={teacher.id}
+                                                value={teacher.id}
+                                                disabled={isDisabled}
+                                                sx={{
+                                                    color: isDisabled ? 'text.disabled' : 'text.primary',
+                                                    opacity: isDisabled ? 0.6 : 1
+                                                }}
+                                            >
+                                                {teacher.name || teacher.firstName || teacher.email}
+                                                {showOccupied && ' (occupied)'}
+                                            </MenuItem>
+                                        );
+                                    })}
                             </Select>
                         </FormControl>
 
