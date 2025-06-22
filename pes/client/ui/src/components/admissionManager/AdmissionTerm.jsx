@@ -23,22 +23,35 @@ import {
     TextField,
     Toolbar,
     Tooltip,
-    Typography
+    Typography,
+    Grid,
+    InputLabel,
+    Select,
+    MenuItem
 } from "@mui/material";
-import {Add, Close, Edit, Visibility} from '@mui/icons-material';
+import {Add, Close, Visibility} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import Radio from '@mui/material/Radio';
-import {createTerm, getTermList, updateTerm} from "../../services/AdmissionService.jsx";
+import {createTerm, getTermList} from "../../services/AdmissionService.jsx";
 import {useSnackbar} from "notistack";
-import { format } from 'date-fns';
+import {format} from 'date-fns';
 import '../../styles/admissionManager/AdmissionTerm.css'
+import {ValidateTermFormData} from "../validation/ValidateTermFormData.jsx";
+import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
 
 function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    const [page, setPage] = useState(0); // Trang hiện tại
-    const [rowsPerPage, setRowsPerPage] = useState(5); //số dòng trang
-
-    console.log('Terms: ', terms)
+    const columns = [
+        {label: 'No', minWidth: 80, align: 'center', key: 'no'},
+        {label: 'Grade', minWidth: 100, align: 'center', key: 'grade'},
+        {label: 'Max Number Registration', minWidth: 160, align: 'center', key: 'maxNumberRegistration'},
+        {label: 'Year', minWidth: 100, align: 'center', key: 'year'},
+        {label: 'Status', minWidth: 120, align: 'center', key: 'status'},
+        {label: 'Action', minWidth: 80, align: 'center', key: 'action'},
+    ];
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -50,10 +63,11 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
     }
 
     const handleDetailClick = (term, type) => {
-        // Xử lý khi người dùng click vào nút "Detail"
         HandleSelectedTerm(term)
-        openDetailPopUpFunc(type); //truyền type 'view' hoặc 'edit'
+        openDetailPopUpFunc(type);
     }
+
+    console.log(terms)
 
     return (
         <Paper sx={{
@@ -65,47 +79,95 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
             boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
             border: '2px solid rgb(254, 254, 253)'
         }}>
-
             <TableContainer sx={{height: 500}}>
                 <Table stickyHeader>
                     <TableHead>
                         <TableRow>
-                            <TableCell>No</TableCell>
-                            <TableCell>Grade</TableCell>
-                            <TableCell>Max number registration</TableCell>
-                            <TableCell>Year</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell align="center">Action</TableCell>
+                            {columns.map(col => (
+                                <TableCell
+                                    key={col.key}
+                                    align={col.align}
+                                    sx={{minWidth: col.minWidth, fontWeight: 'bold'}}
+                                >
+                                    {col.label}
+                                </TableCell>
+                            ))}
                         </TableRow>
                     </TableHead>
-
                     <TableBody>
                         {terms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                            .map((term, index) => (
+                            .map((term, idx) => (
                                 <TableRow key={term.id}>
-                                    <TableCell align="center" sx={{minWidth: 80}}>{index + 1}</TableCell>
-                                    <TableCell align="center" sx={{minWidth: 100}}>{term.grade}</TableCell>
-                                    <TableCell align="center"
-                                               sx={{minWidth: 160}}>{term.maxNumberRegistration}</TableCell>
+                                    <TableCell align="center" sx={{minWidth: 80}}>{idx + 1}</TableCell>
+                                    <TableCell align="center" sx={{minWidth: 100}}>
+                                        <Box sx={{
+                                            display: 'inline-block',
+                                            backgroundColor: term.grade === 'SEED'
+                                                ? '#2e7d32'
+                                                : term.grade === 'BUD'
+                                                    ? '#ed6c02'
+                                                    : '#0288d1',
+                                            padding: '6px 16px',
+                                            borderRadius: '16px',
+                                            minWidth: '90px',
+                                        }}>
+                                            <Typography sx={{
+                                                fontWeight: 600,
+                                                color: '#ffffff',
+                                                textTransform: 'uppercase',
+                                                fontSize: '0.875rem',
+                                                lineHeight: '1.43',
+                                                letterSpacing: '0.01071em',
+                                            }}>
+                                                {term.grade}
+                                            </Typography>
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell align="center" sx={{minWidth: 160}}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: 1
+                                        }}>
+                                            <Typography sx={{
+                                                fontWeight: 600,
+                                                color: term.approvedForm >= term.maxNumberRegistration ? '#d32f2f' : '#07663a'
+                                            }}>
+                                                {term.approvedForm || 0}
+                                            </Typography>
+                                            <Typography sx={{color: '#666'}}>/</Typography>
+                                            <Typography sx={{fontWeight: 600}}>
+                                                {term.maxNumberRegistration}
+                                            </Typography>
+                                        </Box>
+                                    </TableCell>
                                     <TableCell align="center" sx={{minWidth: 100}}>{term.year}</TableCell>
-                                    <TableCell align="center" sx={{minWidth: 120}}>{term.status}</TableCell>
+                                    <TableCell align="center" sx={{
+                                        minWidth: 120,
+                                        fontWeight: 700,
+                                        color:
+                                            term.status === 'active'
+                                                ? '#219653' // xanh lá
+                                                : term.status === 'inactive'
+                                                    ? '#bdbdbd' // xám nhạt
+                                                    : term.status === 'locked'
+                                                        ? '#d32f2f' // đỏ
+                                                        : '#2c3e50',
+                                        borderRadius: 2,
+                                        letterSpacing: 1,
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {term.status}
+                                    </TableCell>
                                     <TableCell align="center" sx={{minWidth: 80}}>
                                         <Tooltip title="View">
                                             <IconButton
-                                                color="info"
+                                                color="primary"
                                                 onClick={() => handleDetailClick(term, 'view')}
-                                                sx={{mr: 1, backgroundColor: '#2c3e50'}}
+                                                sx={{mr: 1}}
                                             >
                                                 <Visibility/>
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Update">
-                                            <IconButton
-                                                color={'error'}
-                                                onClick={() => handleDetailClick(term, 'edit')}
-                                                sx={{backgroundColor: '#2c3e50'}}
-                                            >
-                                                <Edit/>
                                             </IconButton>
                                         </Tooltip>
                                     </TableCell>
@@ -117,7 +179,7 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
             <TablePagination
                 component="div"
                 rowsPerPageOptions={[5, 10, 15]}
-                count={terms?.length} //phải là list.length
+                count={terms?.length}
                 page={page}
                 onPageChange={handleChangePage}
                 rowsPerPage={rowsPerPage}
@@ -127,193 +189,196 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
     )
 }
 
-function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm, mode}) {
-    const isViewMode = mode === 'view';
-    const {enqueueSnackbar} = useSnackbar();
-
+function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
     const [formData, setFormData] = useState({
+        name: '',
+        startDate: null,
+        endDate: null,
         grade: '',
-        startDate: '',
-        endDate: '',
-        maxNumberRegistration: 0
+        maxStudent: 0,
+        minStudent: 0,
+        description: ''
     });
 
+    //Đồng bộ formData từ selectedTerm
     useEffect(() => {
         if (selectedTerm) {
             setFormData({
+                name: selectedTerm.name ?? '',
+                startDate: selectedTerm.startDate ? new Date(selectedTerm.startDate) : null,
+                endDate: selectedTerm.endDate ? new Date(selectedTerm.endDate) : null,
                 grade: selectedTerm.grade ?? '',
-                startDate: selectedTerm.startDate
-                    ? format(new Date(selectedTerm.startDate), "yyyy-MM-dd'T'HH:mm")
-                    : '',
-                endDate: selectedTerm.endDate
-                    ? format(new Date(selectedTerm.endDate), "yyyy-MM-dd'T'HH:mm")
-                    : '',
-                maxNumberRegistration: selectedTerm.maxNumberRegistration ?? 0,
+                maxStudent: selectedTerm.maxStudent ?? 0,
+                minStudent: selectedTerm.minStudent ?? 0,
+                description: selectedTerm.description ?? ''
             });
         }
     }, [selectedTerm]);
 
-    // Validate form trước khi update
-    const validateUpdateForm = () => {
-        // Check if term is not INACTIVE
-        if (selectedTerm.status !== 'INACTIVE_TERM') {
-            enqueueSnackbar("Only inactive terms can be updated", {variant: "error"});
-            return false;
-        }
-
-        // 1. Validate các field required
-        if (!formData.startDate) {
-            enqueueSnackbar("Please select start date", {variant: "error"});
-            return false;
-        }
-        if (!formData.endDate) {
-            enqueueSnackbar("Please select end date", {variant: "error"});
-            return false;
-        }
-        if (!formData.maxNumberRegistration || formData.maxNumberRegistration <= 0) {
-            enqueueSnackbar("Max number registration must be greater than 0", {variant: "error"});
-            return false;
-        }
-
-        // 2. Validate thời gian
-        const startDate = new Date(formData.startDate);
-        const endDate = new Date(formData.endDate);
-        const now = new Date();
-
-        if (startDate < now) {
-            enqueueSnackbar("Start date must be in the future", {variant: "error"});
-            return false;
-        }
-
-        if (endDate <= startDate) {
-            enqueueSnackbar("End date must be after start date", {variant: "error"});
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleUpdateTerm = async () => {
-        try {
-            // Validate form trước
-            if (!validateUpdateForm()) {
-                return;
-            }
-
-            const response = await updateTerm(
-                selectedTerm.id,
-                formData.grade,
-                formData.startDate,
-                formData.endDate,
-                formData.maxNumberRegistration
-            );
-
-            if (response.success) {
-                enqueueSnackbar("Term updated successfully!", {variant: "success"});
-                handleClosePopUp();
-                GetTerm();
-            } else {
-                // Xử lý các lỗi từ BE
-                if (response.message.includes("overlaps")) {
-                    enqueueSnackbar("Time period overlaps with another term of the same grade", {variant: "error"});
-                } else if (response.message.includes("inactive")) {
-                    enqueueSnackbar("Only inactive terms can be updated", {variant: "error"});
-                } else {
-                    enqueueSnackbar(response.message || "Failed to update term", {variant: "error"});
-                }
-            }
-        } catch (error) {
-            enqueueSnackbar("An error occurred while updating the term", {variant: "error"});
+    const getStatusColor = (status) => {
+        switch(status?.toLowerCase()) {
+            case 'active':
+                return '#219653';
+            case 'inactive':
+                return '#bdbdbd';
+            case 'locked':
+                return '#d32f2f';
+            default:
+                return '#2c3e50';
         }
     };
 
-    function HandleOnChange(e) {
-        const {name, value} = e.target;
-        
-        // Validate maxNumberRegistration khi nhập
-        if (name === "maxNumberRegistration") {
-            const numValue = parseInt(value);
-            if (numValue <= 0) {
-                enqueueSnackbar("Max number registration must be greater than 0", {variant: "warning"});
-            }
-        }
+    const handleInputChange = (event) => {
+        const {name, value} = event.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
-        setFormData({...formData, [name]: value});
-    }
+    const handleDateChange = (field, newValue) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: newValue
+        }));
+    };
 
     return (
-        <Dialog maxWidth={'md'} fullWidth open={isPopUpOpen} onClose={handleClosePopUp}>
-            <AppBar sx={{position: 'relative', backgroundColor: '#2c3e50'}}>
+        <Dialog
+            fullScreen
+            open={isPopUpOpen}
+            onClose={handleClosePopUp}
+        >
+            <AppBar sx={{position: 'relative', backgroundColor: '#07663a'}}>
                 <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={handleClosePopUp}
-                        aria-label="close"
-                    >
+                    <IconButton edge="start"
+                                color="inherit"
+                                onClick={handleClosePopUp}
+                                aria-label="close">
                         <Close/>
                     </IconButton>
                     <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
-                        {isViewMode ? 'View Term Detail' : 'Update Term'}
+                        Admission Term Detail
                     </Typography>
+                    <Box sx={{
+                        backgroundColor: getStatusColor(formData.status),
+                        padding: '6px 16px',
+                        borderRadius: '16px',
+                        marginLeft: 2
+                    }}>
+                        <Typography sx={{
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            textTransform: 'uppercase'
+                        }}>
+                            {formData.status}
+                        </Typography>
+                    </Box>
                 </Toolbar>
             </AppBar>
 
             <Box p={4}>
                 <Typography
                     variant='subtitle1'
-                    sx={{mb: 2, fontWeight: 'bold', fontSize: "2.5rem", textAlign: "center", color: '#2c3e50'}}
+                    sx={{mb: 2, fontWeight: 'bold', fontSize: "2.5rem", textAlign: "center", color: '#07663a'}}
                 >
                     Term Information
                 </Typography>
 
-                <Stack spacing={3}>
-                    <Stack>
-                        <TextField
-                            label="Start Date *"
-                            type="datetime-local"
-                            required
-                            fullWidth
-                            name="startDate"
-                            value={formData.startDate}
-                            onChange={HandleOnChange}
-                            disabled={isViewMode}
-                            InputLabelProps={{shrink: true}}
-                            helperText={!isViewMode && "Start date must be in the future"}
-                        />
-                    </Stack>
-                    <Stack>
-                        <TextField
-                            label="End Date *"
-                            type="datetime-local"
-                            name="endDate"
-                            value={formData.endDate}
-                            onChange={HandleOnChange}
-                            disabled={isViewMode}
-                            required
-                            fullWidth
-                            InputLabelProps={{shrink: true}}
-                            helperText={!isViewMode && "End date must be after start date"}
-                        />
-                    </Stack>
-                    <Stack>
-                        <TextField
-                            label="Max Registrations *"
-                            type="number"
-                            required
-                            fullWidth
-                            name="maxNumberRegistration"
-                            value={formData.maxNumberRegistration}
-                            onChange={HandleOnChange}
-                            disabled={isViewMode}
-                            inputProps={{ min: 1 }}
-                            helperText={!isViewMode && "Must be greater than 0"}
-                        />
-                    </Stack>
-                </Stack>
+                <Paper elevation={3} sx={{p: 3, mb: 3}}>
+                    <Typography variant="h6" gutterBottom>Term Information</Typography>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <DateTimePicker
+                                label="Start Date"
+                                value={formData.startDate ? dayjs(formData.startDate) : null}
+                                onChange={(newValue) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        startDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                    }));
+                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth required/>}
+                                format="DD/MM/YYYY HH:mm"
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <DateTimePicker
+                                label="End Date"
+                                value={formData.endDate ? dayjs(formData.endDate) : null}
+                                onChange={(newValue) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        endDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                    }));
+                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth required/>}
+                                format="DD/MM/YYYY HH:mm"
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Grade</InputLabel>
+                                <Select
+                                    name="grade"
+                                    value={formData.grade}
+                                    onChange={handleInputChange}
+                                    label="Grade"
+                                >
+                                    <MenuItem value="GRADE_3">Grade 3</MenuItem>
+                                    <MenuItem value="GRADE_4">Grade 4</MenuItem>
+                                    <MenuItem value="GRADE_5">Grade 5</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Maximum Students"
+                                name="maxStudent"
+                                type="number"
+                                value={formData.maxStudent}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Minimum Students"
+                                name="minStudent"
+                                type="number"
+                                value={formData.minStudent}
+                                onChange={handleInputChange}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Description"
+                                name="description"
+                                multiline
+                                rows={4}
+                                value={formData.description}
+                                onChange={handleInputChange}
+                            />
+                        </Grid>
+                    </Grid>
+                </Paper>
             </Box>
 
-            <DialogActions sx={{justifyContent: 'flex-end', px: 4, py: 3, gap: '1rem'}}>
+            <DialogActions sx={{justifyContent: 'flex-end', px: 4, py: 3}}>
                 <Button
                     sx={{minWidth: 120, height: '44px'}}
                     variant="contained"
@@ -322,220 +387,296 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm
                 >
                     Close
                 </Button>
-
-                {!isViewMode && (
-                    <Button
-                        sx={{minWidth: 120, height: '44px'}}
-                        variant="contained"
-                        color="success"
-                        onClick={handleUpdateTerm}
-                        disabled={selectedTerm?.status !== 'INACTIVE_TERM'}
-                    >
-                        Update
-                    </Button>
-                )}
             </DialogActions>
         </Dialog>
     );
 }
 
-function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm}) {
+function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
+
     const {enqueueSnackbar} = useSnackbar();
-    const currentYear = new Date().getFullYear();
 
     const [formData, setFormData] = useState({
+        startDate: null,
+        endDate: null,
         grade: '',
-        startDate: '',
-        endDate: '',
         maxNumberRegistration: 0
     });
 
-    // Validate form trước khi gửi request
-    const validateForm = () => {
-        // 1. Check các field required
-        if (!formData.grade) {
-            enqueueSnackbar("Please select a grade", {variant: "error"});
-            return false;
-        }
-        if (!formData.startDate) {
-            enqueueSnackbar("Please select start date", {variant: "error"});
-            return false;
-        }
-        if (!formData.endDate) {
-            enqueueSnackbar("Please select end date", {variant: "error"});
-            return false;
-        }
-        if (!formData.maxNumberRegistration || formData.maxNumberRegistration <= 0) {
-            enqueueSnackbar("Max number registration must be greater than 0", {variant: "error"});
-            return false;
+    const [error, setError] = useState('');
+
+    const handleCreate = async (formData) => {
+        const validationError = ValidateTermFormData(formData, terms);
+        if (validationError) {
+            setError(validationError);
+            enqueueSnackbar(validationError, {variant: "warning"});
+            return;
         }
 
-        // 2. Validate thời gian
-        const startDate = new Date(formData.startDate);
-        const endDate = new Date(formData.endDate);
-        const now = new Date();
-
-        if (startDate < now) {
-            enqueueSnackbar("Start date must be in the future", {variant: "error"});
-            return false;
-        }
-
-        if (endDate <= startDate) {
-            enqueueSnackbar("End date must be after start date", {variant: "error"});
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleCreate = async () => {
         try {
-            // Validate form trước
-            if (!validateForm()) {
-                return;
-            }
-
             const response = await createTerm(
-                formData.grade,
                 formData.startDate,
                 formData.endDate,
+                formData.grade,
                 formData.maxNumberRegistration
             );
 
             if (response.success) {
-                enqueueSnackbar("Term created successfully!", {variant: "success"});
+                enqueueSnackbar("Term created successfully", {variant: "success"});
                 handleClosePopUp();
                 GetTerm();
             } else {
-                // Xử lý các lỗi từ BE trả về
-                if (response.message.includes("already exists")) {
-                    enqueueSnackbar(`A term for grade ${formData.grade} already exists in ${currentYear}`, {variant: "error"});
-                } else if (response.message.includes("overlaps")) {
-                    enqueueSnackbar("Time period overlaps with another term of the same grade", {variant: "error"});
-                } else {
-                    enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
-                }
+                enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
             }
         } catch (error) {
-            enqueueSnackbar("An error occurred while creating the term", {variant: "error"});
+            console.error("Error creating term:", error);
+            enqueueSnackbar(error.message || "An error occurred while creating the term", {variant: "error"});
         }
     };
 
-    function HandleOnChange(e) {
-        const {name, value} = e.target;
+    const HandleOnChange = async (e) => {
+        const { name, value } = e.target;
         
-        // Validate maxNumberRegistration khi nhập
-        if (name === "maxNumberRegistration") {
-            const numValue = parseInt(value);
-            if (numValue <= 0) {
-                enqueueSnackbar("Max number registration must be greater than 0", {variant: "warning"});
-            }
-        }
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
 
-        setFormData({...formData, [name]: value});
-    }
+        // Validate form data
+        const validationError = ValidateTermFormData(formData, terms);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+        setError('');
+    };
 
     return (
-        <Dialog open={isPopUpOpen} onClose={handleClosePopUp} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{fontWeight: 'bold', fontSize: 26, color: '#2c3e50'}}>
+        <Dialog open={isPopUpOpen}
+                onClose={handleClosePopUp}
+                fullScreen
+        >
+            <AppBar sx={{
+                position: 'relative',
+                backgroundColor: '#07663a'
+            }}>
+                <Toolbar>
+                    <IconButton edge="start"
+                                color="inherit"
+                                onClick={handleClosePopUp}
+                                aria-label="close">
+                        <Close/>
+                    </IconButton>
+                    <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
+                        Admission Form Detail
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+            <DialogTitle sx={{fontWeight: 'bold', fontSize: 26, color: '#2c684f'}}>
                 Create New Term
             </DialogTitle>
             <DialogContent>
                 <Box sx={{mt: 2, display: 'flex', flexDirection: 'column', gap: 2}}>
-                    <FormControl sx={{pl: 1}}>
-                        <FormLabel sx={{
-                            color: '#2c3e50 !important',
-                            '&.Mui-focused': {color: '#2c3e50 !important'}
-                        }}>
-                            Grade *
-                        </FormLabel>
+                    <Box sx={{ p: 3 }}>
+                        <Typography variant="h6" gutterBottom>Grade</Typography>
                         <RadioGroup
                             row
                             name="grade"
                             value={formData.grade}
-                            onChange={HandleOnChange}
+                            onChange={(e) => HandleOnChange(e)}
                         >
-                            <FormControlLabel value="seed" control={<Radio />} label="Seed"/>
-                            <FormControlLabel value="bud" control={<Radio />} label="Bud"/>
-                            <FormControlLabel value="leaf" control={<Radio />} label="Leaf"/>
+                            <FormControlLabel
+                                value="seed"
+                                control={
+                                    <Radio sx={{
+                                        color: '#2e7d32',
+                                        '&.Mui-checked': {
+                                            color: '#2e7d32',
+                                        }
+                                    }}/>
+                                }
+                                label={
+                                    <Box sx={{
+                                        padding: '6px 16px',
+                                        borderRadius: '16px',
+                                        backgroundColor: formData.grade === 'seed' ? '#2e7d32' : 'transparent',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            backgroundColor: formData.grade === 'seed' ? '#2e7d32' : 'rgba(46, 125, 50, 0.08)',
+                                        },
+                                    }}>
+                                        <Typography sx={{
+                                            color: formData.grade === 'seed' ? '#ffffff' : '#2e7d32',
+                                            fontWeight: 600,
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            Seed
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                value="bud"
+                                control={
+                                    <Radio sx={{
+                                        color: '#ed6c02',
+                                        '&.Mui-checked': {
+                                            color: '#ed6c02',
+                                        }
+                                    }}/>
+                                }
+                                label={
+                                    <Box sx={{
+                                        padding: '6px 16px',
+                                        borderRadius: '16px',
+                                        backgroundColor: formData.grade === 'bud' ? '#ed6c02' : 'transparent',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            backgroundColor: formData.grade === 'bud' ? '#ed6c02' : 'rgba(237, 108, 2, 0.08)',
+                                        },
+                                    }}>
+                                        <Typography sx={{
+                                            color: formData.grade === 'bud' ? '#ffffff' : '#ed6c02',
+                                            fontWeight: 600,
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            Bud
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                value="leaf"
+                                control={
+                                    <Radio sx={{
+                                        color: '#0288d1',
+                                        '&.Mui-checked': {
+                                            color: '#0288d1',
+                                        }
+                                    }}/>
+                                }
+                                label={
+                                    <Box sx={{
+                                        padding: '6px 16px',
+                                        borderRadius: '16px',
+                                        backgroundColor: formData.grade === 'leaf' ? '#0288d1' : 'transparent',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            backgroundColor: formData.grade === 'leaf' ? '#0288d1' : 'rgba(2, 136, 209, 0.08)',
+                                        },
+                                    }}>
+                                        <Typography sx={{
+                                            color: formData.grade === 'leaf' ? '#ffffff' : '#0288d1',
+                                            fontWeight: 600,
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            Leaf
+                                        </Typography>
+                                    </Box>
+                                }
+                            />
                         </RadioGroup>
-                    </FormControl>
+                    </Box>
 
-                    <Box sx={{display: 'flex', gap: 2}}>
-                        <TextField
-                            label="Start Date *"
-                            type="datetime-local"
-                            name="startDate"
-                            value={formData.startDate}
-                            onChange={HandleOnChange}
-                            required
-                            fullWidth
-                            InputLabelProps={{shrink: true}}
-                            helperText="Start date must be in the future"
+                    <Box sx={{display: 'flex', gap: 2, width: '30%', mt: 3}}>
+                        <DateTimePicker
+                            label="Start Date"
+                            value={formData.startDate ? dayjs(formData.startDate) : null}
+                            onChange={(newValue) => {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    startDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                }));
+                            }}
+                            renderInput={(params) => <TextField {...params} fullWidth required/>}
+                            format="DD/MM/YYYY HH:mm"
                         />
-                        <TextField
-                            label="End Date *"
-                            type="datetime-local"
-                            name="endDate"
-                            value={formData.endDate}
-                            onChange={HandleOnChange}
-                            required
-                            fullWidth
-                            InputLabelProps={{shrink: true}}
-                            helperText="End date must be after start date"
+                        <DateTimePicker
+                            label="End Date"
+                            value={formData.endDate ? dayjs(formData.endDate) : null}
+                            onChange={(newValue) => {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    endDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                }));
+                            }}
+                            renderInput={(params) => <TextField {...params} fullWidth required/>}
+                            format="DD/MM/YYYY HH:mm"
                         />
                     </Box>
 
                     <TextField
-                        label="Max Registrations *"
+                        label="Max Registration Number"
                         type="number"
                         required
                         fullWidth
                         name="maxNumberRegistration"
                         value={formData.maxNumberRegistration}
-                        onChange={HandleOnChange}
-                        inputProps={{ min: 1 }}
-                        helperText="Must be greater than 0"
+                        onChange={(e) => HandleOnChange(e)}
+                        sx={{
+                            mt: 3,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                '& fieldset': {
+                                    borderColor: '#2c684f',
+                                    borderWidth: 2,
+                                },
+                                '&:hover fieldset': {
+                                    borderColor: '#2c684f',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#2c684f',
+                                    boxShadow: '0 0 0 2px #eaf3ed'
+                                },
+                            }
+                        }}
                     />
                 </Box>
             </DialogContent>
-            <DialogActions sx={{pb: 3, pr: 3}}>
+            <DialogActions sx={{ p: 3 }}>
                 <Button
+                    variant="contained"
                     onClick={handleClosePopUp}
-                    variant="outlined"
                     sx={{
-                        borderRadius: '12px',
-                        fontWeight: 600,
-                        fontSize: 18,
-                        px: 4,
-                        color: '#2c3e50',
-                        borderColor: '#2c3e50',
-                        '&:hover': {backgroundColor: '#eaf3ed', borderColor: '#2c3e50'}
+                        bgcolor: '#e67e22',
+                        '&:hover': {
+                            bgcolor: '#d35400'
+                        },
+                        px: 4
                     }}
                 >
-                    Cancel
+                    CANCEL
                 </Button>
                 <Button
                     variant="contained"
+                    onClick={() => handleCreate(formData)}
                     sx={{
-                        borderRadius: '12px',
-                        fontWeight: 600,
-                        fontSize: 18,
-                        px: 4,
-                        backgroundColor: '#2c3e50',
-                        '&:hover': {backgroundColor: '#2c3e50'}
+                        bgcolor: '#2c3e50',
+                        '&:hover': {
+                            bgcolor: '#1a252f'
+                        },
+                        px: 4
                     }}
-                    onClick={handleCreate}
                 >
-                    Create Term
+                    SAVE CHANGE
                 </Button>
             </DialogActions>
         </Dialog>
-    );
+    )
 }
 
-
 function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelectedTerm}) {
+    // Calculate total registrations
+    const totalMaxRegistrations = terms.reduce((sum, term) => sum + term.maxNumberRegistration, 0);
+    const totalRegistered = terms.reduce((sum, term) => sum + (term.approvedForm || 0), 0);
+
+    // Calculate BUD and SEED registrations
+    const budMaxRegistrations = terms.filter(term => term.grade === 'BUD').reduce((sum, term) => sum + term.maxNumberRegistration, 0);
+    const budRegistered = terms.filter(term => term.grade === 'BUD').reduce((sum, term) => sum + (term.approvedForm || 0), 0);
+
+    const seedMaxRegistrations = terms.filter(term => term.grade === 'SEED').reduce((sum, term) => sum + term.maxNumberRegistration, 0);
+    const seedRegistered = terms.filter(term => term.grade === 'SEED').reduce((sum, term) => sum + (term.approvedForm || 0), 0);
+
     return (
         <div className="container">
             {/*1.tiêu đề */}
@@ -548,7 +689,7 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
                         fontFamily: 'inherit',
                         letterSpacing: 1,
                         mb: 1,
-                        color: '#2c3e50'
+                        color: '#07663a'
                     }}
                 >
                     Term Admission
@@ -566,6 +707,114 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
                 </Typography>
             </Box>
 
+            {/* Registration Statistics */}
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 4,
+                mb: 3
+            }}>
+                {/* BUD Grade Stats */}
+                <Paper sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundColor: '#f8faf8',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px'
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2
+                    }}>
+                        <Box sx={{
+                            backgroundColor: '#ed6c02',
+                            color: 'white',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: '16px',
+                            fontWeight: 600
+                        }}>
+                            BUD
+                        </Box>
+                        <Typography variant="h6" sx={{color: '#07663a', fontWeight: 600}}>
+                            Registration:
+                        </Typography>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}>
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    color: budRegistered >= budMaxRegistrations ? '#d32f2f' : '#07663a',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {budRegistered}
+                            </Typography>
+                            <Typography variant="h5" sx={{color: '#666'}}>/</Typography>
+                            <Typography variant="h5" sx={{color: '#2c3e50', fontWeight: 700}}>
+                                {budMaxRegistrations}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Paper>
+
+                {/* SEED Grade Stats */}
+                <Paper sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundColor: '#f8faf8',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px'
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2
+                    }}>
+                        <Box sx={{
+                            backgroundColor: '#2e7d32',
+                            color: 'white',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: '16px',
+                            fontWeight: 600
+                        }}>
+                            SEED
+                        </Box>
+                        <Typography variant="h6" sx={{color: '#07663a', fontWeight: 600}}>
+                            Registration:
+                        </Typography>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}>
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    color: seedRegistered >= seedMaxRegistrations ? '#d32f2f' : '#07663a',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {seedRegistered}
+                            </Typography>
+                            <Typography variant="h5" sx={{color: '#666'}}>/</Typography>
+                            <Typography variant="h5" sx={{color: '#2c3e50', fontWeight: 700}}>
+                                {seedMaxRegistrations}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Paper>
+            </Box>
+
             {/*2. button create new term */}
             <Box sx={{display: 'flex', justifyContent: 'flex-end', mb: 2}}>
                 <Button
@@ -578,7 +827,7 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
                         borderRadius: '10px',
                         fontWeight: 600,
                         fontSize: 14,
-                        backgroundColor: '#2c3e50',
+                        backgroundColor: '#07663a',
                         boxShadow: 2,
                         mr: {xs: 0, md: 2}
                     }}
@@ -598,10 +847,10 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
 }
 
 
-export default function AdmissionTerm() {
+export default function TermAdmission() {
     const [popUp, setPopUp] = useState({
-        open: false,
-        type: '', // 'view' or 'update'
+        isOpen: false,
+        type: '', // 'form' or 'view'
         term: null
     });
 
@@ -647,28 +896,25 @@ export default function AdmissionTerm() {
             <RenderPage
                 terms={data.terms}
                 openFormPopUpFunc={() => handleOpenPopUp('form')}
-                openDetailPopUpFunc={(type) => handleOpenPopUp(type)}
+                openDetailPopUpFunc={(type) => handleOpenPopUp('view')}
                 HandleSelectedTerm={HandleSelectedTerm}
             />
 
-            {
-                popUp.isOpen && popUp.type === 'form' &&
+            {popUp.isOpen && popUp.type === 'form' && (
                 <RenderFormPopUp
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
                     GetTerm={GetTerm}
+                    terms={data.terms}
                 />
-            }
-            {
-                popUp.isOpen && (popUp.type === 'view' || popUp.isOpen && popUp.type === 'edit') &&
+            )}
+            {popUp.isOpen && popUp.type === 'view' && (
                 <RenderDetailPopUp
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
                     selectedTerm={selectedTerm}
-                    GetTerm={GetTerm}
-                    mode={popUp.type}
                 />
-            }
+            )}
         </>
     );
 }
