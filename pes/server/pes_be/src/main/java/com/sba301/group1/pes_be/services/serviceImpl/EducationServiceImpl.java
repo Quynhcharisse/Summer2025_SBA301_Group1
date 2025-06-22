@@ -1761,7 +1761,7 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllTeachers() {
         try {
-            List<Account> teachers = accountRepo.findByRole(com.sba301.group1.pes_be.enums.Role.teacher);
+            List<Account> teachers = accountRepo.findByRole(com.sba301.group1.pes_be.enums.Role.TEACHER);
             
             if (teachers.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
