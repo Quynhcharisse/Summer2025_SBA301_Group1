@@ -1757,4 +1757,37 @@ public class EducationServiceImpl implements EducationService {
             );
         }
     }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllTeachers() {
+        try {
+            List<Account> teachers = accountRepo.findByRole(com.sba301.group1.pes_be.enums.Role.teacher);
+            
+            if (teachers.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("No teachers found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("All teachers retrieved successfully")
+                    .success(true)
+                    .data(teachers)
+                    .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error retrieving teachers: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
 }

@@ -16,8 +16,10 @@ import {
 import {DataGrid} from '@mui/x-data-grid';
 import {Add, Delete, Info, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
-import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
+import {getAllClasses, removeClass, createClass, getAllSyllabi, getAllTeachers} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
+import ClassForm from './ClassForm.jsx';
+import TeacherDetailView from './TeacherDetailView.jsx';
 
 function ClassList() {
     const navigate = useNavigate();
@@ -26,9 +28,16 @@ function ClassList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState(null);
+    const [classFormOpen, setClassFormOpen] = useState(false);
+    const [teachers, setTeachers] = useState([]);
+    const [syllabi, setSyllabi] = useState([]);
+    const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
 
     useEffect(() => {
         fetchClasses();
+        fetchTeachers();
+        fetchSyllabi();
     }, []);
 
     const fetchClasses = async () => {
@@ -51,6 +60,30 @@ function ClassList() {
             setClasses([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchTeachers = async () => {
+        try {
+            const teachersResponse = await getAllTeachers();
+            if (teachersResponse && teachersResponse.success) {
+                setTeachers(teachersResponse.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+            setTeachers([]);
+        }
+    };
+
+    const fetchSyllabi = async () => {
+        try {
+            const syllabiResponse = await getAllSyllabi();
+            if (syllabiResponse && syllabiResponse.success) {
+                setSyllabi(syllabiResponse.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching syllabi:', error);
+            setSyllabi([]);
         }
     };
 
@@ -91,6 +124,40 @@ function ClassList() {
     const handleDeleteCancel = () => {
         setDeleteDialogOpen(false);
         setClassToDelete(null);
+    };
+
+    const handleCreateClass = () => {
+        setClassFormOpen(true);
+    };
+
+    const handleClassFormSubmit = async (classData) => {
+        try {
+            const response = await createClass(classData);
+            if (response && response.success) {
+                enqueueSnackbar('Class created successfully', { variant: 'success' });
+                setClassFormOpen(false);
+                fetchClasses();
+            } else {
+                enqueueSnackbar('Failed to create class', { variant: 'error' });
+            }
+        } catch (error) {
+            console.error('Error creating class:', error);
+            enqueueSnackbar('Error creating class', { variant: 'error' });
+        }
+    };
+
+    const handleClassFormClose = () => {
+        setClassFormOpen(false);
+    };
+
+    const handleTeacherClick = (teacher) => {
+        setSelectedTeacher(teacher);
+        setTeacherDetailOpen(true);
+    };
+
+    const handleTeacherDetailClose = () => {
+        setTeacherDetailOpen(false);
+        setSelectedTeacher(null);
     };
 
     const getStatusColor = (status) => {
@@ -147,19 +214,36 @@ function ClassList() {
             width: 150,
             headerAlign: 'center',
             align: 'center',
-            valueGetter: (params) => {
-                // DataGrid passes the teacher object directly as params for this field
-                if (params && params.name) {
-                    return params.name;
+            renderCell: (params) => {
+                const teacher = params.row?.teacher;
+                const teacherName = teacher?.name || teacher?.firstName || 'No Teacher';
+                
+                if (!teacher || teacherName === 'No Teacher') {
+                    return (
+                        <Typography variant="body2" color="text.secondary">
+                            No Teacher
+                        </Typography>
+                    );
                 }
-                if (params && params.firstName) {
-                    return params.firstName;
-                }
-                // Fallback to check if it's the full row object
-                if (params && params.row && params.row.teacher) {
-                    return params.row.teacher.name || params.row.teacher.firstName || 'No Teacher';
-                }
-                return 'No Teacher';
+                
+                return (
+                    <Button
+                        variant="text"
+                        onClick={() => handleTeacherClick(teacher)}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#1976d2',
+                            '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                textDecoration: 'underline'
+                            },
+                            p: 0.5,
+                            minWidth: 'auto'
+                        }}
+                    >
+                        {teacherName}
+                    </Button>
+                );
             }
         },
         {
@@ -252,11 +336,12 @@ function ClassList() {
                 <Button
                     variant="contained"
                     startIcon={<Add/>}
+                    onClick={handleCreateClass}
                     sx={{
-                        background: 'linear-gradient(135deg, var(--success-color), #45a049)',
+                        backgroundColor: '#1976d2',
+                        color: 'white',
                         '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
+                            backgroundColor: '#1565c0',
                         }
                     }}
                 >
@@ -345,6 +430,22 @@ function ClassList() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <ClassForm
+                open={classFormOpen}
+                onClose={handleClassFormClose}
+                onSubmit={handleClassFormSubmit}
+                mode="create"
+                teachers={teachers}
+                syllabi={syllabi}
+                loading={loading}
+            />
+
+            <TeacherDetailView
+                teacher={selectedTeacher}
+                open={teacherDetailOpen}
+                onClose={handleTeacherDetailClose}
+            />
         </Box>
     );
 }

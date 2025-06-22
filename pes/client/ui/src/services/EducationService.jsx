@@ -332,3 +332,17 @@ export const deleteSchedule = async (scheduleId) => {
     const response = await axiosClient.delete(`/education/schedules/${scheduleId}`)
     return response.status === 204 ? { success: true, message: 'Schedule deleted successfully' } : (response ? response.data : null)
 }
+
+export const getAllTeachers = async () => {
+    try {
+        const response = await axiosClient.get('/education/teachers')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch teachers',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}

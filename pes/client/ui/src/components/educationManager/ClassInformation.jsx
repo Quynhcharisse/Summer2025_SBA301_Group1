@@ -2,6 +2,7 @@ import React from 'react';
 import {
     Alert,
     Box,
+    Button,
     Chip,
     Divider,
     Stack,
@@ -14,7 +15,7 @@ import {
     School
 } from '@mui/icons-material';
 
-const ClassInformation = ({ classData, syllabus, classLessons }) => {
+const ClassInformation = ({ classData, syllabus, classLessons, onTeacherClick }) => {
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'active':
@@ -76,9 +77,31 @@ const ClassInformation = ({ classData, syllabus, classLessons }) => {
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
-                            <Typography variant="body1">
-                                {classData?.teacher?.name || 'Not assigned'}
-                            </Typography>
+                            {classData?.teacher ? (
+                                <Button
+                                    variant="text"
+                                    onClick={() => onTeacherClick && onTeacherClick(classData.teacher)}
+                                    sx={{
+                                        textTransform: 'none',
+                                        color: '#1976d2',
+                                        p: 0,
+                                        minWidth: 'auto',
+                                        justifyContent: 'flex-start',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                            textDecoration: 'underline'
+                                        }
+                                    }}
+                                >
+                                    <Typography variant="body1">
+                                        {classData.teacher.name || 'Unknown Teacher'}
+                                    </Typography>
+                                </Button>
+                            ) : (
+                                <Typography variant="body1" color="text.secondary">
+                                    Not assigned
+                                </Typography>
+                            )}
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>

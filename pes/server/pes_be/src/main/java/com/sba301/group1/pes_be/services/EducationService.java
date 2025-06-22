@@ -336,4 +336,10 @@ public interface EducationService {
      */
     ResponseEntity<ResponseObject> deleteSyllabus(Integer syllabusId);
 
+   /**
+    * Retrieves all teachers in the system
+    * @return ResponseEntity containing the list of all teachers
+    */
+   ResponseEntity<ResponseObject> getAllTeachers();
+
 }

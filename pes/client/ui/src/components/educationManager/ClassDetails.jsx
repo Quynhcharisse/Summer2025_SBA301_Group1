@@ -42,6 +42,7 @@ import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
 import ClassInformation from './ClassInformation.jsx';
 import ScheduleAndActivitiesSection from './ScheduleAndActivitiesSection.jsx';
+import TeacherDetailView from './TeacherDetailView.jsx';
 
 function ClassDetails() {
     const {id: classId} = useParams();
@@ -68,6 +69,8 @@ function ClassDetails() {
     const [activityFormOpen, setActivityFormOpen] = useState(false);
     const [activityFormMode, setActivityFormMode] = useState('create');
     const [selectedActivity, setSelectedActivity] = useState(null);
+    const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
 
     const fetchAllLessons = useCallback(async () => {
         try {
@@ -482,6 +485,16 @@ function ClassDetails() {
         }
     };
 
+    const handleTeacherClick = (teacher) => {
+        setSelectedTeacher(teacher);
+        setTeacherDetailOpen(true);
+    };
+
+    const handleTeacherDetailClose = () => {
+        setTeacherDetailOpen(false);
+        setSelectedTeacher(null);
+    };
+
 
 
 
@@ -524,6 +537,7 @@ function ClassDetails() {
                                 classData={classData}
                                 syllabus={syllabus}
                                 classLessons={classLessons}
+                                onTeacherClick={handleTeacherClick}
                             />
                         </CardContent>
                     </Card>
@@ -580,6 +594,12 @@ function ClassDetails() {
                 loading={false}
                 scheduleId={selectedActivity?.scheduleId}
                 slotContext={selectedActivity?.slotContext}
+            />
+
+            <TeacherDetailView
+                teacher={selectedTeacher}
+                open={teacherDetailOpen}
+                onClose={handleTeacherDetailClose}
             />
         </Box>
     );

@@ -341,6 +341,13 @@ public class EducationController {
     @Operation(summary = "Get all syllabi")
     public ResponseEntity<ResponseObject> getAllSyllabi() {
         return educationService.getAllSyllabi();
+        @GetMapping("/teachers")
+        @PreAuthorize("hasRole('education')")
+        @Operation(summary = "Get all teachers")
+        public ResponseEntity<ResponseObject> getAllTeachers() {
+            return educationService.getAllTeachers();
+        }
+    
     }
 
     @PostMapping("/syllabus")
