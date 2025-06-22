@@ -379,21 +379,6 @@ const TeacherDetailView = ({
                                 </Grid>
                                 <Grid item xs={6} sm={3}>
                                     <Typography variant="caption" color="text.secondary">
-                                        Account Status
-                                    </Typography>
-                                    <Chip
-                                        label={teacher.status || 'Unknown'}
-                                        size="small"
-                                        sx={{
-                                            bgcolor: teacher.status?.toLowerCase() === 'active' ? '#e8f5e8' : '#ffeaa7',
-                                            color: teacher.status?.toLowerCase() === 'active' ? '#2e7d32' : '#e17055',
-                                            fontWeight: 600,
-                                            fontSize: '0.7rem'
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={6} sm={3}>
-                                    <Typography variant="caption" color="text.secondary">
                                         Role
                                     </Typography>
                                     <Typography variant="body2" fontWeight="500">
