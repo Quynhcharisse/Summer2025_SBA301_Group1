@@ -328,7 +328,7 @@ public class EducationServiceImpl implements EducationService {
             }
             
             String successMessage = "Activity deleted successfully" + scheduleInfo;
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 ResponseObject.builder()
                     .message(successMessage)
                     .success(true)
@@ -604,7 +604,7 @@ public class EducationServiceImpl implements EducationService {
             List<ClassesResponse> classesResponses = ClassesResponse.fromEntityList(classes);
 
             if (classesResponses.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No classes found")
                         .success(false)
@@ -636,7 +636,7 @@ public class EducationServiceImpl implements EducationService {
         try {
             Classes classEntity = classesRepo.findByIdWithFullDetails(classId);
             if (classEntity == null) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("Class not found")
                         .success(false)
@@ -679,7 +679,7 @@ public class EducationServiceImpl implements EducationService {
 
             Syllabus syllabus = syllabusRepo.findByClassId(classId);
             if (syllabus == null) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No syllabus found for this class")
                         .success(false)
@@ -724,7 +724,7 @@ public class EducationServiceImpl implements EducationService {
             List<LessonResponse> lessonResponses = LessonResponse.fromEntityList(lessons);
 
             if (lessonResponses.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No lessons found for this class")
                         .success(false)
@@ -757,7 +757,7 @@ public class EducationServiceImpl implements EducationService {
             List<Classes> classes = classesRepo.findByStatus(status);
 
             if (classes.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No classes found with status: " + status)
                         .success(false)
@@ -790,7 +790,7 @@ public class EducationServiceImpl implements EducationService {
             List<Classes> classes = classesRepo.findByTeacherId(teacherId);
 
             if (classes.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No classes found for teacher ID: " + teacherId)
                         .success(false)
@@ -836,7 +836,7 @@ public class EducationServiceImpl implements EducationService {
             List<Classes> classes = classesRepo.findByGrade(gradeEnum);
 
             if (classes.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No classes found for grade: " + grade)
                         .success(false)
@@ -989,7 +989,7 @@ public class EducationServiceImpl implements EducationService {
                         classes.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
                         classesRepo.save(classes);
-                        return ResponseEntity.status(HttpStatus.CREATED).body(
+                        return ResponseEntity.ok().body(
                                 ResponseObject.builder()
                                         .message("Update class successfully")
                                         .success(true)
@@ -1051,7 +1051,7 @@ public class EducationServiceImpl implements EducationService {
             List<LessonResponse> lessonResponses = LessonResponse.fromEntityList(lessons);
 
             if (lessonResponses.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No lessons found")
                         .success(false)
@@ -1083,7 +1083,7 @@ public class EducationServiceImpl implements EducationService {
         try {
             Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
             if (lessonOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("Lesson not found")
                         .success(false)
@@ -1117,7 +1117,7 @@ public class EducationServiceImpl implements EducationService {
             List<Lesson> lessons = lessonRepo.findByTopicContaining(topic);
 
             if (lessons.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No lessons found for topic: " + topic)
                         .success(false)
@@ -1150,7 +1150,7 @@ public class EducationServiceImpl implements EducationService {
             List<Lesson> lessons = lessonRepo.findBySyllabusId(syllabusId);
 
             if (lessons.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No lessons found for syllabus ID: " + syllabusId)
                         .success(false)
@@ -1484,7 +1484,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             scheduleRepo.deleteById(scheduleId);
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 ResponseObject.builder()
                     .message("Schedule deleted successfully")
                     .success(true)
@@ -1534,7 +1534,7 @@ public class EducationServiceImpl implements EducationService {
             List<Syllabus> syllabi = syllabusRepo.findAll();
             List<SyllabusResponse> syllabusResponses = SyllabusResponse.fromEntityList(syllabi);
             if (syllabusResponses.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
                         .message("No syllabi exist")
                         .success(false)
