@@ -1,26 +1,14 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-    Alert,
     Box,
     Button,
     Card,
     CardContent,
-    Grid,
-    IconButton,
-    Paper,
     Stack,
-    TextField,
-    Tooltip,
     Typography
 } from '@mui/material';
 import {
-    Add,
-    ArrowBack,
-    ChevronLeft,
-    ChevronRight,
-    Delete,
-    Edit
-} from '@mui/icons-material';
+    ArrowBack} from '@mui/icons-material';
 import {useNavigate, useParams} from 'react-router-dom';
 import {enqueueSnackbar} from 'notistack';
 import {
@@ -36,12 +24,17 @@ import {
     updateSchedule,
     deleteSchedule,
     createActivity,
-    deleteActivity
+    deleteActivity,
+    updateClass,
+    getAllTeachers,
+    getAllSyllabi,
+    getTeacherById
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
 import ClassInformation from './ClassInformation.jsx';
 import ScheduleAndActivitiesSection from './ScheduleAndActivitiesSection.jsx';
+import TeacherDetailView from './TeacherDetailView.jsx';
 
 function ClassDetails() {
     const {id: classId} = useParams();
@@ -53,6 +46,8 @@ function ClassDetails() {
     const [classLessons, setClassLessons] = useState([]);
     const [allLessons, setAllLessons] = useState([]);
     const [allClasses, setAllClasses] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [syllabi, setSyllabi] = useState([]);
     const [loading, setLoading] = useState(false);
     
     // Week navigation state
@@ -68,6 +63,8 @@ function ClassDetails() {
     const [activityFormOpen, setActivityFormOpen] = useState(false);
     const [activityFormMode, setActivityFormMode] = useState('create');
     const [selectedActivity, setSelectedActivity] = useState(null);
+    const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
 
     const fetchAllLessons = useCallback(async () => {
         try {
@@ -88,6 +85,28 @@ function ClassDetails() {
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
+        }
+    }, []);
+
+    const fetchAllTeachers = useCallback(async () => {
+        try {
+            const response = await getAllTeachers();
+            if (response && response.success) {
+                setTeachers(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+        }
+    }, []);
+
+    const fetchAllSyllabi = useCallback(async () => {
+        try {
+            const response = await getAllSyllabi();
+            if (response && response.success) {
+                setSyllabi(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching syllabi:', error);
         }
     }, []);
 
@@ -144,11 +163,13 @@ function ClassDetails() {
                 await fetchClassDetails();
                 await fetchAllLessons();
                 await fetchAllClasses();
+                await fetchAllTeachers();
+                await fetchAllSyllabi();
             }
         };
 
         fetchData();
-    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
+    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses, fetchAllTeachers, fetchAllSyllabi]);
 
     // Initialize current week when schedules are loaded
     useEffect(() => {
@@ -482,6 +503,49 @@ function ClassDetails() {
         }
     };
 
+    const handleTeacherClick = async (teacher) => {
+        try {
+            // Fetch complete teacher details instead of using the simplified teacher object from class data
+            const response = await getTeacherById(teacher.id);
+            if (response && response.success) {
+                setSelectedTeacher(response.data);
+                setTeacherDetailOpen(true);
+            } else {
+                // Fallback to the original teacher object if fetch fails
+                console.warn('Failed to fetch complete teacher details, using simplified data');
+                setSelectedTeacher(teacher);
+                setTeacherDetailOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching teacher details:', error);
+            // Fallback to the original teacher object if error occurs
+            setSelectedTeacher(teacher);
+            setTeacherDetailOpen(true);
+        }
+    };
+
+    const handleTeacherDetailClose = () => {
+        setTeacherDetailOpen(false);
+        setSelectedTeacher(null);
+    };
+
+    const handleUpdateClass = async (classId, updateData) => {
+        try {
+            const response = await updateClass(classId, updateData);
+            if (response && response.success) {
+                enqueueSnackbar('Class updated successfully', { variant: 'success' });
+                await fetchClassDetails(); // Refresh class data
+            } else {
+                enqueueSnackbar('Failed to update class', { variant: 'error' });
+                throw new Error('Failed to update class');
+            }
+        } catch (error) {
+            console.error('Error updating class:', error);
+            enqueueSnackbar('Error updating class', { variant: 'error' });
+            throw error;
+        }
+    };
+
 
 
 
@@ -517,13 +581,14 @@ function ClassDetails() {
                 <Stack spacing={3}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" color="primary" sx={{mb: 2}}>
-                                Class Information
-                            </Typography>
                             <ClassInformation
                                 classData={classData}
                                 syllabus={syllabus}
                                 classLessons={classLessons}
+                                onTeacherClick={handleTeacherClick}
+                                teachers={teachers}
+                                syllabi={syllabi}
+                                onUpdateClass={handleUpdateClass}
                             />
                         </CardContent>
                     </Card>
@@ -580,6 +645,12 @@ function ClassDetails() {
                 loading={false}
                 scheduleId={selectedActivity?.scheduleId}
                 slotContext={selectedActivity?.slotContext}
+            />
+
+            <TeacherDetailView
+                teacher={selectedTeacher}
+                open={teacherDetailOpen}
+                onClose={handleTeacherDetailClose}
             />
         </Box>
     );

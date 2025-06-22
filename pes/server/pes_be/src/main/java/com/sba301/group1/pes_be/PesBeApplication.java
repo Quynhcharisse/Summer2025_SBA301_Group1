@@ -147,16 +147,30 @@ public class PesBeApplication {
             String[] teacherEmails = {
                     "teacher.seed@gmail.com",
                     "teacher.bud@gmail.com",
-                    "teacher.leaf@gmail.com"
+                    "teacher.leaf@gmail.com",
+                    "teacher.alice@gmail.com",
+                    "teacher.bob@gmail.com",
+                    "teacher.carol@gmail.com",
+                    "teacher.david@gmail.com",
+                    "teacher.emma@gmail.com",
+                    "teacher.frank@gmail.com",
+                    "teacher.grace@gmail.com"
             };
 
             String[] teacherNames = {
                     "Ms. Sarah Johnson",
                     "Ms. Emily Chen",
-                    "Mr. Michael Brown"
+                    "Mr. Michael Brown",
+                    "Ms. Alice Williams",
+                    "Mr. Bob Martinez",
+                    "Ms. Carol Thompson",
+                    "Mr. David Garcia",
+                    "Ms. Emma Rodriguez",
+                    "Mr. Frank Lee",
+                    "Ms. Grace Kim"
             };
 
-            Account[] teachers = new Account[3];
+            Account[] teachers = new Account[teacherEmails.length];
 
             for (int i = 0; i < teacherEmails.length; i++) {
                 if (!accountRepo.existsByEmail(teacherEmails[i])) {
@@ -167,7 +181,7 @@ public class PesBeApplication {
                             .name(teacherNames[i])
                             .phone(generateRandomPhone())
                             .identityNumber(generateRandomCCCD())
-                            .gender(i == 2 ? "male" : "female")
+                            .gender(i % 3 == 0 ? "male" : "female")
                             .status(Status.ACCOUNT_ACTIVE.getValue())
                             .createdAt(LocalDate.now())
                             .build();
