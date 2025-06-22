@@ -32,9 +32,6 @@ public class AdmissionForm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @Column(name = "`profile_image`")
-    String profileImage;
-
     @Column(name = "`household_registration_address`")
     String householdRegistrationAddress;
 
@@ -43,6 +40,9 @@ public class AdmissionForm {
 
     @Column(name = "`household_registration_img`")
     String householdRegistrationImg ;
+
+    @Column(name = "`child_characteristics_form_img`")
+    String childCharacteristicsFormImg;
 
     @Column(name = "`commitment_img`")
     String commitmentImg ;

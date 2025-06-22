@@ -18,9 +18,7 @@ public class SubmitAdmissionFormRequest {
     int studentId;
     int admissionTermId;
     String householdRegistrationAddress;
-    String profileImage;
-    String birthCertificateImg;
-    String householdRegistrationImg;
+    String childCharacteristicsFormImg;
     String commitmentImg;
     String note;
 }

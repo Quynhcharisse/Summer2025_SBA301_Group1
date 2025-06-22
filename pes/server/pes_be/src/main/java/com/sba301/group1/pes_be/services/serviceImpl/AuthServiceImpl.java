@@ -59,7 +59,15 @@ public class AuthServiceImpl implements AuthService {
 
         Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
         System.out.println(account);
-        assert account != null;
+        if (account == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    ResponseObject.builder()
+                            .message("Invalid email or password")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
 
         String newAccess = jwtService.generateAccessToken(account);
         String newRefresh = jwtService.generateRefreshToken(account);
@@ -116,9 +124,9 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 ResponseObject.builder()
-                        .message("Refresh invalid")
+                        .message("Refresh token is invalid or expired")
                         .success(false)
                         .data(null)
                         .build()

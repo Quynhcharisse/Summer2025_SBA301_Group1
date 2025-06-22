@@ -34,18 +34,6 @@ public class AdmissionController {
         return admissionService.viewAdmissionTerm();
     }
 
-    @PostMapping("/extra/term")
-    @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> createExtraTerm(@RequestBody CreateExtraTermRequest request) {
-        return admissionService.createExtraTerm(request);
-    }
-
-    @GetMapping("/extra/term")
-    @PreAuthorize("hasRole('admission')")
-    public ResponseEntity<ResponseObject> viewExtraTerm() {
-        return admissionService.viewExtraTerm();
-    }
-
     @GetMapping("/form/list")
     @PreAuthorize("hasRole('admission')")
     public ResponseEntity<ResponseObject> viewAdmissionFormList() {

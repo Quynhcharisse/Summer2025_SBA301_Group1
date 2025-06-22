@@ -4,11 +4,9 @@ import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
-import com.sba301.group1.pes_be.models.ExtraTerm;
 import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
-import com.sba301.group1.pes_be.repositories.ExtraTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
@@ -17,8 +15,8 @@ import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
-import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.ExtraTermValidation;
+import com.sba301.group1.pes_be.validations.AdmissionValidation.ProcessAdmissionFormValidation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +37,6 @@ public class AdmissionServiceImpl implements AdmissionService {
     private final AdmissionFormRepo admissionFormRepo;
     private final AdmissionTermRepo admissionTermRepo;
     private final MailService mailService;
-    private final ExtraTermRepo extraTermRepo;
 
     @Override
     public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
@@ -86,7 +83,6 @@ public class AdmissionServiceImpl implements AdmissionService {
             }
         }
 
-
         // Nếu hợp lệ, tiếp tục tạo term
         admissionTermRepo.save(
                 AdmissionTerm.builder()
@@ -120,7 +116,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         LocalDateTime today = LocalDateTime.now();
 
         for (AdmissionTerm term : terms) {
-            String timeStatus = updateTermStatus(term, today);
+            String timeStatus = updateTermStatus(term);
 
             //if đủ → cần "khóa" lại dù chưa hết hạn
             boolean isFull = countApprovedFormByTerm(term) >= term.getMaxNumberRegistration();
@@ -146,9 +142,14 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("endDate", term.getEndDate());
                             data.put("year", term.getYear());
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
-                            data.put("registeredCount", countApprovedFormByTerm(term));
+                            data.put("approvedForm", countApprovedFormByTerm(term));
                             data.put("grade", term.getGrade());
                             data.put("status", term.getStatus());
+
+                            //gọi lai extra term
+                            if (!admissionTermRepo.findAllByParentTerm_Id(term.getId()).isEmpty()) {
+                                data.put("extraTerms", viewExtraTerm(term));
+                            }
                             return data;
                         }
                 )
@@ -163,7 +164,8 @@ public class AdmissionServiceImpl implements AdmissionService {
         );
     }
 
-    private String updateTermStatus(AdmissionTerm term, LocalDateTime today) {
+    private String updateTermStatus(AdmissionTerm term) {
+        LocalDateTime today = LocalDateTime.now();
         if (today.isBefore(term.getStartDate())) {
             return Status.INACTIVE_TERM.getValue();
         } else if (!today.isAfter(term.getEndDate())) {
@@ -172,7 +174,6 @@ public class AdmissionServiceImpl implements AdmissionService {
             return Status.LOCKED_TERM.getValue();
         }
     }
-
 
     @Override
     public ResponseEntity<ResponseObject> createExtraTerm(CreateExtraTermRequest request) {
@@ -223,62 +224,56 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         // 4. Tạo extra RequestTerm
-        ExtraTerm reversion = ExtraTerm.builder()
-                .name("Reversion Term - " + term.getGrade().getName() + " " + term.getYear())
+        AdmissionTerm extraTerm = admissionTermRepo.save(AdmissionTerm.builder()
+                .name("Extra Term - " + term.getGrade().getName() + " " + term.getYear())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .maxNumberRegistration(countMissingFormAmountByTerm(term))
-                .reason(request.getReason())
-                .admissionTerm(term)
-                .build();
+                .year(term.getYear())
+                .grade(term.getGrade())
+                .parentTerm(term)
+                .status(Status.INACTIVE_TERM.getValue())
+                .build());
 
-        extraTermRepo.save(reversion);
+        extraTerm.setStatus(updateTermStatus(extraTerm));
+        admissionTermRepo.save(extraTerm);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ResponseObject.builder()
-                        .message("Reversion request term created successfully")
+                        .message("Extra term created successfully")
                         .success(true)
                         .data(null)
                         .build()
         );
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> viewExtraTerm() {
-        List<ExtraTerm> extraTerm = extraTermRepo.findAll();
-
-        List<Map<String, Object>> extraTermList = extraTerm.stream()
-                .map(rev -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", rev.getId());
-                    data.put("name", rev.getName());
-                    data.put("startDate", rev.getStartDate());
-                    data.put("endDate", rev.getEndDate());
-                    data.put("maxNumberRegistration", rev.getMaxNumberRegistration());
-                    data.put("reason", rev.getReason());
-                    data.put("admissionTermId", rev.getAdmissionTerm().getId());
-                    data.put("grade", rev.getAdmissionTerm().getGrade());
-                    data.put("year", rev.getAdmissionTerm().getYear());
-                    return data;
-                })
-                .toList();
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                ResponseObject.builder()
-                        .message("")
-                        .success(true)
-                        .data(extraTermList)
-                        .build()
-        );
-    }
-
     private int countApprovedFormByTerm(AdmissionTerm term) {
-        return  (int) term.getAdmissionFormList().stream().filter(form -> form.getStatus().equals(Status.APPROVED.getValue())).count();
+        return (int) term.getAdmissionFormList().stream().filter(form -> form.getStatus().equals(Status.APPROVED.getValue())).count();
     }
 
     private int countMissingFormAmountByTerm(AdmissionTerm term) {
         return term.getMaxNumberRegistration() - countApprovedFormByTerm(term);
     }
+
+
+    private List<Map<String, Object>> viewExtraTerm(AdmissionTerm parentTerm) {
+        List<Map<String, Object>> extraTermList = admissionTermRepo.findAllByParentTerm_Id(parentTerm.getId()).stream()
+                .map(extraTerm -> {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("id", extraTerm.getId());
+                    data.put("name", extraTerm.getName());
+                    data.put("startDate", extraTerm.getStartDate());
+                    data.put("endDate", extraTerm.getEndDate());
+                    data.put("maxNumberRegistration", extraTerm.getMaxNumberRegistration());
+                    data.put("approvedForm", countApprovedFormByTerm(extraTerm));
+                    data.put("status", extraTerm.getStatus());
+                    return data;
+                })
+                .toList();
+
+        return extraTermList;
+    }
+
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList() {
@@ -292,11 +287,12 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("studentGender", form.getStudent().getGender());
                             data.put("studentDateOfBirth", form.getStudent().getDateOfBirth());
                             data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
-                            data.put("profileImage", form.getProfileImage());
+                            data.put("profileImage", form.getStudent().getAdmissionFormList());
                             data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
                             data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
                             data.put("birthCertificateImg", form.getBirthCertificateImg());
                             data.put("commitmentImg", form.getCommitmentImg());
+                            data.put("childCharacteristicsFormImg", form.getChildCharacteristicsFormImg());
                             data.put("submittedDate", form.getSubmittedDate());
                             data.put("cancelReason", form.getCancelReason());
                             data.put("note", form.getNote());
@@ -320,7 +316,7 @@ public class AdmissionServiceImpl implements AdmissionService {
     public ResponseEntity<ResponseObject> processAdmissionFormList(ProcessAdmissionFormRequest request) {
         String error = ProcessAdmissionFormValidation.processFormByManagerValidate(request, admissionFormRepo);
         if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)
