@@ -14,10 +14,7 @@ import {
     IconButton,
     Paper,
     Stack,
-    Typography,
-    CircularProgress,
-    Alert
-} from '@mui/material';
+    Typography} from '@mui/material';
 import {
     Close,
     Person,
@@ -39,10 +36,14 @@ const TeacherDetailView = ({
     if (!teacher) return null;
 
     const getStatusColor = (status) => {
+        
         switch (status?.toLowerCase()) {
             case 'active':
+            case 'account_active':
                 return '#4caf50';
             case 'inactive':
+            case 'ban':
+            case 'account_ban':
                 return '#f44336';
             case 'pending':
                 return '#ff9800';
@@ -384,8 +385,8 @@ const TeacherDetailView = ({
                                         label={teacher.status || 'Unknown'}
                                         size="small"
                                         sx={{
-                                            bgcolor: teacher.status === 'active' ? '#e8f5e8' : '#ffeaa7',
-                                            color: teacher.status === 'active' ? '#2e7d32' : '#e17055',
+                                            bgcolor: teacher.status?.toLowerCase() === 'active' ? '#e8f5e8' : '#ffeaa7',
+                                            color: teacher.status?.toLowerCase() === 'active' ? '#2e7d32' : '#e17055',
                                             fontWeight: 600,
                                             fontSize: '0.7rem'
                                         }}

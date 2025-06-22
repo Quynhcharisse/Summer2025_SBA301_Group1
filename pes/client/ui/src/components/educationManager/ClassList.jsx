@@ -16,7 +16,7 @@ import {
 import {DataGrid} from '@mui/x-data-grid';
 import {Add, Delete, Info, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
-import {getAllClasses, removeClass, createClass, getAllSyllabi, getAllTeachers} from "../../services/EducationService.jsx";
+import {getAllClasses, removeClass, createClass, getAllSyllabi, getAllTeachers, getTeacherById} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
 import ClassForm from './ClassForm.jsx';
 import TeacherDetailView from './TeacherDetailView.jsx';
@@ -150,9 +150,25 @@ function ClassList() {
         setClassFormOpen(false);
     };
 
-    const handleTeacherClick = (teacher) => {
-        setSelectedTeacher(teacher);
-        setTeacherDetailOpen(true);
+    const handleTeacherClick = async (teacher) => {
+        try {
+            // Fetch complete teacher details instead of using the simplified teacher object from class data
+            const response = await getTeacherById(teacher.id);
+            if (response && response.success) {
+                setSelectedTeacher(response.data);
+                setTeacherDetailOpen(true);
+            } else {
+                // Fallback to the original teacher object if fetch fails
+                console.warn('Failed to fetch complete teacher details, using simplified data');
+                setSelectedTeacher(teacher);
+                setTeacherDetailOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching teacher details:', error);
+            // Fallback to the original teacher object if error occurs
+            setSelectedTeacher(teacher);
+            setTeacherDetailOpen(true);
+        }
     };
 
     const handleTeacherDetailClose = () => {

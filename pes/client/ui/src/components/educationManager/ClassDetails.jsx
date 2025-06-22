@@ -27,7 +27,8 @@ import {
     deleteActivity,
     updateClass,
     getAllTeachers,
-    getAllSyllabi
+    getAllSyllabi,
+    getTeacherById
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
@@ -502,9 +503,25 @@ function ClassDetails() {
         }
     };
 
-    const handleTeacherClick = (teacher) => {
-        setSelectedTeacher(teacher);
-        setTeacherDetailOpen(true);
+    const handleTeacherClick = async (teacher) => {
+        try {
+            // Fetch complete teacher details instead of using the simplified teacher object from class data
+            const response = await getTeacherById(teacher.id);
+            if (response && response.success) {
+                setSelectedTeacher(response.data);
+                setTeacherDetailOpen(true);
+            } else {
+                // Fallback to the original teacher object if fetch fails
+                console.warn('Failed to fetch complete teacher details, using simplified data');
+                setSelectedTeacher(teacher);
+                setTeacherDetailOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching teacher details:', error);
+            // Fallback to the original teacher object if error occurs
+            setSelectedTeacher(teacher);
+            setTeacherDetailOpen(true);
+        }
     };
 
     const handleTeacherDetailClose = () => {
