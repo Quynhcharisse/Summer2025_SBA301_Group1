@@ -19,8 +19,6 @@ function ClassForm({
     open,
     onClose,
     onSubmit,
-    mode,
-    initialData,
     teachers,
     syllabi,
     loading
@@ -41,34 +39,20 @@ function ClassForm({
 
     useEffect(() => {
         if (open) {
-            if (mode === 'create') {
-                setFormData({
-                    name: '',
-                    teacherId: '',
-                    syllabusId: '',
-                    numberStudent: 1,
-                    roomNumber: '',
-                    startDate: '',
-                    endDate: '',
-                    status: 'active',
-                    grade: ''
-                });
-            } else if (mode === 'edit' && initialData) {
-                setFormData({
-                    name: initialData.name || '',
-                    teacherId: initialData.teacher?.id || initialData.teacherId || '',
-                    syllabusId: initialData.syllabus?.id || initialData.syllabusId || '',
-                    numberStudent: initialData.numberStudent > 0 ? initialData.numberStudent : 1,
-                    roomNumber: initialData.roomNumber || '',
-                    startDate: initialData.startDate || '',
-                    endDate: initialData.endDate || '',
-                    status: initialData.status || 'active',
-                    grade: initialData.grade || ''
-                });
-            }
+            setFormData({
+                name: '',
+                teacherId: '',
+                syllabusId: '',
+                numberStudent: 1,
+                roomNumber: '',
+                startDate: '',
+                endDate: '',
+                status: 'active',
+                grade: ''
+            });
             setErrors([]);
         }
-    }, [open, mode, initialData]);
+    }, [open]);
 
     const validateForm = () => {
         const validationErrors = [];
@@ -180,7 +164,7 @@ function ClassForm({
             fullWidth
         >
             <DialogTitle>
-                {mode === 'create' ? 'Create New Class' : 'Edit Class'}
+                Create New Class
             </DialogTitle>
             <DialogContent>
                 <Stack spacing={3} sx={{ mt: 2 }}>
@@ -214,26 +198,20 @@ function ClassForm({
                                         if (a.isOccupied === b.isOccupied) return 0;
                                         return a.isOccupied ? 1 : -1;
                                     })
-                                    .map((teacher) => {
-                                        const isCurrentTeacher = mode === 'edit' && teacher.id === initialData?.teacher?.id;
-                                        const isDisabled = teacher.isOccupied && mode === 'create';
-                                        const showOccupied = teacher.isOccupied && !isCurrentTeacher;
-                                        
-                                        return (
-                                            <MenuItem
-                                                key={teacher.id}
-                                                value={teacher.id}
-                                                disabled={isDisabled}
-                                                sx={{
-                                                    color: isDisabled ? 'text.disabled' : 'text.primary',
-                                                    opacity: isDisabled ? 0.6 : 1
-                                                }}
-                                            >
-                                                {teacher.name || teacher.firstName || teacher.email}
-                                                {showOccupied && ' (occupied)'}
-                                            </MenuItem>
-                                        );
-                                    })}
+                                    .map((teacher) => (
+                                        <MenuItem
+                                            key={teacher.id}
+                                            value={teacher.id}
+                                            disabled={teacher.isOccupied}
+                                            sx={{
+                                                color: teacher.isOccupied ? 'text.disabled' : 'text.primary',
+                                                opacity: teacher.isOccupied ? 0.6 : 1
+                                            }}
+                                        >
+                                            {teacher.name || teacher.firstName || teacher.email}
+                                            {teacher.isOccupied && ' (occupied)'}
+                                        </MenuItem>
+                                    ))}
                             </Select>
                         </FormControl>
 
@@ -336,12 +314,12 @@ function ClassForm({
                 <Button onClick={handleClose} disabled={loading}>
                     Cancel
                 </Button>
-                <Button 
-                    onClick={handleSubmit} 
+                <Button
+                    onClick={handleSubmit}
                     variant="contained"
                     disabled={loading}
                 >
-                    {mode === 'create' ? 'Create Class' : 'Update Class'}
+                    Create Class
                 </Button>
             </DialogActions>
         </Dialog>

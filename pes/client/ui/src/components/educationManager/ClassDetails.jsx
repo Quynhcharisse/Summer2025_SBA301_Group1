@@ -24,7 +24,10 @@ import {
     updateSchedule,
     deleteSchedule,
     createActivity,
-    deleteActivity
+    deleteActivity,
+    updateClass,
+    getAllTeachers,
+    getAllSyllabi
 } from '../../services/EducationService.jsx';
 import ScheduleForm from './ScheduleForm.jsx';
 import ActivityForm from './ActivityForm.jsx';
@@ -42,6 +45,8 @@ function ClassDetails() {
     const [classLessons, setClassLessons] = useState([]);
     const [allLessons, setAllLessons] = useState([]);
     const [allClasses, setAllClasses] = useState([]);
+    const [teachers, setTeachers] = useState([]);
+    const [syllabi, setSyllabi] = useState([]);
     const [loading, setLoading] = useState(false);
     
     // Week navigation state
@@ -79,6 +84,28 @@ function ClassDetails() {
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
+        }
+    }, []);
+
+    const fetchAllTeachers = useCallback(async () => {
+        try {
+            const response = await getAllTeachers();
+            if (response && response.success) {
+                setTeachers(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+        }
+    }, []);
+
+    const fetchAllSyllabi = useCallback(async () => {
+        try {
+            const response = await getAllSyllabi();
+            if (response && response.success) {
+                setSyllabi(response.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching syllabi:', error);
         }
     }, []);
 
@@ -135,11 +162,13 @@ function ClassDetails() {
                 await fetchClassDetails();
                 await fetchAllLessons();
                 await fetchAllClasses();
+                await fetchAllTeachers();
+                await fetchAllSyllabi();
             }
         };
 
         fetchData();
-    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses]);
+    }, [classId, fetchClassDetails, fetchAllLessons, fetchAllClasses, fetchAllTeachers, fetchAllSyllabi]);
 
     // Initialize current week when schedules are loaded
     useEffect(() => {
@@ -483,6 +512,23 @@ function ClassDetails() {
         setSelectedTeacher(null);
     };
 
+    const handleUpdateClass = async (classId, updateData) => {
+        try {
+            const response = await updateClass(classId, updateData);
+            if (response && response.success) {
+                enqueueSnackbar('Class updated successfully', { variant: 'success' });
+                await fetchClassDetails(); // Refresh class data
+            } else {
+                enqueueSnackbar('Failed to update class', { variant: 'error' });
+                throw new Error('Failed to update class');
+            }
+        } catch (error) {
+            console.error('Error updating class:', error);
+            enqueueSnackbar('Error updating class', { variant: 'error' });
+            throw error;
+        }
+    };
+
 
 
 
@@ -526,6 +572,9 @@ function ClassDetails() {
                                 syllabus={syllabus}
                                 classLessons={classLessons}
                                 onTeacherClick={handleTeacherClick}
+                                teachers={teachers}
+                                syllabi={syllabi}
+                                onUpdateClass={handleUpdateClass}
                             />
                         </CardContent>
                     </Card>
