@@ -350,6 +350,13 @@ public class EducationController {
         return educationService.getAllTeachers();
     }
 
+    @GetMapping("/teachers/{teacherId}")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get teacher by ID")
+    public ResponseEntity<ResponseObject> getTeacherById(@PathVariable Integer teacherId) {
+        return educationService.getTeacherById(teacherId);
+    }
+
     @PostMapping("/syllabus")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Create a syllabus", description = "Allows education staff to create a new syllabus")

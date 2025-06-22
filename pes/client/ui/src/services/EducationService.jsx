@@ -346,3 +346,17 @@ export const getAllTeachers = async () => {
         }
     }
 }
+
+export const getTeacherById = async (teacherId) => {
+    try {
+        const response = await axiosClient.get(`/education/teachers/${teacherId}`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch teacher details',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}

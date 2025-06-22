@@ -342,4 +342,11 @@ public interface EducationService {
     */
    ResponseEntity<ResponseObject> getAllTeachers();
 
+   /**
+    * Retrieves a teacher by their ID
+    * @param teacherId the ID of the teacher
+    * @return ResponseEntity containing the teacher data
+    */
+   ResponseEntity<ResponseObject> getTeacherById(Integer teacherId);
+
 }

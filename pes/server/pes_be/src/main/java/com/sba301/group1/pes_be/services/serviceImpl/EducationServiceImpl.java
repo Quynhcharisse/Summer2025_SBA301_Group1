@@ -2,6 +2,7 @@ package com.sba301.group1.pes_be.services.serviceImpl;
 
 import com.sba301.group1.pes_be.response.ActivityResponse;
 import com.sba301.group1.pes_be.response.ScheduleResponse;
+import com.sba301.group1.pes_be.response.TeacherResponse;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.models.*;
 import com.sba301.group1.pes_be.repositories.*;
@@ -1761,7 +1762,7 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllTeachers() {
         try {
-            List<Account> teachers = accountRepo.findByRole(com.sba301.group1.pes_be.enums.Role.TEACHER);
+            List<Account> teachers = accountRepo.findByRoleWithClasses(com.sba301.group1.pes_be.enums.Role.TEACHER);
             
             if (teachers.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -1773,17 +1774,63 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
+            List<TeacherResponse> teacherResponses = TeacherResponse.fromEntityList(teachers);
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("All teachers retrieved successfully")
                     .success(true)
-                    .data(teachers)
+                    .data(teacherResponses)
                     .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error retrieving teachers: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getTeacherById(Integer teacherId) {
+        try {
+            Optional<Account> teacherOpt = accountRepo.findById(teacherId);
+            if (teacherOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Teacher not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            Account teacher = teacherOpt.get();
+            // Check if the account is actually a teacher
+            if (teacher.getRole() != com.sba301.group1.pes_be.enums.Role.TEACHER) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                        .message("Account found but user is not a teacher")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            TeacherResponse teacherResponse = TeacherResponse.fromEntity(teacher);
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Teacher retrieved successfully")
+                    .success(true)
+                    .data(teacherResponse)
+                    .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error retrieving teacher: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()
