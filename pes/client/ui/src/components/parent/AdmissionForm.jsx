@@ -27,7 +27,9 @@ import {
     TableRow,
     TextField,
     Toolbar,
-    Typography
+    Typography,
+    Grid,
+    Alert
 } from "@mui/material";
 import {Add, Close, CloudUpload, Info} from '@mui/icons-material';
 import {useEffect, useState} from "react";
@@ -40,8 +42,8 @@ import '../../styles/Parent/Form.css'
 
 
 function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
-    const [page, setPage] = useState(0); // Trang hiện tại
-    const [rowsPerPage, setRowsPerPage] = useState(5); //số dòng trang
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -53,10 +55,29 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
     }
 
     const handleDetailClick = (form) => {
-        // Xử lý khi người dùng click vào nút "Detail"
         HandleSelectedForm(form)
         openDetailPopUpFunc();
     }
+
+    // Helper function to format status text
+    const formatStatus = (status) => {
+        return status.toLowerCase().replace(/_/g, ' ');
+    };
+
+    // Helper function to get status color
+    const getStatusColor = (status) => {
+        switch (status.toLowerCase()) {
+            case 'approved':
+                return 'green';
+            case 'rejected':
+            case 'cancelled':
+                return 'red';
+            case 'pending_approval':
+                return '#052c65';
+            default:
+                return 'black';
+        }
+    };
 
     return (
         <Paper sx={{
@@ -68,7 +89,6 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
             boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
             border: '2px solid rgb(254, 254, 253)'
         }}>
-
             <TableContainer sx={{height: 500}}>
                 <Table stickyHeader>
                     <TableHead>
@@ -92,7 +112,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                             </TableRow>
                         ) : (
                             forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
-                                <TableRow key={index}>
+                                <TableRow key={form.id}>
                                     <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
                                     <TableCell align="center">{form.studentName}</TableCell>
                                     <TableCell align="center">{form.submittedDate}</TableCell>
@@ -100,20 +120,13 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                                     <TableCell
                                         align="center"
                                         sx={{
-                                            color:
-                                                form.status === "approved"
-                                                    ? "green"
-                                                    : form.status === "rejected" || form.status === "cancelled"
-                                                        ? "red"
-                                                        : form.status === "pending approval"
-                                                            ? "#052c65"
-                                                            : "black",
+                                            color: getStatusColor(form.status),
                                             fontWeight: "bold",
                                         }}
                                     >
-                                        {form.status}
+                                        {formatStatus(form.status)}
                                     </TableCell>
-                                    <TableCell align="center">{form.note}</TableCell>
+                                    <TableCell align="center">{form.note || "N/A"}</TableCell>
                                     <TableCell align="center">
                                         <IconButton color="primary" onClick={() => handleDetailClick(form)}>
                                             <Info sx={{color: '#2c3e50'}}/>
@@ -128,7 +141,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
             <TablePagination
                 component="div"
                 rowsPerPageOptions={[5, 10, 15]}
-                count={Array.isArray(forms) ? forms.length : 0} //phân trang có bn dòng
+                count={Array.isArray(forms) ? forms.length : 0}
                 page={page}
                 onPageChange={handleChangePage}
                 rowsPerPage={rowsPerPage}
@@ -139,18 +152,12 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
 }
 
 function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
-
-    const [openConfirm, setOpenConfirm] = useState(false); // tạo usestate để mở dialog
-
-    const handleOpenConfirm = () => setOpenConfirm(true);
-
-    /*handleCloseConfirm sẽ đặt lại openConfirm = false để đóng dialog khi người dùng nhấn Disagree hoặc đóng hộp thoại*/
-    const handleCloseConfirm = () => setOpenConfirm(false);
-
-    //tạo state để hiển thị ảnh
+    const [openConfirm, setOpenConfirm] = useState(false);
     const [openImage, setOpenImage] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
 
+    const handleOpenConfirm = () => setOpenConfirm(true);
+    const handleCloseConfirm = () => setOpenConfirm(false);
 
     async function HandleCancel() {
         const response = await cancelAdmission(selectedForm.id)
@@ -158,11 +165,16 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
             enqueueSnackbar("Form cancelled successfully", {variant: "success"});
             handleClosePopUp()
         } else {
-            enqueueSnackbar("Failed to cancel admission form", {variant: "error"});
+            enqueueSnackbar(response.message || "Failed to cancel admission form", {variant: "error"});
         }
     }
 
-    console.log(selectedForm)
+    // Helper function to check if form can be cancelled
+    const canCancel = () => {
+        const status = selectedForm.status.toLowerCase();
+        return status !== 'cancelled' && status !== 'approved' && status !== 'rejected';
+    };
+
     return (
         <Dialog
             fullScreen
@@ -198,7 +210,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                     <Stack>
                         <FormControl>
                             <FormLabel sx={{color: 'black'}} disabled>Gender</FormLabel>
-                            <RadioGroup row value={selectedForm.studentGender || ''}>
+                            <RadioGroup row value={selectedForm.studentGender?.toLowerCase() || ''}>
                                 <FormControlLabel value="female" control={<Radio/>} label="Female"
                                                   sx={{color: 'black'}} disabled/>
                                 <FormControlLabel value="male" control={<Radio/>} label="Male"
@@ -235,12 +247,11 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                             {label: "Profile Image", src: selectedForm.profileImage},
                             {label: "Household Registration", src: selectedForm.householdRegistrationImg},
                             {label: "Birth Certificate", src: selectedForm.birthCertificateImg},
+                            {label: "Child Characteristics Form", src: selectedForm.childCharacteristicsFormImg},
                             {label: "Commitment", src: selectedForm.commitmentImg}
-                        ].map((item, idx) => (
+                        ].filter(item => item.src).map((item, idx) => (
                             <Paper key={idx} elevation={2} sx={{p: 2, borderRadius: 2, width: 200}}>
                                 <Typography variant="body2" fontWeight="bold" sx={{mb: 1}}>{item.label}</Typography>
-                                {/*thay vì click="ảnh" redirect sang link khác*/}
-                                {/*vì giải quyết vấn đề hiện model thôi*/}
                                 <img
                                     src={item.src}
                                     alt={item.label}
@@ -250,10 +261,6 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                                         setOpenImage(true);
                                     }}
                                 />
-
-                                <Dialog open={openImage} onClose={() => setOpenImage(false)} maxWidth="md">
-                                    <img src={selectedImage} style={{width: '100%'}} alt="Zoom"/>
-                                </Dialog>
                             </Paper>
                         ))}
                     </Stack>
@@ -269,7 +276,6 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                             marginTop: '2vh'
                         }}
                     >
-                        {/*button submit*/}
                         <Button
                             sx={{width: '10%', height: '5vh'}}
                             variant="contained"
@@ -279,20 +285,17 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                             Close
                         </Button>
 
-                        {/*button cancel*/}
-                        {/*xét điều kiện, nếu cancel rồi thì ẩn nút cancel đó, ko cho hiện lại */}
-                        {selectedForm.status !== 'cancelled' && (
-                        <Button
-                            sx={{width: '10%', height: '5vh'}}
-                            variant="contained"
-                            color="success"
-                            onClick={handleOpenConfirm}
-                        >
-                            Cancel
-                        </Button>
+                        {canCancel() && (
+                            <Button
+                                sx={{width: '10%', height: '5vh'}}
+                                variant="contained"
+                                color="error"
+                                onClick={handleOpenConfirm}
+                            >
+                                Cancel Form
+                            </Button>
                         )}
 
-                        {/* Dialog xác nhận cancel */}
                         <Dialog open={openConfirm} onClose={handleCloseConfirm}>
                             <DialogTitle>Cancel Admission Form</DialogTitle>
                             <DialogContent>
@@ -304,7 +307,6 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                                 </DialogContentText>
                             </DialogContent>
                             <DialogActions>
-                                {/*handleCloseConfirm sẽ đặt lại openConfirm = false để đóng dialog khi người dùng nhấn Disagree hoặc đóng hộp thoại*/}
                                 <Button onClick={handleCloseConfirm} color="inherit">Disagree</Button>
                                 <Button onClick={HandleCancel} color="error" autoFocus>Agree</Button>
                             </DialogActions>
@@ -312,410 +314,576 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                     </Stack>
                 </Stack>
             </Box>
+
+            <Dialog open={openImage} onClose={() => setOpenImage(false)} maxWidth="md">
+                <img src={selectedImage} style={{width: '100%'}} alt="Zoom"/>
+            </Dialog>
         </Dialog>
     )
 }
 
 function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) {
-    //mỗi lần select là lưu id student
     const [selectedStudentId, setSelectedStudentId] = useState(
         studentList?.[0]?.id || ''
     );
-
-    // Thêm console.log để debug
-    console.log("Student List in Form:", studentList);
-    console.log("Selected Student ID:", selectedStudentId);
     
     const selectedStudent = studentList?.find(child => child.id === selectedStudentId);
-    console.log("Selected Student:", selectedStudent);
-    console.log("Selected Student Gender:", selectedStudent?.gender);
 
-    //lam 1 useState de nhap input cho address + note
     const [input, setInput] = useState({
         address: '',
         note: ''
     });
 
-    //nơi lưu file thô mà người dùng upload từ <input="file"/>
     const [uploadedFile, setUploadedFile] = useState({
-        profile: '',
-        houseAddress: '',
-        birth: '',
-        commit: ''
+        childCharacteristics: null,
+        commitment: null
     });
 
-    //nơi lưu trữ URL trả về từ Couldinary sau khi upload thành công
-    const [imageLink, setImageLink] = useState({
-        profileLink: '',
-        houseAddressLink: '',
-        birthLink: '',
-        commitLink: ''
-    });
-
-    const [isSubmit, setIsSubmit] = useState(false);// để chỉ báo rằng user đã bấm Submit ít nhất 1 lần
+    const [isSubmit, setIsSubmit] = useState(false);
 
     async function HandleSubmit() {
+        setIsSubmit(true);
 
-        setIsSubmit(true);//báo hiệu bấm submit
-
-        // Validate bắt buộc
         if (!input.address.trim()) {
             enqueueSnackbar("Please enter household registration address", {variant: "error"});
             return;
         }
 
-        const uploadResult = await handleUploadImage()
-        if (!uploadResult) {
+        if (!uploadedFile.childCharacteristics) {
+            enqueueSnackbar("Please upload child characteristics form", {variant: "error"});
             return;
         }
 
-        const response = await submittedForm(
-            selectedStudent.id,
-            input.address,
-            uploadResult.profileLink,
-            uploadResult.houseAddressLink,
-            uploadResult.birthLink,
-            uploadResult.commitLink,
-            input.note
-        )
+        if (!uploadedFile.commitment) {
+            enqueueSnackbar("Please upload commitment form", {variant: "error"});
+            return;
+        }
 
-        console.log("Phản hồi từ submittedForm:", response);
+        // Upload files to Cloudinary
+        const formData = new FormData();
+        formData.append("file", uploadedFile.childCharacteristics);
+        formData.append("upload_preset", "pes_swd");
+        formData.append("api_key", "837117616828593");
 
-        if (response && response.success) {
-            enqueueSnackbar(response.message, {variant: 'success'});
-            // muốn gọi lại danh sách sau khi submit
-            GetForm()
-            handleClosePopUp()
-        } else {
-            enqueueSnackbar("Submission failed", {variant: "error"});
+        const commitmentData = new FormData();
+        commitmentData.append("file", uploadedFile.commitment);
+        commitmentData.append("upload_preset", "pes_swd");
+        commitmentData.append("api_key", "837117616828593");
+
+        try {
+            const [characteristicsResponse, commitmentResponse] = await Promise.all([
+                axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", formData, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                }),
+                axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", commitmentData, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                })
+            ]);
+
+            if (characteristicsResponse.status === 200 && commitmentResponse.status === 200) {
+                const response = await submittedForm({
+                    studentId: selectedStudentId,
+                    householdRegistrationAddress: input.address,
+                    childCharacteristicsFormImg: characteristicsResponse.data.url,
+                    commitmentImg: commitmentResponse.data.url,
+                    note: input.note || ''
+                });
+
+                if (response && response.success) {
+                    enqueueSnackbar(response.message, {variant: 'success'});
+                    GetForm();
+                    handleClosePopUp();
+                } else {
+                    enqueueSnackbar(response.message || "Submission failed", {variant: "error"});
+                }
+            }
+        } catch (error) {
+            enqueueSnackbar("Error uploading files", {variant: "error"});
         }
     }
 
-    //đưa vào id, lưu đúng loại file vào uploadFile
-    function HandleUploadFile(file, id) {
-        switch (id) {
-            case 1:
-                setUploadedFile({...uploadedFile, profile: file})
-                break;
-
-            case 2:
-                setUploadedFile({...uploadedFile, houseAddress: file})
-                break;
-
-            case 3:
-                setUploadedFile({...uploadedFile, birth: file})
-                break;
-
-            default:
-                setUploadedFile({...uploadedFile, commit: file})
-                break;
-        }
-    }
-
-    const handleUploadImage = async () => {
-        if (!uploadedFile.profile) {
-            enqueueSnackbar("Please upload profile image.", {variant: "warning"});
-            return null;
-        }
-
-        if (!uploadedFile.houseAddress) {
-            enqueueSnackbar("Please upload household registration document.", {variant: "warning"});
-            return null;
-        }
-
-        if (!uploadedFile.birth) {
-            enqueueSnackbar("Please upload birth certificate.", {variant: "warning"});
-            return null;
-        }
-
-        if (!uploadedFile.commit) {
-            enqueueSnackbar("Please upload commitment form.", {variant: "warning"});
-            return null;
-        }
-
-        //ghép các chuỗi lại với nhau
-        const profileData = new FormData();
-        profileData.append("file", uploadedFile.profile);
-        profileData.append("upload_preset", "pes_swd");
-        profileData.append("api_key", "837117616828593");
-
-        const houseAddressData = new FormData();
-        houseAddressData.append("file", uploadedFile.houseAddress);
-        houseAddressData.append("upload_preset", "pes_swd");
-        houseAddressData.append("api_key", "837117616828593");
-
-        const birthData = new FormData();
-        birthData.append("file", uploadedFile.birth);
-        birthData.append("upload_preset", "pes_swd");
-        birthData.append("api_key", "837117616828593");
-
-        const commitData = new FormData();
-        commitData.append("file", uploadedFile.commit);
-        commitData.append("upload_preset", "pes_swd");
-        commitData.append("api_key", "837117616828593");
-
-        //mock api cho từng upload ảnh
-        const profileResponse = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", profileData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
-
-        const houseAddressResponse = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", houseAddressData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
-
-        const birthResponse = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", birthData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
-
-        const commitResponse = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", commitData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
-
-        const profileCondition = profileResponse && profileResponse.status === 200
-        const houseAddressCondition = houseAddressResponse && houseAddressResponse.status === 200
-        const birthCondition = birthResponse && birthResponse.status === 200
-        const commitCondition = commitResponse && commitResponse.status === 200
-
-        if (profileCondition && houseAddressCondition && birthCondition && commitCondition) {
-            const result = {
-                profileLink: profileResponse.data.url,
-                houseAddressLink: houseAddressResponse.data.url,
-                birthLink: birthResponse.data.url,
-                commitLink: commitResponse.data.url,
-            }
-            setImageLink(result)
-            return result;
-        }
-        return null
-    }
-
-    // bản chât luôn nằm trong hàm tổng, chỉ là ẩn nó thông qua cái nút
     return (
-        <div>
-            {/* Pop-up content goes here */}
-            <Dialog fullScreen
-                    open={isPopUpOpen}
-                    onClose={handleClosePopUp}
-            >
-                <AppBar sx={{position: 'relative'}}>
-                    <Toolbar>
-                        <IconButton
-                            edge="start"
-                            color="inherit"
-                            onClick={handleClosePopUp}
-                            aria-label="close"
+        <Dialog
+            fullScreen
+            open={isPopUpOpen}
+            onClose={handleClosePopUp}
+        >
+            <AppBar sx={{ position: 'relative', bgcolor: '#2c3e50' }}>
+                <Toolbar>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={handleClosePopUp}
+                        aria-label="close"
+                    >
+                        <Close />
+                    </IconButton>
+                    <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
+                        Create Admission Form
+                    </Typography>
+                </Toolbar>
+            </AppBar>
+
+            <Box sx={{ p: 4, maxWidth: '1200px', mx: 'auto' }}>
+                <Typography 
+                    variant="h4" 
+                    sx={{ 
+                        mb: 5, 
+                        color: '#2c3e50', 
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        position: 'relative',
+                        '&:after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: -10,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 100,
+                            height: 3,
+                            bgcolor: '#2c3e50'
+                        }
+                    }}
+                >
+                    Form Information
+                </Typography>
+
+                <Box sx={{ mb: 4 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Child Name</InputLabel>
+                        <Select
+                            value={selectedStudentId}
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                            label="Child Name"
+                            sx={{
+                                bgcolor: '#fff',
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(0, 0, 0, 0.12)'
+                                }
+                            }}
                         >
-                            <Close/>
-                        </IconButton>
-                        <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
-                            Create Admission Form
-                        </Typography>
-                    </Toolbar>
-                </AppBar>
+                            {studentList?.filter(student => !student.hadForm).map((student) => (
+                                <MenuItem key={student.id} value={student.id}>{student.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                <Box p={4}>
-                    {/*form content*/}
-                    <Typography
-                        variant='subtitle1'
-                        sx={{mb: 2, fontWeight: 'bold', fontSize: "2.5rem", textAlign: "center"}}
-                    >
-                        Form Information
-                    </Typography>
-
-                    {/*check id co bi null */}
-                    {selectedStudentId != null && Array.isArray(studentList) && (
-                        <Stack spacing={3}>
-                            <Stack>
-                                <FormControl fullWidth>
-                                    <InputLabel>Child Name</InputLabel>
-                                    <Select
-                                        value={selectedStudentId}
-                                        onChange={(e) => setSelectedStudentId(e.target.value)}
-                                        label="Child Name"
-                                        name="childName"
-                                        variant={"outlined"}>
-                                        {
-                                            studentList.filter(student => !student.hadForm).map((student, index) => (
-                                                <MenuItem key={index} value={student.id}>{student.name}</MenuItem>
-                                            ))}
-                                    </Select>
-                                </FormControl>
-                            </Stack>
-
-                            <Stack>
-                                <FormControl>
-                                    <FormLabel sx={{color: 'black'}}>Gender</FormLabel>
-                                    <RadioGroup 
-                                        row
-                                        value={selectedStudent?.gender || ''}
-                                    >
-                                        <FormControlLabel 
-                                            value="female" 
-                                            control={<Radio/>} 
-                                            label="Female"
-                                            sx={{color: 'black'}} 
-                                            disabled
-                                        />
-                                        <FormControlLabel 
-                                            value="male" 
-                                            control={<Radio/>} 
-                                            label="Male"
-                                            sx={{color: 'black'}} 
-                                            disabled
-                                        />
-                                    </RadioGroup>
-                                </FormControl>
-                            </Stack>
-
-                            <Stack>
-                                <DatePicker
-                                    sx={{fill: '#2c3e50'}}
-                                    label="Date of birth"
-                                    disabled
-                                    value={
-                                        selectedStudentId
-                                            ? dayjs(studentList.find(child => child.id === selectedStudentId)?.dateOfBirth)
-                                            : null
-                                    }
-                                    slotProps={{textField: {fullWidth: true}}}
-                                />
-                            </Stack>
-
-                            <Stack>
-                                <TextField
-                                    fullWidth
-                                    label="Place of birth"
-                                    disabled
-                                    defaultValue={studentList.find(child => child.id === selectedStudentId) ? studentList.find(child => child.id === selectedStudentId).placeOfBirth : ''}
-                                    name="placeOfBirth"
-                                />
-                            </Stack>
-                            <Stack>
-                                <TextField fullWidth
-                                           label="Household registration address *"
-                                           value={input.address}
-                                           onChange={(e) => setInput({...input, address: e.target.value})}
-                                           name="householdRegistrationAddress"
-                                           error={isSubmit && !input.address.trim()}
-                                           helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
-                                />
-                            </Stack>
-                            <Stack>
-                                <TextField fullWidth
-                                           label="Note"
-                                           value={input.note}
-                                           onChange={(e) => setInput({...input, note: e.target.value})}
-                                           name="note"
-                                />
-                            </Stack>
-                        </Stack>
-                    )}
-
-                    {/*form upload*/}
-                    <Typography
-                        variant='subtitle1'
-                        sx={{mb: 3, mt: 5, fontSize: '1rem', fontWeight: 'bold'}}
-                    >
-                        UPLOAD DOCUMENTS
-                    </Typography>
-
-                    <Stack spacing={3}>
-
-                        <Stack>
-                            <Typography variant='body1' sx={{mb: 1}}>Profile Image: <span
-                                className={'text-primary'}>{uploadedFile.profile ? uploadedFile.profile.name : ""}</span></Typography>
-                            <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
-                                    variant="contained"
-                                    startIcon={<CloudUpload/>}>
-                                Upload
-                                <input type="file" hidden name="profileImage"
-                                       onChange={(e) => HandleUploadFile(e.target.files[0], 1)}/>{/*số 1 tham số truyền vào mấy case 1, case 2,..*/}
-                            </Button>
-                        </Stack>
-
-                        <Stack>
-                            <Typography variant='body1' sx={{mb: 1}}>Household Registration: <span
-                                className={'text-primary'}>{uploadedFile.houseAddress ? uploadedFile.houseAddress.name : ""}</span></Typography>
-                            <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
-                                    variant="contained"
-                                    startIcon={<CloudUpload/>}>
-                                Upload
-                                <input type="file" hidden name="householdRegistrationImg"
-                                       onChange={(e) => HandleUploadFile(e.target.files[0], 2)}/>
-                            </Button>
-                        </Stack>
-
-                        <Stack>
-                            <Typography variant='body1' sx={{mb: 1}}>Birth Certificate: <span
-                                className={'text-primary'}>{uploadedFile.birth ? uploadedFile.birth.name : ""}</span></Typography>
-                            <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
-                                    variant="contained"
-                                    startIcon={<CloudUpload/>}>
-                                Upload
-                                <input type="file" hidden name="birthCertificateImg"
-                                       onChange={(e) => HandleUploadFile(e.target.files[0], 3)}/>
-                            </Button>
-                        </Stack>
-
-                        <Stack>
-                            <Typography variant='body1' sx={{mb: 1}}>Commitment: <span
-                                className={'text-primary'}>{uploadedFile.commit ? uploadedFile.commit.name : ""}</span></Typography>
-                            <Button component="label" sx={{width: '10%', marginTop: '2vh', height: '5vh'}}
-                                    variant="contained"
-                                    startIcon={<CloudUpload/>}>
-                                Upload
-                                <input type="file" hidden name="commitmentImg"
-                                       onChange={(e) => HandleUploadFile(e.target.files[0], 4)}/>
-                            </Button>
-                        </Stack>
-                    </Stack>
-
-                    <Stack
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            justifyContent: 'flex-end',
-                            gap: '1rem',
-                            marginTop: '2vh'
+                    <Typography 
+                        color="error" 
+                        variant="caption" 
+                        sx={{ 
+                            display: 'block', 
+                            mt: 1,
+                            fontStyle: 'italic'
                         }}
                     >
-                        {/*button submit*/}
-                        <Button
-                            sx={{width: '10%', height: '5vh'}}
-                            variant="contained"
-                            color="warning"
-                            onClick={handleClosePopUp}
-                        >
-                            Close
-                        </Button>
-
-                        {/*button cancel*/}
-                        <Button
-                            sx={{width: '10%', height: '5vh'}}
-                            variant="contained"
-                            color="success"
-                            onClick={() => HandleSubmit(
-                                imageLink.profileLink,
-                                imageLink.houseAddressLink,
-                                imageLink.birthLink,
-                                imageLink.commitLink,
-                            )}
-                        >
-                            Submit
-                        </Button>
-                    </Stack>
+                        * Only children with age from 3 to 5 can be submitted for admission preschool
+                    </Typography>
                 </Box>
-            </Dialog>
-        </div>
-    )
+
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: 4, 
+                        mb: 4, 
+                        bgcolor: '#f8f9fa',
+                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                        borderRadius: 2
+                    }}
+                >
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            mb: 3, 
+                            color: '#2c3e50',
+                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
+                        Student Information
+                    </Typography>
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Full Name"
+                                value={selectedStudent?.name || ''}
+                                disabled
+                                sx={{ bgcolor: '#fff' }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Gender"
+                                value={selectedStudent?.gender || ''}
+                                disabled
+                                sx={{ bgcolor: '#fff' }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <TextField
+                                fullWidth
+                                label="Date of Birth"
+                                value={selectedStudent?.dateOfBirth || ''}
+                                disabled
+                                sx={{ bgcolor: '#fff' }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Place of Birth"
+                                value={selectedStudent?.placeOfBirth || ''}
+                                disabled
+                                sx={{ bgcolor: '#fff' }}
+                            />
+                        </Grid>
+                    </Grid>
+                </Paper>
+
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: 4, 
+                        mb: 4,
+                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                        borderRadius: 2
+                    }}
+                >
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            mb: 3, 
+                            color: '#2c3e50',
+                            fontWeight: 600
+                        }}
+                    >
+                        Student Documents
+                    </Typography>
+                    <Grid container spacing={4}>
+                        <Grid item xs={12} md={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        mb: 2,
+                                        fontWeight: 500,
+                                        color: '#2c3e50'
+                                    }}
+                                >
+                                    Profile Image
+                                </Typography>
+                                <Paper 
+                                    elevation={2} 
+                                    sx={{ 
+                                        p: 2, 
+                                        height: 200,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: '#fff',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            transform: 'translateY(-5px)',
+                                            boxShadow: 3
+                                        }
+                                    }}
+                                >
+                                    {selectedStudent?.profileImage ? (
+                                        <img 
+                                            src={selectedStudent.profileImage} 
+                                            alt="Profile" 
+                                            style={{ 
+                                                maxHeight: '100%', 
+                                                maxWidth: '100%', 
+                                                objectFit: 'contain',
+                                                borderRadius: 8
+                                            }}
+                                        />
+                                    ) : (
+                                        <Typography color="textSecondary">No image</Typography>
+                                    )}
+                                </Paper>
+                            </Box>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        mb: 2,
+                                        fontWeight: 500,
+                                        color: '#2c3e50'
+                                    }}
+                                >
+                                    Birth Certificate
+                                </Typography>
+                                <Paper 
+                                    elevation={2} 
+                                    sx={{ 
+                                        p: 2, 
+                                        height: 200,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: '#fff',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            transform: 'translateY(-5px)',
+                                            boxShadow: 3
+                                        }
+                                    }}
+                                >
+                                    {selectedStudent?.birthCertificateImg ? (
+                                        <img 
+                                            src={selectedStudent.birthCertificateImg} 
+                                            alt="Birth Certificate" 
+                                            style={{ 
+                                                maxHeight: '100%', 
+                                                maxWidth: '100%', 
+                                                objectFit: 'contain',
+                                                borderRadius: 8
+                                            }}
+                                        />
+                                    ) : (
+                                        <Typography color="textSecondary">No image</Typography>
+                                    )}
+                                </Paper>
+                            </Box>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Typography 
+                                    variant="subtitle1" 
+                                    sx={{ 
+                                        mb: 2,
+                                        fontWeight: 500,
+                                        color: '#2c3e50'
+                                    }}
+                                >
+                                    Household Registration
+                                </Typography>
+                                <Paper 
+                                    elevation={2} 
+                                    sx={{ 
+                                        p: 2, 
+                                        height: 200,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        bgcolor: '#fff',
+                                        transition: 'all 0.3s ease',
+                                        '&:hover': {
+                                            transform: 'translateY(-5px)',
+                                            boxShadow: 3
+                                        }
+                                    }}
+                                >
+                                    {selectedStudent?.householdRegistrationImg ? (
+                                        <img 
+                                            src={selectedStudent.householdRegistrationImg} 
+                                            alt="Household Registration" 
+                                            style={{ 
+                                                maxHeight: '100%', 
+                                                maxWidth: '100%', 
+                                                objectFit: 'contain',
+                                                borderRadius: 8
+                                            }}
+                                        />
+                                    ) : (
+                                        <Typography color="textSecondary">No image</Typography>
+                                    )}
+                                </Paper>
+                            </Box>
+                        </Grid>
+                    </Grid>
+
+                    <Alert 
+                        severity="info" 
+                        sx={{ 
+                            mt: 3,
+                            bgcolor: 'rgba(30, 136, 229, 0.1)',
+                            '& .MuiAlert-icon': {
+                                color: 'rgb(30, 136, 229)'
+                            }
+                        }}
+                    >
+                        Please verify that all student information is correct before submitting the form. If any information needs to be
+                        updated, please contact the school administrator.
+                    </Alert>
+                </Paper>
+
+                <TextField
+                    fullWidth
+                    required
+                    label="Household Registration Address"
+                    value={input.address}
+                    onChange={(e) => setInput({ ...input, address: e.target.value })}
+                    error={isSubmit && !input.address.trim()}
+                    helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
+                    sx={{ 
+                        mb: 3,
+                        bgcolor: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#2c3e50'
+                            }
+                        }
+                    }}
+                />
+
+                <TextField
+                    fullWidth
+                    label="Note"
+                    value={input.note}
+                    onChange={(e) => setInput({ ...input, note: e.target.value })}
+                    multiline
+                    rows={4}
+                    sx={{ 
+                        mb: 4,
+                        bgcolor: '#fff',
+                        '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#2c3e50'
+                            }
+                        }
+                    }}
+                />
+
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        p: 4, 
+                        mb: 4,
+                        border: '1px solid rgba(0, 0, 0, 0.12)',
+                        borderRadius: 2
+                    }}
+                >
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            mb: 3, 
+                            color: '#2c3e50',
+                            fontWeight: 600
+                        }}
+                    >
+                        Upload Documents
+                    </Typography>
+
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                            <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                    mb: 1,
+                                    fontWeight: 500,
+                                    color: '#2c3e50'
+                                }}
+                            >
+                                Child Characteristics Form
+                            </Typography>
+                            <Button
+                                component="label"
+                                variant="outlined"
+                                startIcon={<CloudUpload />}
+                                fullWidth
+                                sx={{ 
+                                    height: '56px',
+                                    borderColor: '#2c3e50',
+                                    color: '#2c3e50',
+                                    '&:hover': {
+                                        borderColor: '#2c3e50',
+                                        bgcolor: 'rgba(44, 62, 80, 0.04)'
+                                    }
+                                }}
+                            >
+                                {uploadedFile.childCharacteristics ? uploadedFile.childCharacteristics.name : "UPLOAD NEW"}
+                                <input
+                                    type="file"
+                                    hidden
+                                    onChange={(e) => setUploadedFile({
+                                        ...uploadedFile,
+                                        childCharacteristics: e.target.files[0]
+                                    })}
+                                />
+                            </Button>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                    mb: 1,
+                                    fontWeight: 500,
+                                    color: '#2c3e50'
+                                }}
+                            >
+                                Commitment
+                            </Typography>
+                            <Button
+                                component="label"
+                                variant="outlined"
+                                startIcon={<CloudUpload />}
+                                fullWidth
+                                sx={{ 
+                                    height: '56px',
+                                    borderColor: '#2c3e50',
+                                    color: '#2c3e50',
+                                    '&:hover': {
+                                        borderColor: '#2c3e50',
+                                        bgcolor: 'rgba(44, 62, 80, 0.04)'
+                                    }
+                                }}
+                            >
+                                {uploadedFile.commitment ? uploadedFile.commitment.name : "UPLOAD NEW"}
+                                <input
+                                    type="file"
+                                    hidden
+                                    onChange={(e) => setUploadedFile({
+                                        ...uploadedFile,
+                                        commitment: e.target.files[0]
+                                    })}
+                                />
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                    <Button
+                        variant="outlined"
+                        onClick={handleClosePopUp}
+                        sx={{ 
+                            px: 4,
+                            borderColor: '#e67e22',
+                            color: '#e67e22',
+                            '&:hover': {
+                                borderColor: '#d35400',
+                                bgcolor: 'rgba(230, 126, 34, 0.04)'
+                            }
+                        }}
+                    >
+                        CANCEL
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={HandleSubmit}
+                        sx={{ 
+                            px: 4,
+                            bgcolor: '#2c3e50',
+                            '&:hover': {
+                                bgcolor: '#1a252f'
+                            }
+                        }}
+                    >
+                        SUBMIT
+                    </Button>
+                </Box>
+            </Box>
+        </Dialog>
+    );
 }
 
 function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList}) {

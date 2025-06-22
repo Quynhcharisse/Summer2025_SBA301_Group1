@@ -5,24 +5,25 @@ export const getFormInformation = async () => {
     return response ? response.data : null
 }
 
-export const submittedForm = async (
-    studentId,
-    householdRegistrationAddress,
-    profileImage,
-    birthCertificateImg,
-    householdRegistrationImg,
-    commitmentImg,
-    note) => {
-    const response = await axiosClient.post("/parent/form/submit", {
-        studentId: studentId,
-        householdRegistrationAddress: householdRegistrationAddress,
-        profileImage: profileImage,
-        birthCertificateImg: birthCertificateImg,
-        householdRegistrationImg: householdRegistrationImg,
-        commitmentImg: commitmentImg,
-        note: note
-    })
-    return response ? response.data : null
+export async function submittedForm(requestBody) {
+    try {
+        const response = await axiosClient.post(
+            "/parent/form/submit",
+            requestBody,
+            {
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        if (error.response) {
+            return error.response.data;
+        }
+        return {
+            success: false,
+            message: "Network error occurred"
+        };
+    }
 }
 
 // thêm headers : Content-Type: application/json bắt buộc để Spring hiểu đây là raw JSON
