@@ -83,7 +83,7 @@ public class ClassesResponse {
                 .build();
         }
         List<SimpleStudentResponse> studentResponse = null;
-        if (classes.getStudentClassList() != null) {
+        if (classes.getStudentClassList() != null && !classes.getStudentClassList().isEmpty()) {
             studentResponse = classes.getStudentClassList().stream()
                 .map(studentClass -> {
                     Student student = studentClass.getStudent();

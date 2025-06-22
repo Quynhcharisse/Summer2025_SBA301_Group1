@@ -1100,6 +1100,7 @@ public class EducationServiceImpl implements EducationService {
 
                 student.setStudent(true);
                 studentRepo.save(student);
+                classEntity.getStudentClassList().add(studentClass);
             }
 
             String message = "Students assigned to class successfully";
