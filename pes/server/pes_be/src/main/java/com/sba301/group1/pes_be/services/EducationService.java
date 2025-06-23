@@ -180,12 +180,34 @@ public interface EducationService {
      * @param classId the ID of the class to delete
      * @return ResponseEntity containing the operation result
      */
-    ResponseEntity<ResponseObject> deleteClass(Integer classId);
+    ResponseEntity<ResponseObject> deleteClass(Integer classId);    // Lesson Service Methods    //assign student to class
 
-    // Lesson Service Methods
-
-    //assign student to class
+    /**
+     * Assigns students to a class
+     * @param request the student-class assignment request
+     * @return ResponseEntity containing the operation result
+     */
     ResponseEntity<ResponseObject> assignStudentsToClass(StudentClassRequest request);
+
+    /**
+     * Unassigns students from a class
+     * @param request the student-class unassignment request
+     * @return ResponseEntity containing the operation result
+     */
+    ResponseEntity<ResponseObject> unassignStudentsFromClass(StudentClassRequest request);
+
+    /**
+     * Retrieves all students in the system
+     * @return ResponseEntity containing the list of all students
+     */
+    ResponseEntity<ResponseObject> getAllStudents();
+
+    /**
+     * Retrieves students assigned to a specific class
+     * @param classId the ID of the class
+     * @return ResponseEntity containing the list of students in the class
+     */
+    ResponseEntity<ResponseObject> getStudentsByClassId(Integer classId);
 
     /**
      * Retrieves all lessons in the system
@@ -340,4 +362,9 @@ public interface EducationService {
      */
     ResponseEntity<ResponseObject> deleteSyllabus(Integer syllabusId);
 
+    /**
+     * Retrieves all student-class assignment relationships
+     * @return ResponseEntity containing the list of student-class assignments
+     */
+    ResponseEntity<ResponseObject> getAllStudentClassAssignments();
 }

@@ -10,6 +10,7 @@ import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.response.ClassesResponse;
 import com.sba301.group1.pes_be.response.LessonResponse;
 import com.sba301.group1.pes_be.response.SyllabusResponse;
+import com.sba301.group1.pes_be.response.SimpleStudentResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ScheduleValidation.CreateScheduleValidation;
@@ -21,8 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -1064,9 +1068,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Classes classEntity = classOpt.get();
-            List<String> errors = new ArrayList<>();
-
-            for (Integer studentId : studentIds) {
+            List<String> errors = new ArrayList<>();            for (Integer studentId : studentIds) {
                 Optional<Student> studentOpt = studentRepo.findById(studentId);
                 if (studentOpt.isEmpty()) {
                     errors.add("Student not found: " + studentId);
@@ -1074,9 +1076,10 @@ public class EducationServiceImpl implements EducationService {
                 }
                 Student student = studentOpt.get();
 
-                boolean alreadyAssigned = studentClassRepo.existsByStudentIdAndClassesId(studentId, classId);
-                if (alreadyAssigned) {
-                    errors.add("Student already assigned: " + studentId);
+                List<StudentClass> existingAssignments = studentClassRepo.findByStudentId(studentId);
+                if (!existingAssignments.isEmpty()) {
+                    Integer existingClassId = existingAssignments.get(0).getClasses().getId();
+                    errors.add("Student " + student.getId() + " is already assigned to class: " + existingClassId);
                     continue;
                 }
 
@@ -1107,6 +1110,68 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     ResponseObject.builder()
                             .message("Error assigning students to class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<ResponseObject> unassignStudentsFromClass(StudentClassRequest request) {
+        try {
+            Integer classId = request.getClassId();
+            List<Integer> studentIds = request.getStudentIds();
+
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Classes classEntity = classOpt.get();
+            List<String> errors = new ArrayList<>();
+
+            for (Integer studentId : studentIds) {
+                Optional<Student> studentOpt = studentRepo.findById(studentId);
+                if (studentOpt.isEmpty()) {
+                    errors.add("Student not found: " + studentId);
+                    continue;
+                }
+
+                Optional<StudentClass> studentClassOpt = studentClassRepo.findByStudentIdAndClassesId(studentId, classId);
+                if (studentClassOpt.isEmpty()) {
+                    errors.add("Student not assigned to this class: " + studentId);
+                    continue;
+                }
+
+                StudentClass studentClass = studentClassOpt.get();
+                studentClassRepo.delete(studentClass);
+                classEntity.getStudentClassList().remove(studentClass);
+            }
+
+            if (!errors.isEmpty()) {
+                throw new RuntimeException(String.join("; ", errors));
+            }
+
+            String message = "Students unassigned from class successfully";
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(message)
+                            .success(true)
+                            .data(ClassesResponse.fromEntity(classEntity))
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("Error unassigning students from class: " + e.getMessage())
                             .success(false)
                             .data(null)
                             .build()
@@ -1825,6 +1890,128 @@ public class EducationServiceImpl implements EducationService {
                     .success(false)
                     .data(null)
                     .build()
+            );
+        }
+    }    
+    
+    // Student Management Methods
+    @Override
+    public ResponseEntity<ResponseObject> getAllStudents() {
+        try {
+            List<Student> students = studentRepo.findAll();
+            List<SimpleStudentResponse> studentResponses = students.stream()
+                    .map(student -> SimpleStudentResponse.builder()
+                            .id(student.getId())
+                            .name(student.getName())
+                            .gender(student.getGender())
+                            .dateOfBirth(student.getDateOfBirth())
+                            .placeOfBirth(student.getPlaceOfBirth())
+                            .profileImage(student.getProfileImage())
+                            .isStudent(student.isStudent())
+                            .parentId(student.getParent() != null ? student.getParent().getId() : null)
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Students retrieved successfully")
+                            .success(true)
+                            .data(studentResponses)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving students: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getStudentsByClassId(Integer classId) {
+        try {
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            List<StudentClass> studentClasses = studentClassRepo.findByClassesId(classId);
+            List<SimpleStudentResponse> studentResponses = studentClasses.stream()
+                    .map(sc -> {
+                        Student student = sc.getStudent();
+                        return SimpleStudentResponse.builder()
+                                .id(student.getId())
+                                .name(student.getName())
+                                .gender(student.getGender())
+                                .dateOfBirth(student.getDateOfBirth())
+                                .placeOfBirth(student.getPlaceOfBirth())
+                                .profileImage(student.getProfileImage())
+                                .isStudent(student.isStudent())
+                                .parentId(student.getParent() != null ? student.getParent().getId() : null)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Students for class retrieved successfully")
+                            .success(true)
+                            .data(studentResponses)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving students for class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllStudentClassAssignments() {
+        try {
+            List<StudentClass> studentClassList = studentClassRepo.findAll();
+            
+            // Create a map to group assignments by student
+            Map<Integer, List<Map<String, Object>>> studentAssignments = new HashMap<>();
+            
+            for (StudentClass sc : studentClassList) {
+                Integer studentId = sc.getStudent().getId();
+                
+                Map<String, Object> assignment = new HashMap<>();
+                assignment.put("classId", sc.getClasses().getId());
+                assignment.put("className", sc.getClasses().getName());
+                assignment.put("classGrade", sc.getClasses().getGrade());
+                
+                studentAssignments.computeIfAbsent(studentId, k -> new ArrayList<>()).add(assignment);
+            }
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Student class assignments retrieved successfully")
+                            .success(true)
+                            .data(studentAssignments)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving student class assignments: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
