@@ -97,11 +97,6 @@ function ClassList() {
         navigate(`/education/classes/${classData.id}`);
     };
 
-    const handleCreateClass = () => {
-        // For now, just navigate to a creation page or show a message
-        enqueueSnackbar('Class creation feature will be implemented', {variant: 'info'});
-    };
-
     const handleDeleteClick = (classData) => {
         setClassToDelete(classData);
         setDeleteDialogOpen(true);
@@ -359,7 +354,8 @@ function ClassList() {
             <Typography variant="h4" sx={{fontWeight: 'bold'}}>
                 Class Management
             </Typography>
-            <Button
+            <Box sx={{display: 'flex', gap: 1}}>
+                <Button
                 variant="outlined"
                 startIcon={<PersonAdd color="#1976d2"/>}
                 onClick={() => navigate('/education/assign-students')}
@@ -388,6 +384,7 @@ function ClassList() {
             >
                 Create Class
             </Button>
+            </Box>
         </Box>
 
             {/* Search Bar */}
