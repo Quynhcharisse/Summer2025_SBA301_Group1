@@ -25,7 +25,6 @@ import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
 import com.sba301.group1.pes_be.requests.LessonRequest;
-import com.sba301.group1.pes_be.requests.LessonSyllabusRequest;
 import com.sba301.group1.pes_be.requests.StudentClassRequest;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -1275,7 +1274,7 @@ public class EducationServiceImpl implements EducationService {
             List<Lesson> lessons = lessonRepo.findBySyllabusId(syllabusId);
 
             if (lessons.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                     ResponseObject.builder()
                         .message("No lessons found for syllabus ID: " + syllabusId)
                         .success(false)

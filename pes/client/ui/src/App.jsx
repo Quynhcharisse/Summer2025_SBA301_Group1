@@ -22,6 +22,7 @@ import LessonList from "./components/educationManager/LessonList.jsx";
 import ProfileParent from "./components/parent/ProfileParent.jsx";
 import AssignStudentToClass from "./components/educationManager/AssignStudentToClass.jsx";
 import LessonDetails from "./components/educationManager/LessonDetails.jsx";
+import SyllabusDetails from "./components/educationManager/SyllabusDetails.jsx";
 
 
 const router = createBrowserRouter([
@@ -113,6 +114,10 @@ const router = createBrowserRouter([
             {
                 path: 'syllabus',
                 element: <SyllabusList/>
+            },
+            {
+                path: 'syllabus/:id',
+                element: <SyllabusDetails/>
             },
             {
                 path: 'lessons',

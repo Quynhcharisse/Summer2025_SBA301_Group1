@@ -295,6 +295,7 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                         label="Description"
                         fullWidth
                         multiline
+                        rows={4}
                         margin="normal"
                         error={!!errors.description}
                         helperText={errors.description ? "Description is required" : ""}
@@ -334,16 +335,21 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                     >
                         Add Lesson
                     </Button>
-                    <DialogActions>
-                        <Button onClick={onClose} color="secondary" disabled={loading}>
-                            Close
-                        </Button>
-                        <Button type="submit" variant="contained" color="success" disabled={loading}>
-                            {isEdit ? 'Update Syllabus' : 'Add Syllabus'}
-                        </Button>
-                    </DialogActions>
                 </Box>
             </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose} color="secondary" disabled={loading}>
+                    Close
+                </Button>
+                <Button 
+                    onClick={handleSubmit(onSubmit)} 
+                    variant="contained" 
+                    color="success" 
+                    disabled={loading}
+                >
+                    {isEdit ? 'Update Syllabus' : 'Add Syllabus'}
+                </Button>
+            </DialogActions>
         </Dialog>
     );
 }
