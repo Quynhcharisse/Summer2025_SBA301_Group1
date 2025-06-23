@@ -25,6 +25,7 @@ import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
 import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.requests.LessonSyllabusRequest;
 import com.sba301.group1.pes_be.requests.StudentClassRequest;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -1395,6 +1396,54 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error deleting lesson: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getSyllabiByLessonId(Integer lessonId) {
+        try {
+            Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
+            if (lessonOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Lesson not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            List<SyllabusLesson> syllabusLessons = syllabusLessonRepo.findByLessonId(lessonId);
+            List<SyllabusResponse> syllabusResponses = syllabusLessons.stream()
+                .map(syllabusLesson -> SyllabusResponse.fromEntity(syllabusLesson.getSyllabus()))
+                .collect(Collectors.toList());
+
+            if (syllabusResponses.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                    ResponseObject.builder()
+                        .message("No syllabi found for this lesson")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Syllabi retrieved successfully")
+                    .success(true)
+                    .data(syllabusResponses)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error retrieving syllabi: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()

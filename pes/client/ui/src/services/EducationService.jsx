@@ -139,6 +139,21 @@ export const removeLesson = async (id) => {
     return response.status === 204 ? { success: true, message: 'Lesson deleted successfully' } : response.data;
 }
 
+// Lesson-Syllabus Assignment APIs
+export const getSyllabiByLessonId = async (lessonId) => {
+    try {
+        const response = await axiosClient.get(`/education/lessons/${lessonId}/syllabi`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch syllabi for lesson',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
 // Activity APIs
 export const createActivity = async (activityData) => {
     try {
