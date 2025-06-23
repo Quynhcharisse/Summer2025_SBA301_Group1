@@ -56,7 +56,7 @@ export const updateClass = async (id, data) => {
 
 export const removeClass = async (id) => {
     const response = await axiosClient.delete(`/education/classes/${id}`);
-    return response.data;
+    return response.status === 204 ? { success: true, message: 'Class deleted successfully' } : response.data;
 }
 
 // Syllabus APIs
@@ -92,7 +92,7 @@ export const updateSyllabus = async (id, data) => {
 
 export const removeSyllabus = async (id) => {
     const response = await axiosClient.delete(`/education/syllabus/${id}`);
-    return response.data;
+    return response.status === 204 ? { success: true, message: 'Syllabus deleted successfully' } : response.data;
 }
 
 // Lesson APIs
@@ -136,7 +136,7 @@ export const updateLesson = async (id, data) => {
 
 export const removeLesson = async (id) => {
     const response = await axiosClient.delete(`/education/lessons/${id}`);
-    return response.data;
+    return response.status === 204 ? { success: true, message: 'Lesson deleted successfully' } : response.data;
 }
 
 // Activity APIs
@@ -238,7 +238,7 @@ export const checkActivityDeletionImpact = async (activityId) => {
 export const deleteActivity = async (activityId) => {
     try {
         const response = await axiosClient.delete(`/education/activities/${activityId}`)
-        return response ? response.data : null
+        return response.status === 204 ? { success: true, message: 'Activity deleted successfully' } : (response ? response.data : null)
     } catch (error) {
         throw {
             error: true,
@@ -330,7 +330,35 @@ export const getWeeklySchedule = async (classId, weekNumber) => {
 
 export const deleteSchedule = async (scheduleId) => {
     const response = await axiosClient.delete(`/education/schedules/${scheduleId}`)
-    return response ? response.data : null
+    return response.status === 204 ? { success: true, message: 'Schedule deleted successfully' } : (response ? response.data : null)
+}
+
+export const getAllTeachers = async () => {
+    try {
+        const response = await axiosClient.get('/education/teachers')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch teachers',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
+export const getTeacherById = async (teacherId) => {
+    try {
+        const response = await axiosClient.get(`/education/teachers/${teacherId}`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch teacher details',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 // Student Assignment APIs

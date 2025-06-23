@@ -14,10 +14,19 @@ import {
     Typography
 } from '@mui/material';
 import {DataGrid} from '@mui/x-data-grid';
-import {Add, Delete, Info, Search, PersonAdd} from '@mui/icons-material';
+import {Add, Delete, Info, PersonAdd, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
-import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
+import {
+    createClass,
+    getAllClasses,
+    getAllSyllabi,
+    getAllTeachers,
+    getTeacherById,
+    removeClass
+} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
+import ClassForm from './ClassForm.jsx';
+import TeacherDetailView from './TeacherDetailView.jsx';
 
 function ClassList() {
     const navigate = useNavigate();
@@ -26,9 +35,16 @@ function ClassList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState(null);
+    const [classFormOpen, setClassFormOpen] = useState(false);
+    const [teachers, setTeachers] = useState([]);
+    const [syllabi, setSyllabi] = useState([]);
+    const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState(null);
 
     useEffect(() => {
         fetchClasses();
+        fetchTeachers();
+        fetchSyllabi();
     }, []);
 
     const fetchClasses = async () => {
@@ -52,13 +68,38 @@ function ClassList() {
         } finally {
             setLoading(false);
         }
-    };    const handleViewInfo = (classData) => {
+    };
+    const fetchTeachers = async () => {
+        try {
+            const teachersResponse = await getAllTeachers();
+            if (teachersResponse && teachersResponse.success) {
+                setTeachers(teachersResponse.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching teachers:', error);
+            setTeachers([]);
+        }
+    };
+
+    const fetchSyllabi = async () => {
+        try {
+            const syllabiResponse = await getAllSyllabi();
+            if (syllabiResponse && syllabiResponse.success) {
+                setSyllabi(syllabiResponse.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching syllabi:', error);
+            setSyllabi([]);
+        }
+    };
+
+    const handleViewInfo = (classData) => {
         navigate(`/education/classes/${classData.id}`);
     };
 
     const handleCreateClass = () => {
         // For now, just navigate to a creation page or show a message
-        enqueueSnackbar('Class creation feature will be implemented', { variant: 'info' });
+        enqueueSnackbar('Class creation feature will be implemented', {variant: 'info'});
     };
 
     const handleDeleteClick = (classData) => {
@@ -94,6 +135,56 @@ function ClassList() {
     const handleDeleteCancel = () => {
         setDeleteDialogOpen(false);
         setClassToDelete(null);
+    };
+
+    const handleCreateClass = () => {
+        setClassFormOpen(true);
+    };
+
+    const handleClassFormSubmit = async (classData) => {
+        try {
+            const response = await createClass(classData);
+            if (response && response.success) {
+                enqueueSnackbar('Class created successfully', {variant: 'success'});
+                setClassFormOpen(false);
+                fetchClasses();
+            } else {
+                enqueueSnackbar('Failed to create class', {variant: 'error'});
+            }
+        } catch (error) {
+            console.error('Error creating class:', error);
+            enqueueSnackbar('Error creating class', {variant: 'error'});
+        }
+    };
+
+    const handleClassFormClose = () => {
+        setClassFormOpen(false);
+    };
+
+    const handleTeacherClick = async (teacher) => {
+        try {
+            // Fetch complete teacher details instead of using the simplified teacher object from class data
+            const response = await getTeacherById(teacher.id);
+            if (response && response.success) {
+                setSelectedTeacher(response.data);
+                setTeacherDetailOpen(true);
+            } else {
+                // Fallback to the original teacher object if fetch fails
+                console.warn('Failed to fetch complete teacher details, using simplified data');
+                setSelectedTeacher(teacher);
+                setTeacherDetailOpen(true);
+            }
+        } catch (error) {
+            console.error('Error fetching teacher details:', error);
+            // Fallback to the original teacher object if error occurs
+            setSelectedTeacher(teacher);
+            setTeacherDetailOpen(true);
+        }
+    };
+
+    const handleTeacherDetailClose = () => {
+        setTeacherDetailOpen(false);
+        setSelectedTeacher(null);
     };
 
     const getStatusColor = (status) => {
@@ -150,19 +241,36 @@ function ClassList() {
             width: 150,
             headerAlign: 'center',
             align: 'center',
-            valueGetter: (params) => {
-                // DataGrid passes the teacher object directly as params for this field
-                if (params && params.name) {
-                    return params.name;
+            renderCell: (params) => {
+                const teacher = params.row?.teacher;
+                const teacherName = teacher?.name || teacher?.firstName || 'No Teacher';
+
+                if (!teacher || teacherName === 'No Teacher') {
+                    return (
+                        <Typography variant="body2" color="text.secondary">
+                            No Teacher
+                        </Typography>
+                    );
                 }
-                if (params && params.firstName) {
-                    return params.firstName;
-                }
-                // Fallback to check if it's the full row object
-                if (params && params.row && params.row.teacher) {
-                    return params.row.teacher.name || params.row.teacher.firstName || 'No Teacher';
-                }
-                return 'No Teacher';
+
+                return (
+                    <Button
+                        variant="text"
+                        onClick={() => handleTeacherClick(teacher)}
+                        sx={{
+                            textTransform: 'none',
+                            color: '#1976d2',
+                            '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                textDecoration: 'underline'
+                            },
+                            p: 0.5,
+                            minWidth: 'auto'
+                        }}
+                    >
+                        {teacherName}
+                    </Button>
+                );
             }
         },
         {
@@ -247,41 +355,40 @@ function ClassList() {
     });
 
     return (
-        <Box sx={{p: 3}}>            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
-                <Typography variant="h4" sx={{fontWeight: 'bold'}}>
-                    Class Management
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<PersonAdd color="#1976d2"/>}
-                        onClick={() => navigate('/education/assign-students')}
-                        sx={{
-                            borderColor: '#1976d2',
-                            color: '#1976d2',
-                            '&:hover': {
-                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                                borderColor: '#1976d2',
-                            }
-                        }}
-                    >
-                        Assign Students
-                    </Button>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add/>}
-                        onClick={handleCreateClass}
-                        sx={{
-                            backgroundColor: '#1976d2',
-                            '&:hover': {
-                                backgroundColor: '#1565c0',
-                            }
-                        }}
-                    >
-                        Create Class
-                    </Button>
-                </Box>
-            </Box>
+        <Box sx={{p: 3}}> <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+            <Typography variant="h4" sx={{fontWeight: 'bold'}}>
+                Class Management
+            </Typography>
+            <Button
+                variant="outlined"
+                startIcon={<PersonAdd color="#1976d2"/>}
+                onClick={() => navigate('/education/assign-students')}
+                sx={{
+                    borderColor: '#1976d2',
+                    color: '#1976d2',
+                    '&:hover': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                        borderColor: '#1976d2',
+                    }
+                }}
+            >
+                Assign Students
+            </Button>
+            <Button
+                variant="contained"
+                startIcon={<Add/>}
+                onClick={handleCreateClass}
+                sx={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    '&:hover': {
+                        backgroundColor: '#1565c0',
+                    }
+                }}
+            >
+                Create Class
+            </Button>
+        </Box>
 
             {/* Search Bar */}
             <Box sx={{mb: 3}}>
@@ -364,6 +471,22 @@ function ClassList() {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <ClassForm
+                open={classFormOpen}
+                onClose={handleClassFormClose}
+                onSubmit={handleClassFormSubmit}
+                mode="create"
+                teachers={teachers}
+                syllabi={syllabi}
+                loading={loading}
+            />
+
+            <TeacherDetailView
+                teacher={selectedTeacher}
+                open={teacherDetailOpen}
+                onClose={handleTeacherDetailClose}
+            />
         </Box>
     );
 }

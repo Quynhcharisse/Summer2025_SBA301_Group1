@@ -26,50 +26,46 @@ export const getTermList = async () => {
 }
 
 export const createTerm = async (
-    grade,
     startDate,
     endDate,
-    maxNumberRegistration,
-) => {
-
-    try {
-        const response = await
-            axiosClient.post("/admission/term", {
-                    grade: grade,
-                    startDate: startDate,
-                    endDate: endDate,
-                    maxNumberRegistration: maxNumberRegistration,
-                }
-            );
-        return response.data;
-    } catch (error) {
-        console.error("Create term error:", error);
-        throw error;
-    }
-}
-
-
-export const updateTerm = async (
-    id,
     grade,
-    startDate,
-    endDate,
-    maxNumberRegistration,
+    maxNumberRegistration
 ) => {
+    const response = await axiosClient.post("/admission/term", {
+        grade: grade,
+        startDate: startDate,
+        endDate: endDate,
+        maxNumberRegistration: maxNumberRegistration
+    });
+    return response ? response.data : null;
+};
 
+// Extra Term APIs
+export const createExtraTerm = async (data) => {
     try {
-        const response = await
-            axiosClient.put("/admission/term", {
-                    id: id,
-                    grade: grade,
-                    startDate: startDate,
-                    endDate: endDate,
-                    maxNumberRegistration: maxNumberRegistration,
-                }
-            );
+        console.log('🚀 Creating Extra Term - Request Data:', {
+            admissionTermId: data.termId,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            maxNumberRegistration: data.maxNumberRegistration
+        });
+
+        const response = await axiosClient.post('/admission/extra/term', {
+            admissionTermId: data.termId,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            maxNumberRegistration: data.maxNumberRegistration
+        });
+
+        console.log('✅ Extra Term Creation Response:', response.data);
         return response.data;
     } catch (error) {
-        console.error("Update term error:", error);
+        console.error('❌ Extra Term Creation Error:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            headers: error.response?.headers
+        });
         throw error;
     }
-}
+};

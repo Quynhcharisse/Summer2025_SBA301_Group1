@@ -23,6 +23,14 @@ public interface ClassesRepo extends JpaRepository<Classes, Integer> {
     @Query("SELECT c FROM Classes c WHERE c.name LIKE %:name%")
     List<Classes> findByNameContaining(@Param("name") String name);
     
+    boolean existsByName(String name);
+    
+    boolean existsByNameAndIdNot(String name, Integer id);
+    
+    boolean existsByTeacherIdAndStatus(Integer teacherId, String status);
+    
+    boolean existsByTeacherIdAndStatusAndIdNot(Integer teacherId, String status, Integer id);
+    
     @Query("SELECT c FROM Classes c WHERE c.grade = :grade AND c.status = :status")
     List<Classes> findByGradeAndStatus(@Param("grade") Grade grade, @Param("status") String status);
     
