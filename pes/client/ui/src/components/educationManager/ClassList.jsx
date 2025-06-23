@@ -14,7 +14,7 @@ import {
     Typography
 } from '@mui/material';
 import {DataGrid} from '@mui/x-data-grid';
-import {Add, Delete, Info, Search} from '@mui/icons-material';
+import {Add, Delete, Info, Search, PersonAdd} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
 import {getAllClasses, removeClass} from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
@@ -52,10 +52,13 @@ function ClassList() {
         } finally {
             setLoading(false);
         }
+    };    const handleViewInfo = (classData) => {
+        navigate(`/education/classes/${classData.id}`);
     };
 
-    const handleViewInfo = (classData) => {
-        navigate(`/education/classes/${classData.id}`);
+    const handleCreateClass = () => {
+        // For now, just navigate to a creation page or show a message
+        enqueueSnackbar('Class creation feature will be implemented', { variant: 'info' });
     };
 
     const handleDeleteClick = (classData) => {
@@ -244,24 +247,40 @@ function ClassList() {
     });
 
     return (
-        <Box sx={{p: 3}}>
-            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+        <Box sx={{p: 3}}>            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                 <Typography variant="h4" sx={{fontWeight: 'bold'}}>
                     Class Management
                 </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<Add/>}
-                    sx={{
-                        background: 'linear-gradient(135deg, var(--success-color), #45a049)',
-                        '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 20px rgba(76, 175, 80, 0.3)',
-                        }
-                    }}
-                >
-                    Create Class
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button
+                        variant="outlined"
+                        startIcon={<PersonAdd color="#1976d2"/>}
+                        onClick={() => navigate('/education/assign-students')}
+                        sx={{
+                            borderColor: '#1976d2',
+                            color: '#1976d2',
+                            '&:hover': {
+                                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                                borderColor: '#1976d2',
+                            }
+                        }}
+                    >
+                        Assign Students
+                    </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<Add/>}
+                        onClick={handleCreateClass}
+                        sx={{
+                            backgroundColor: '#1976d2',
+                            '&:hover': {
+                                backgroundColor: '#1565c0',
+                            }
+                        }}
+                    >
+                        Create Class
+                    </Button>
+                </Box>
             </Box>
 
             {/* Search Bar */}
