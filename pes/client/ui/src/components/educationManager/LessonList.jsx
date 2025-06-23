@@ -46,7 +46,29 @@ export default function LessonList() {
         }
     };
 
+    const handleViewDetails = (lesson) => {
+        // Prevent navigation for skeleton rows
+        if (!lesson || !lesson.id || lesson.id.toString().startsWith('skeleton-')) {
+            return;
+        }
+        navigate(`/education/lessons/${lesson.id}`);
+    };
+
+    const handleEdit = (lesson) => {
+        // Prevent edit for skeleton rows
+        if (!lesson || !lesson.id || lesson.id.toString().startsWith('skeleton-')) {
+            return;
+        }
+        setSelectedLesson(lesson);
+        setEditMode(true);
+        setFormOpen(true);
+    };
+
     const handleDelete = async (id) => {
+        // Prevent delete for skeleton rows
+        if (!id || id.toString().startsWith('skeleton-')) {
+            return;
+        }
         try {
             await removeLesson(id);
             enqueueSnackbar("Lesson deleted successfully!", {variant: 'success'});
@@ -55,16 +77,6 @@ export default function LessonList() {
             enqueueSnackbar("Lesson deletion failed: " + (error?.response?.data?.message || error.message || error), {variant: 'error'});
             console.log('Error delete lessons:', error);
         }
-    };
-
-    const handleViewDetails = (lesson) => {
-        navigate(`/education/lessons/${lesson.id}`);
-    };
-
-    const handleEdit = (lesson) => {
-        setSelectedLesson(lesson);
-        setEditMode(true);
-        setFormOpen(true);
     };
 
     const handleCreateNew = () => {

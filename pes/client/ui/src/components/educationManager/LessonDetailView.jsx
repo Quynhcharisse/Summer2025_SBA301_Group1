@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Box,
     Card,
@@ -9,7 +9,8 @@ import {
     Paper,
     Stack,
     Typography,
-    Button
+    Button,
+    Collapse
 } from '@mui/material';
 import {
     Description,
@@ -18,7 +19,9 @@ import {
     School,
     Topic,
     MenuBook,
-    Edit
+    Edit,
+    ExpandMore,
+    ExpandLess
 } from '@mui/icons-material';
 
 const LessonDetailView = ({
@@ -27,6 +30,8 @@ const LessonDetailView = ({
     activities = [],
     onEdit
 }) => {
+    const [showAllActivities, setShowAllActivities] = useState(false);
+
     if (!lesson) return null;
 
     const formatDuration = (duration) => {
@@ -41,6 +46,12 @@ const LessonDetailView = ({
 
     const getTopicColor = () => '#2196f3';
     const topicColor = getTopicColor();
+
+    const handleToggleActivities = () => {
+        setShowAllActivities(!showAllActivities);
+    };
+
+    const displayedActivities = showAllActivities ? activities : activities.slice(0, 5);
 
     return (
         <Box sx={{display: 'flex', flexDirection: 'column', gap: 3}}>
@@ -240,7 +251,7 @@ const LessonDetailView = ({
                         </Box>
                         <Divider sx={{ mb: 2 }} />
                         <Stack spacing={1}>
-                            {activities.slice(0, 5).map((activity) => (
+                            {displayedActivities.map((activity) => (
                                 <Box
                                     key={activity.id}
                                     sx={{
@@ -258,12 +269,27 @@ const LessonDetailView = ({
                                     </Typography>
                                 </Box>
                             ))}
-                            {activities.length > 5 && (
-                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
-                                    +{activities.length - 5} more activities
-                                </Typography>
-                            )}
                         </Stack>
+                        {activities.length > 5 && (
+                            <Box sx={{ textAlign: 'center', mt: 2 }}>
+                                <Button
+                                    variant="text"
+                                    onClick={handleToggleActivities}
+                                    startIcon={showAllActivities ? <ExpandLess /> : <ExpandMore />}
+                                    sx={{
+                                        color: '#4caf50',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(76, 175, 80, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    {showAllActivities 
+                                        ? 'Show Less' 
+                                        : `Show ${activities.length - 5} More Activities`
+                                    }
+                                </Button>
+                            </Box>
+                        )}
                     </CardContent>
                 </Card>
             )}
