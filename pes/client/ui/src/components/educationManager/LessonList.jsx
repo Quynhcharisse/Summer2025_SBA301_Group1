@@ -102,10 +102,10 @@ export default function LessonList() {
 
     const columns = [
         {field: 'id', headerName: 'ID', width: 70, headerAlign: 'center', align: 'center'},
-        {field: 'topic', headerName: 'Topic', width: 180, headerAlign: 'center'},
-        {field: 'description', headerName: 'Description', width: 250, headerAlign: 'center'},
+        {field: 'topic', headerName: 'Topic', flex: 1, minWidth: 150, headerAlign: 'center'},
+        {field: 'description', headerName: 'Description', flex: 2, minWidth: 200, headerAlign: 'center'},
         {field: 'duration', headerName: 'Duration (min)', width: 120, headerAlign: 'center', align: 'center'},
-        {field: 'materials', headerName: 'Materials', width: 180, headerAlign: 'center'},
+        {field: 'materials', headerName: 'Materials', flex: 1, minWidth: 150, headerAlign: 'center'},
         {
             field: 'actions',
             headerName: 'Actions',
