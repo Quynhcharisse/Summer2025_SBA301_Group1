@@ -1,5 +1,5 @@
 import {memo, useCallback, useEffect, useRef, useState} from 'react';
-import {useFieldArray, useForm} from 'react-hook-form';
+import {useFieldArray, useForm, Controller} from 'react-hook-form';
 import {
     Box,
     Button,
@@ -18,62 +18,71 @@ import {
 } from '@mui/material';
 import {enqueueSnackbar} from 'notistack';
 import {Add} from '@mui/icons-material';
-import {createSyllabus, getAllSyllabi, updateSyllabus} from "../../services/EducationService.jsx";
+import {createSyllabus, getAllLessons, updateSyllabus} from "../../services/EducationService.jsx";
 
 const LessonItem = memo(({
                              item,
                              index,
+                             control,
                              register,
                              remove,
                              allLessons,
                              errors,
-                             loading
+                             loading,
+                             watch
                          }) => {
+    const selectedLessonId = watch(`lessons.${index}.id`);
+    
     return (
         <Box key={item.id} sx={{border: 1, borderRadius: 1, p: 2, mb: 2}}>
-            <FormControl fullWidth margin="dense" error={!!errors?.lessons?.[index]?.lessonId}>
+            <FormControl fullWidth margin="dense" error={!!errors?.lessons?.[index]?.id}>
                 <InputLabel id={`lesson-select-label-${index}`}>Lesson</InputLabel>
-                <Select
-                    labelId={`lesson-select-label-${index}`}
-                    label="Lesson"
-                    defaultValue={item.lessonId || ""}
-                    {...register(`lessons.${index}.lessonId`, {required: true})}
-                    disabled={loading}
-                >
-                    <MenuItem value="">
-                        <em>Select Lesson</em>
-                    </MenuItem>
-                    {allLessons && Array.isArray(allLessons) && allLessons.map(lesson =>
-                        lesson && lesson.id ? (
-                            <MenuItem key={lesson.id} value={Number(lesson.id)}>
-                                {lesson.topic || lesson.title || `Lesson #${lesson.id}`}
+                <Controller
+                    name={`lessons.${index}.id`}
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                        <Select
+                            {...field}
+                            labelId={`lesson-select-label-${index}`}
+                            label="Lesson"
+                            value={field.value || ""}
+                            disabled={loading}
+                            onChange={(e) => field.onChange(Number(e.target.value) || "")}
+                        >
+                            <MenuItem value="">
+                                <em>Select Lesson</em>
                             </MenuItem>
-                        ) : null
+                            {allLessons && Array.isArray(allLessons) && allLessons.map(lesson =>
+                                lesson && lesson.id ? (
+                                    <MenuItem key={lesson.id} value={Number(lesson.id)}>
+                                        {lesson.topic || `Lesson #${lesson.id}`} (ID: {lesson.id})
+                                    </MenuItem>
+                                ) : null
+                            )}
+                        </Select>
                     )}
-                </Select>
-                {errors?.lessons?.[index]?.lessonId && <FormHelperText>Lesson selection is required</FormHelperText>}
+                />
+                {errors?.lessons?.[index]?.id && <FormHelperText>Lesson selection is required</FormHelperText>}
             </FormControl>
 
-            {/* Hidden field for syllabusId in each lesson */}
-            <input type="hidden" {...register(`lessons.${index}.syllabusId`)} />
-
-            {allLessons && item.lessonId && (
+            {allLessons && selectedLessonId && (
                 <Typography variant="body2" color="text.secondary" mt={1}>
-                    {allLessons.find(l => Number(l.id) === Number(item.lessonId))?.description || ''}
+                    {allLessons.find(l => Number(l.id) === Number(selectedLessonId))?.description || ''}
                 </Typography>
             )}
 
             <Divider sx={{my: 2}}/>
 
             <TextField
-                label="Note"
+                label="Description"
                 fullWidth
                 margin="normal"
                 multiline
                 rows={2}
-                placeholder="Add notes about this lesson (optional)"
-                defaultValue={item.note || ""}
-                {...register(`lessons.${index}.note`)}
+                placeholder="Add description about this lesson (optional)"
+                defaultValue={item.description || ""}
+                {...register(`lessons.${index}.description`)}
                 disabled={loading}
                 sx={{mb: 1}}
             />
@@ -126,8 +135,7 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
         const fetchLessons = async () => {
             try {
                 setLoading(true);
-                const response = await getAllSyllabi();
-                // Ensure we're getting data in the right format
+                const response = await getAllLessons();
                 const lessonData = response.data ? response.data : response;
                 setAllLessons(Array.isArray(lessonData) ? lessonData : []);
                 setLoading(false);
@@ -150,27 +158,24 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
             lessonsProcessedRef.current = false;
 
             try {
-                if (syllabus.syllabusLessonList && Array.isArray(syllabus.syllabusLessonList)) {
-                    console.log("Found syllabusLessonList:", syllabus.syllabusLessonList);
+                if (syllabus.lessons && Array.isArray(syllabus.lessons)) {
+                    console.log("Found lessons:", syllabus.lessons);
 
-                    const lessonFormData = syllabus.syllabusLessonList
-                        .filter(syllabusLesson => syllabusLesson && syllabusLesson.lesson)
-                        .map(syllabusLesson => ({
-                            lessonId: Number(syllabusLesson.lesson.id),
-                            syllabusId: Number(syllabus.id),
-                            note: syllabusLesson.note || ''
-                        }));
-
-                    console.log("Processed lesson data for form:", lessonFormData);
+                    // Map syllabus lessons to the correct format
+                    const mappedLessons = syllabus.lessons.map(lesson => ({
+                        id: lesson.id,
+                        syllabusId: syllabus.id,
+                        description: lesson.description || ""
+                    }));
 
                     reset({
                         syllabusId: syllabus.id,
                         title: syllabus.title || '',
                         description: syllabus.description || '',
-                        lessons: lessonFormData // Include lessons directly in reset
+                        lessons: mappedLessons
                     });
 
-                    replace(lessonFormData);
+                    replace(mappedLessons);
 
                     lessonsProcessedRef.current = true;
                 } else {
@@ -180,7 +185,7 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                         description: syllabus.description || '',
                         lessons: []
                     });
-                    console.warn("No syllabusLessonList found or it's not an array:", syllabus.syllabusLessonList);
+                    console.warn("No lessons found or it's not an array:", syllabus.lessons);
                 }
             } catch (error) {
                 console.error("Error processing syllabus lessons:", error);
@@ -203,9 +208,9 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
             setAddingLesson(true);
 
             append({
-                lessonId: "",
+                id: "", // This will be set to lesson ID when user selects
                 syllabusId: syllabusId || null,
-                note: ""
+                description: ""
             });
 
             setTimeout(() => setAddingLesson(false), 100);
@@ -232,9 +237,9 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                 ...data,
                 syllabusId: data.syllabusId ? Number(data.syllabusId) : null,
                 lessons: data.lessons.map(lesson => ({
-                    ...lesson,
-                    lessonId: Number(lesson.lessonId),
-                    syllabusId: Number(data.syllabusId) || null
+                    lessonId: lesson.id,
+                    syllabusId: Number(data.syllabusId) || null,
+                    description: lesson.description || ""
                 }))
             };
 
@@ -298,9 +303,9 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                     />
                     <Typography variant="subtitle1" mt={2}>Lessons</Typography>
 
-                    {isEdit && syllabus?.syllabusLessonList?.length > 0 && fields.length === 0 && (
+                    {isEdit && syllabus?.lessons?.length > 0 && fields.length === 0 && (
                         <Typography color="error" variant="body2">
-                            Found {syllabus.syllabusLessonList.length} lessons but not displayed. Check console for
+                            Found {syllabus.lessons.length} lessons but not displayed. Check console for
                             details.
                         </Typography>
                     )}
@@ -310,11 +315,13 @@ export default function SyllabusForm({open, onClose, syllabus, isEdit}) {
                             key={item.id}
                             item={item}
                             index={index}
+                            control={control}
                             register={register}
                             remove={remove}
                             allLessons={allLessons}
                             errors={errors}
                             loading={loading}
+                            watch={watch}
                         />
                     ))}
                     <Button
