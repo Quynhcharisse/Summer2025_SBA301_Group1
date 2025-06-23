@@ -1,5 +1,5 @@
 import React from 'react';
-import {Dashboard, School, Event, CalendarToday, PlayLesson, Book} from '@mui/icons-material';
+import {Dashboard, School, Event, CalendarToday, PlayLesson, Book, PersonAdd} from '@mui/icons-material';
 import DashboardUI from '../components/ui/DashhboardUI';
 
 function EducationLayout() {
@@ -8,6 +8,11 @@ function EducationLayout() {
             segment: 'education/classes',
             title: 'Classes Management',
             icon: <School sx={{ color: '#666' }}/>,
+        },
+        {
+            segment: 'education/assign-students',
+            title: 'Assign Students',
+            icon: <PersonAdd sx={{ color: '#666' }}/>,
         },
         {
             segment: 'education/syllabus',

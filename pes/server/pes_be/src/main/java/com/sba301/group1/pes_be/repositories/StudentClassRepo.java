@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StudentClassRepo extends JpaRepository<StudentClass, Integer> {
@@ -14,4 +15,6 @@ public interface StudentClassRepo extends JpaRepository<StudentClass, Integer> {
     List<StudentClass> findByClassesId(Integer classesId);
     
     boolean existsByStudentIdAndClassesId(Integer studentId, Integer classesId);
+    
+    Optional<StudentClass> findByStudentIdAndClassesId(Integer studentId, Integer classesId);
 }

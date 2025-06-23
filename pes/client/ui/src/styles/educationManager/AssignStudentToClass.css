@@ -1,0 +1,124 @@
+/* AssignStudentToClass Styles */
+.assign-student-container {
+    padding: 24px;
+}
+
+.assign-student-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.assign-student-title {
+    font-weight: bold;
+    color: #1976d2;
+}
+
+.class-selection-card {
+    margin-bottom: 24px;
+}
+
+.class-info-box {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.student-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.student-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.student-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.student-item.selected {
+    border-color: #1976d2;
+    background-color: rgba(25, 118, 210, 0.05);
+}
+
+.search-controls {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.search-controls > * {
+    flex: 1;
+    min-width: 200px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .assign-student-container {
+        padding: 16px;
+    }
+    
+    .assign-student-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .search-controls > * {
+        min-width: 100%;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Custom scrollbar for student list */
+.student-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.student-list-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.student-list-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

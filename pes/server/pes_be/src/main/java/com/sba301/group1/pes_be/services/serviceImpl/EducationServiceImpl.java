@@ -11,6 +11,7 @@ import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.response.ClassesResponse;
 import com.sba301.group1.pes_be.response.LessonResponse;
 import com.sba301.group1.pes_be.response.SyllabusResponse;
+import com.sba301.group1.pes_be.response.SimpleStudentResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ClassValidation.CreateClassValidation;
@@ -24,8 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,8 @@ public class EducationServiceImpl implements EducationService {
     private final SyllabusRepo syllabusRepo;
     private final SyllabusLessonRepo syllabusLessonRepo;
     private final AccountRepo accountRepo;
+    private final StudentRepo studentRepo;
+    private final StudentClassRepo studentClassRepo;
 
     // Private helper method to convert Activity entity to Response
     private ActivityResponse convertToResponse(Activity activity) {
@@ -301,7 +307,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity activity = activityOpt.get();
-            
+
             // Check if activity is part of a schedule and gather information for response
             String scheduleInfo = "";
             Schedule schedule = null;
@@ -329,7 +335,7 @@ public class EducationServiceImpl implements EducationService {
                 // Activity has no schedule, safe to delete directly
                 activityRepo.deleteById(activityId);
             }
-            
+
             String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 ResponseObject.builder()
@@ -365,29 +371,29 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Activity activity = activityOpt.get();
-            
+
             // Build impact information
             java.util.Map<String, Object> impactInfo = new java.util.HashMap<>();
             impactInfo.put("activityId", activityId);
             impactInfo.put("activityTopic", activity.getTopic());
             impactInfo.put("hasScheduleImpact", activity.getSchedule() != null);
-            
+
             if (activity.getSchedule() != null) {
                 Schedule schedule = activity.getSchedule();
                 impactInfo.put("scheduleId", schedule.getId());
                 impactInfo.put("weekNumber", schedule.getWeekNumber());
-                
+
                 if (schedule.getClasses() != null) {
                     impactInfo.put("className", schedule.getClasses().getName());
                     impactInfo.put("classId", schedule.getClasses().getId());
                 }
-                
+
                 // Count other activities in the same schedule
                 List<Activity> scheduleActivities = activityRepo.findByScheduleId(schedule.getId());
                 impactInfo.put("totalActivitiesInSchedule", scheduleActivities.size());
                 impactInfo.put("isLastActivityInSchedule", scheduleActivities.size() == 1);
             }
-            
+
             return ResponseEntity.ok().body(
                 ResponseObject.builder()
                     .message("Activity deletion impact analysis completed")
@@ -437,7 +443,7 @@ public class EducationServiceImpl implements EducationService {
             // Find or create schedule for the specified week
             Optional<Schedule> scheduleOpt = scheduleRepo.findByClassesIdAndWeekNumber(
                 request.getClassId(), request.getWeekNumber());
-            
+
             Schedule schedule;
             if (scheduleOpt.isEmpty()) {
                 // Create new schedule if it doesn't exist
@@ -1006,6 +1012,136 @@ public class EducationServiceImpl implements EducationService {
         }
     }
 
+    @Override
+    @Transactional
+    public ResponseEntity<ResponseObject> assignStudentsToClass(StudentClassRequest request) {
+        try {
+            Integer classId = request.getClassId();
+            List<Integer> studentIds = request.getStudentIds();
+
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Classes classEntity = classOpt.get();
+            List<String> errors = new ArrayList<>();            for (Integer studentId : studentIds) {
+                Optional<Student> studentOpt = studentRepo.findById(studentId);
+                if (studentOpt.isEmpty()) {
+                    errors.add("Student not found: " + studentId);
+                    continue;
+                }
+                Student student = studentOpt.get();
+
+                List<StudentClass> existingAssignments = studentClassRepo.findByStudentId(studentId);
+                if (!existingAssignments.isEmpty()) {
+                    Integer existingClassId = existingAssignments.get(0).getClasses().getId();
+                    errors.add("Student " + student.getId() + " is already assigned to class: " + existingClassId);
+                    continue;
+                }
+
+                StudentClass studentClass = StudentClass.builder()
+                        .student(student)
+                        .classes(classEntity)
+                        .build();
+                studentClassRepo.save(studentClass);
+
+                student.setStudent(true);
+                studentRepo.save(student);
+                classEntity.getStudentClassList().add(studentClass);
+            }
+
+            if (!errors.isEmpty()) {
+                throw new RuntimeException(String.join("; ", errors));
+            }
+
+            String message = "Students assigned to class successfully";
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(message)
+                            .success(true)
+                            .data(ClassesResponse.fromEntity(classEntity))
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("Error assigning students to class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<ResponseObject> unassignStudentsFromClass(StudentClassRequest request) {
+        try {
+            Integer classId = request.getClassId();
+            List<Integer> studentIds = request.getStudentIds();
+
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Classes classEntity = classOpt.get();
+            List<String> errors = new ArrayList<>();
+
+            for (Integer studentId : studentIds) {
+                Optional<Student> studentOpt = studentRepo.findById(studentId);
+                if (studentOpt.isEmpty()) {
+                    errors.add("Student not found: " + studentId);
+                    continue;
+                }
+
+                Optional<StudentClass> studentClassOpt = studentClassRepo.findByStudentIdAndClassesId(studentId, classId);
+                if (studentClassOpt.isEmpty()) {
+                    errors.add("Student not assigned to this class: " + studentId);
+                    continue;
+                }
+
+                StudentClass studentClass = studentClassOpt.get();
+                studentClassRepo.delete(studentClass);
+                classEntity.getStudentClassList().remove(studentClass);
+            }
+
+            if (!errors.isEmpty()) {
+                throw new RuntimeException(String.join("; ", errors));
+            }
+
+            String message = "Students unassigned from class successfully";
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message(message)
+                            .success(true)
+                            .data(ClassesResponse.fromEntity(classEntity))
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("Error unassigning students from class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
     // Lesson Service Methods
     @Override
     public ResponseEntity<ResponseObject> getAllLessons() {
@@ -1302,7 +1438,7 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Schedule schedule = scheduleOpt.get();
-            
+
             // Validate request (includes duplicate check)
             String validationError = UpdateScheduleValidation.validate(request, schedule, scheduleRepo);
             if (!validationError.isEmpty()) {
@@ -1314,7 +1450,7 @@ public class EducationServiceImpl implements EducationService {
                         .build()
                 );
             }
-            
+
             schedule.setWeekNumber(request.getWeekNumber());
             schedule.setNote(request.getNote());
 
@@ -1717,6 +1853,128 @@ public class EducationServiceImpl implements EducationService {
                     .success(false)
                     .data(null)
                     .build()
+            );
+        }
+    }    
+    
+    // Student Management Methods
+    @Override
+    public ResponseEntity<ResponseObject> getAllStudents() {
+        try {
+            List<Student> students = studentRepo.findAll();
+            List<SimpleStudentResponse> studentResponses = students.stream()
+                    .map(student -> SimpleStudentResponse.builder()
+                            .id(student.getId())
+                            .name(student.getName())
+                            .gender(student.getGender())
+                            .dateOfBirth(student.getDateOfBirth())
+                            .placeOfBirth(student.getPlaceOfBirth())
+                            .profileImage(student.getProfileImage())
+                            .isStudent(student.isStudent())
+                            .parentId(student.getParent() != null ? student.getParent().getId() : null)
+                            .build())
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Students retrieved successfully")
+                            .success(true)
+                            .data(studentResponses)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving students: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getStudentsByClassId(Integer classId) {
+        try {
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            List<StudentClass> studentClasses = studentClassRepo.findByClassesId(classId);
+            List<SimpleStudentResponse> studentResponses = studentClasses.stream()
+                    .map(sc -> {
+                        Student student = sc.getStudent();
+                        return SimpleStudentResponse.builder()
+                                .id(student.getId())
+                                .name(student.getName())
+                                .gender(student.getGender())
+                                .dateOfBirth(student.getDateOfBirth())
+                                .placeOfBirth(student.getPlaceOfBirth())
+                                .profileImage(student.getProfileImage())
+                                .isStudent(student.isStudent())
+                                .parentId(student.getParent() != null ? student.getParent().getId() : null)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Students for class retrieved successfully")
+                            .success(true)
+                            .data(studentResponses)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving students for class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllStudentClassAssignments() {
+        try {
+            List<StudentClass> studentClassList = studentClassRepo.findAll();
+            
+            // Create a map to group assignments by student
+            Map<Integer, List<Map<String, Object>>> studentAssignments = new HashMap<>();
+            
+            for (StudentClass sc : studentClassList) {
+                Integer studentId = sc.getStudent().getId();
+                
+                Map<String, Object> assignment = new HashMap<>();
+                assignment.put("classId", sc.getClasses().getId());
+                assignment.put("className", sc.getClasses().getName());
+                assignment.put("classGrade", sc.getClasses().getGrade());
+                
+                studentAssignments.computeIfAbsent(studentId, k -> new ArrayList<>()).add(assignment);
+            }
+
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Student class assignments retrieved successfully")
+                            .success(true)
+                            .data(studentAssignments)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving student class assignments: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }

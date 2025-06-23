@@ -360,3 +360,78 @@ export const getTeacherById = async (teacherId) => {
         }
     }
 }
+
+// Student Assignment APIs
+export const assignStudentsToClass = async (assignData) => {
+    try {
+        const response = await axiosClient.post('/education/classes/assign-students', assignData, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return response ? response.data : null;
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to assign students to class',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
+export const unassignStudentsFromClass = async (unassignData) => {
+    try {
+        const response = await axiosClient.post('/education/classes/unassign-students', unassignData, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return response ? response.data : null;
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to unassign students from class',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
+export const getAllStudents = async () => {
+    try {
+        const response = await axiosClient.get('/education/students')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch students',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
+export const getStudentsByClassId = async (classId) => {
+    try {
+        const response = await axiosClient.get(`/education/classes/${classId}/students`)
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch students for class',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
+
+export const getStudentClassAssignments = async () => {
+    try {
+        const response = await axiosClient.get('/education/student-class-assignments')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch student class assignments',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}

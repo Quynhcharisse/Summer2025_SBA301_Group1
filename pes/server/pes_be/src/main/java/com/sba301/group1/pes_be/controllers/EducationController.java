@@ -6,6 +6,7 @@ import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
 import com.sba301.group1.pes_be.requests.CreateActivityRequest;
 import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
 import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.requests.StudentClassRequest;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
@@ -248,6 +249,18 @@ public class EducationController {
     @Operation(summary = "Delete a class", description = "Allows education staff to delete a class")
     public ResponseEntity<ResponseObject> deleteClass(@PathVariable Integer classId) {
         return educationService.deleteClass(classId);
+    }    @PostMapping("/classes/assign-students")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Assign students to a class", description = "Allows education staff to assign students to a class")
+    public ResponseEntity<ResponseObject> assignStudentsToClass(@RequestBody StudentClassRequest request) {
+        return educationService.assignStudentsToClass(request);
+    }
+
+    @PostMapping("/classes/unassign-students")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Unassign students from a class", description = "Allows education staff to unassign students from a class")
+    public ResponseEntity<ResponseObject> unassignStudentsFromClass(@RequestBody StudentClassRequest request) {
+        return educationService.unassignStudentsFromClass(request);
     }
 
     // Lesson Management Methods
@@ -378,5 +391,25 @@ public class EducationController {
         return educationService.deleteSyllabus(syllabusId);
     }
 
+    // Student Management Methods
+    @GetMapping("/students")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all students")
+    public ResponseEntity<ResponseObject> getAllStudents() {
+        return educationService.getAllStudents();
+    }
 
+    @GetMapping("/classes/{classId}/students")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get students in a specific class")
+    public ResponseEntity<ResponseObject> getStudentsByClassId(@PathVariable Integer classId) {
+        return educationService.getStudentsByClassId(classId);
+    }
+
+    @GetMapping("/student-class-assignments")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get all student class assignments", description = "Retrieves all student-class assignment relationships")
+    public ResponseEntity<ResponseObject> getAllStudentClassAssignments() {
+        return educationService.getAllStudentClassAssignments();
+    }
 }

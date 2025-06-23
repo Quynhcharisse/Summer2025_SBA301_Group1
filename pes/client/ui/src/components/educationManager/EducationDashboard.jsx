@@ -1,8 +1,11 @@
 import React from 'react';
-import {Avatar, Box, Card, CardContent, Chip, Container, Grid, Paper, Typography} from '@mui/material';
-import {Assignment, CalendarToday, Dashboard, Event, School, TrendingUp} from '@mui/icons-material';
+import {Avatar, Box, Card, CardContent, Chip, Container, Grid, Paper, Typography, Button} from '@mui/material';
+import {Assignment, CalendarToday, Dashboard, Event, School, TrendingUp, PersonAdd} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 function EducationDashboard() {
+    const navigate = useNavigate();
+    
     const features = [
         {
             title: 'Class Management',
@@ -31,13 +34,20 @@ function EducationDashboard() {
             icon: <Assignment/>,
             color: '#4caf50',
             stats: 'Active Syllabi'
-        },
-        {
+        },        {
             title: 'Lessons Management',
             description: 'Plan, organize, and manage lessons effectively.',
             icon: <Dashboard/>,
             color: '#3f51b5',
             stats: 'Total Lessons'
+        },
+        {
+            title: 'Student Assignment',
+            description: 'Assign students to classes efficiently and manage student enrollment.',
+            icon: <PersonAdd/>,
+            color: '#e91e63',
+            stats: 'Assign Students',
+            action: () => navigate('/education/assign-students')
         }
     ];
 
@@ -156,9 +166,7 @@ function EducationDashboard() {
                                     >
                                         {feature.title}
                                     </Typography>
-                                </Box>
-
-                                <Typography
+                                </Box>                                <Typography
                                     variant="body2"
                                     color="text.secondary"
                                     sx={{mb: 2, lineHeight: 1.6}}
@@ -166,15 +174,34 @@ function EducationDashboard() {
                                     {feature.description}
                                 </Typography>
 
-                                <Chip
-                                    label={feature.stats}
-                                    size="small"
-                                    sx={{
-                                        bgcolor: `${feature.color}15`,
-                                        color: feature.color,
-                                        fontWeight: 500
-                                    }}
-                                />
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Chip
+                                        label={feature.stats}
+                                        size="small"
+                                        sx={{
+                                            bgcolor: `${feature.color}15`,
+                                            color: feature.color,
+                                            fontWeight: 500
+                                        }}
+                                    />
+                                    {feature.action && (
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            onClick={feature.action}
+                                            sx={{
+                                                borderColor: feature.color,
+                                                color: feature.color,
+                                                '&:hover': {
+                                                    backgroundColor: `${feature.color}10`,
+                                                    borderColor: feature.color
+                                                }
+                                            }}
+                                        >
+                                            Go
+                                        </Button>
+                                    )}
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>
