@@ -2,29 +2,26 @@ import {useEffect, useState} from 'react';
 import {
     Box,
     Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     IconButton,
     Paper,
     Stack,
-    TextField,
-    Typography
+    Typography,
+    Skeleton
 } from '@mui/material';
-import {Add, Delete, Edit} from '@mui/icons-material';
+import {Add, Delete, Edit, Info} from '@mui/icons-material';
 import {enqueueSnackbar} from 'notistack';
-import {useForm} from 'react-hook-form';
 import {DataGrid} from '@mui/x-data-grid';
 import {createLesson, getAllLessons, removeLesson, updateLesson} from "../../services/EducationService.jsx";
+import LessonForm from './LessonForm.jsx';
+import { useNavigate } from 'react-router-dom';
 
 export default function LessonList() {
+    const navigate = useNavigate();
     const [lessons, setLessons] = useState([]);
-    const [show, setShow] = useState(false);
+    const [formOpen, setFormOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
-    const [editId, setEditId] = useState(null);
-
-    const {register, handleSubmit, reset, setValue, formState: {errors}} = useForm();
+    const [selectedLesson, setSelectedLesson] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
@@ -32,6 +29,7 @@ export default function LessonList() {
 
     const fetchData = async () => {
         try {
+            setLoading(true);
             const response = await getAllLessons();
             const data = response.data;
             if (!Array.isArray(data)) {
@@ -43,10 +41,34 @@ export default function LessonList() {
         } catch (error) {
             enqueueSnackbar('Error fetching lessons: ' + (error?.response?.data?.message || error.message || error), {variant: 'error'});
             setLessons([]);
+        } finally {
+            setLoading(false);
         }
     };
 
+    const handleViewDetails = (lesson) => {
+        // Prevent navigation for skeleton rows
+        if (!lesson || !lesson.id || lesson.id.toString().startsWith('skeleton-')) {
+            return;
+        }
+        navigate(`/education/lessons/${lesson.id}`);
+    };
+
+    const handleEdit = (lesson) => {
+        // Prevent edit for skeleton rows
+        if (!lesson || !lesson.id || lesson.id.toString().startsWith('skeleton-')) {
+            return;
+        }
+        setSelectedLesson(lesson);
+        setEditMode(true);
+        setFormOpen(true);
+    };
+
     const handleDelete = async (id) => {
+        // Prevent delete for skeleton rows
+        if (!id || id.toString().startsWith('skeleton-')) {
+            return;
+        }
         try {
             await removeLesson(id);
             enqueueSnackbar("Lesson deleted successfully!", {variant: 'success'});
@@ -57,10 +79,17 @@ export default function LessonList() {
         }
     };
 
-    const onSubmit = async (formData) => {
+    const handleCreateNew = () => {
+        setSelectedLesson(null);
+        setEditMode(false);
+        setFormOpen(true);
+    };
+
+    const handleFormSubmit = async (formData) => {
         try {
-            if (editMode && editId) {
-                await updateLesson(editId, formData);
+            setLoading(true);
+            if (editMode && selectedLesson) {
+                await updateLesson(selectedLesson.id, formData);
                 enqueueSnackbar("Lesson updated successfully!", {variant: 'success'});
             } else {
                 const exists = lessons.find(l => l.topic.toLowerCase() === formData.topic.toLowerCase());
@@ -71,59 +100,80 @@ export default function LessonList() {
                 await createLesson(formData);
                 enqueueSnackbar("Lesson added successfully!", {variant: 'success'});
             }
-            reset();
+            setFormOpen(false);
+            setSelectedLesson(null);
             setEditMode(false);
-            setEditId(null);
-            setShow(false);
             fetchData();
         } catch (error) {
             enqueueSnackbar("An error occurred: " + (error?.response?.data?.message || error.message || error), {variant: 'error'});
             console.log("An error occurred!", error);
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const handleEdit = (lesson) => {
-        setEditMode(true);
-        setEditId(lesson.id);
-        setValue('topic', lesson.topic);
-        setValue('description', lesson.description);
-        setValue('duration', lesson.duration);
-        setValue('materials', lesson.materials);
-        setShow(true);
     };
 
     const columns = [
         {field: 'id', headerName: 'ID', width: 70, headerAlign: 'center', align: 'center'},
-        {field: 'topic', headerName: 'Topic', width: 180, headerAlign: 'center'},
-        {field: 'description', headerName: 'Description', width: 250, headerAlign: 'center'},
-        {field: 'duration', headerName: 'Duration (hrs)', width: 120, headerAlign: 'center', align: 'center'},
-        {field: 'materials', headerName: 'Materials', width: 180, headerAlign: 'center'},
+        {field: 'topic', headerName: 'Topic', flex: 1, minWidth: 150, headerAlign: 'center'},
+        {field: 'description', headerName: 'Description', flex: 2, minWidth: 200, headerAlign: 'center'},
+        {field: 'duration', headerName: 'Duration (min)', width: 120, headerAlign: 'center', align: 'center'},
+        {field: 'materials', headerName: 'Materials', flex: 1, minWidth: 150, headerAlign: 'center'},
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 150,
+            width: 200,
             headerAlign: 'center',
             align: 'center',
             sortable: false,
-            renderCell: (params) => (
-                <Stack direction="row" spacing={1}>
-                    <IconButton color="info" onClick={() => handleEdit(params.row)}>
-                        <Edit color="info"/>
-                    </IconButton>
-                    <IconButton
-                        color="error"
-                        onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this lesson?")) {
-                                handleDelete(params.row.id);
-                            }
-                        }}
-                    >
-                        <Delete color="error"/>
-                    </IconButton>
-                </Stack>
-            )
+            renderCell: (params) => {
+                // Show skeleton for loading rows
+                if (params.row.id && params.row.id.toString().startsWith('skeleton-')) {
+                    return <Skeleton variant="rectangular" width={150} height={32} />;
+                }
+                
+                return (
+                    <Stack direction="row" spacing={1}>
+                        <IconButton 
+                            color="primary" 
+                            onClick={() => handleViewDetails(params.row)}
+                            title="View Details"
+                        >
+                            <Info color="primary"/>
+                        </IconButton>
+                        <IconButton 
+                            color="info" 
+                            onClick={() => handleEdit(params.row)}
+                            title="Edit Lesson"
+                        >
+                            <Edit color="info"/>
+                        </IconButton>
+                        <IconButton
+                            color="error"
+                            onClick={() => {
+                                if (window.confirm("Are you sure you want to delete this lesson?")) {
+                                    handleDelete(params.row.id);
+                                }
+                            }}
+                            title="Delete Lesson"
+                        >
+                            <Delete color="error"/>
+                        </IconButton>
+                    </Stack>
+                );
+            }
         }
     ];
+
+    // Create skeleton data for loading state
+    const createSkeletonRows = () => {
+        return Array(5).fill(0).map((_, index) => ({
+            id: `skeleton-${index}`,
+            topic: `Loading...`,
+            description: `Loading lesson description...`,
+            duration: `--`,
+            materials: `Loading materials...`
+        }));
+    };
 
     return (
         <Box sx={{p: 3}}>
@@ -135,19 +185,14 @@ export default function LessonList() {
                     startIcon={<Add/>}
                     variant="contained"
                     color="primary"
-                    onClick={() => {
-                        setEditMode(false);
-                        setEditId(null);
-                        reset({topic: '', description: '', duration: '', materials: ''});
-                        setShow(true);
-                    }}
+                    onClick={handleCreateNew}
                 >
                     Add new lesson
                 </Button>
             </Box>
             <Paper sx={{height: 600, width: '100%'}}>
                 <DataGrid
-                    rows={lessons}
+                    rows={loading ? createSkeletonRows() : lessons}
                     columns={columns}
                     pageSize={10}
                     rowsPerPageOptions={[5, 10, 20]}
@@ -161,72 +206,31 @@ export default function LessonList() {
                         '& .MuiDataGrid-cell': {
                             display: 'flex',
                             alignItems: 'center'
+                        },
+                        '& .MuiDataGrid-row': {
+                            '&:has([data-id^="skeleton-"])': {
+                                '& .MuiDataGrid-cell': {
+                                    color: '#999',
+                                    fontStyle: 'italic'
+                                }
+                            }
                         }
                     }}
                 />
             </Paper>
 
-            <Dialog open={show} onClose={() => setShow(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{editMode ? 'Edit Lesson' : 'Add New Lesson'}</DialogTitle>
-                <DialogContent>
-                    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{mt: 1}}>
-                        <TextField
-                            label="Lesson Topic"
-                            fullWidth
-                            margin="normal"
-                            error={!!errors.topic}
-                            helperText={errors.topic ? "Topic is required" : ""}
-                            {...register("topic", {required: true})}
-                            autoFocus
-                        />
-                        <TextField
-                            label="Description"
-                            fullWidth
-                            margin="normal"
-                            multiline
-                            rows={3}
-                            error={!!errors.description}
-                            helperText={errors.description ? "Description is required" : ""}
-                            {...register("description", {required: true})}
-                        />
-                        <TextField
-                            label="Duration (hours)"
-                            fullWidth
-                            margin="normal"
-                            type="number"
-                            inputProps={{min: 0, step: 0.5}}
-                            error={!!errors.duration}
-                            helperText={errors.duration ?
-                                errors.duration.type === "required" ? "Duration is required" :
-                                    errors.duration.type === "min" ? "Duration cannot be negative" :
-                                        errors.duration.type === "pattern" ? "Please enter a valid number" :
-                                            "Duration is required" : "Enter lesson duration in hours"}
-                            {...register("duration", {
-                                required: true,
-                                min: 0,
-                                pattern: /^[0-9]*\.?[0-9]+$/
-                            })}
-                        />
-                        <TextField
-                            label="Materials"
-                            fullWidth
-                            margin="normal"
-                            error={!!errors.materials}
-                            helperText={errors.materials ? "Materials are required" : ""}
-                            {...register("materials", {required: true})}
-                        />
-
-                        <DialogActions>
-                            <Button onClick={() => setShow(false)} color="secondary">
-                                Close
-                            </Button>
-                            <Button type="submit" variant="contained" color="success">
-                                {editMode ? 'Save Changes' : 'Add Lesson'}
-                            </Button>
-                        </DialogActions>
-                    </Box>
-                </DialogContent>
-            </Dialog>
+            <LessonForm
+                open={formOpen}
+                onClose={() => {
+                    setFormOpen(false);
+                    setSelectedLesson(null);
+                    setEditMode(false);
+                }}
+                onSubmit={handleFormSubmit}
+                mode={editMode ? 'edit' : 'create'}
+                initialData={selectedLesson}
+                loading={loading}
+            />
         </Box>
     );
 }

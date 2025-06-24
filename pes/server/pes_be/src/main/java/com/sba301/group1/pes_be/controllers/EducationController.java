@@ -320,6 +320,13 @@ public class EducationController {
         return educationService.getAllLessons();
     }
 
+    @GetMapping("/lessons/{lessonId}/syllabi")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get syllabi for a lesson", description = "Retrieves all syllabi assigned to a specific lesson")
+    public ResponseEntity<ResponseObject> getSyllabiByLessonId(@PathVariable Integer lessonId) {
+        return educationService.getSyllabiByLessonId(lessonId);
+    }
+
     // Syllabus Viewing Methods
     @GetMapping("/syllabus/{syllabusId}")
     @PreAuthorize("hasRole('education')")
