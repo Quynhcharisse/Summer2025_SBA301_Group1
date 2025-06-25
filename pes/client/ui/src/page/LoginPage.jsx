@@ -128,6 +128,12 @@ const signInPage = async (provider, formData) => {
                             }, 500)
                             break;
 
+                        case 'HR':
+                            setTimeout(() => {
+                                window.location.href = "/hr";
+                            }, 500)
+                            break;
+
                         default:
                             window.location.href = "/login";
                     }

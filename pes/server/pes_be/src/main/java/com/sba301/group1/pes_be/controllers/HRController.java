@@ -7,12 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/hr")
@@ -21,9 +16,9 @@ public class HRController {
 
     private final HRService hrService;
 
-    @GetMapping("/parent")
+    @GetMapping("/parent/{id}")
     @PreAuthorize("hasRole('hr')")
-    public ResponseEntity<ResponseObject> getParentById(@RequestBody int id, HttpServletRequest httpRequest) {
+    public ResponseEntity<ResponseObject> getParentById(@PathVariable int id, HttpServletRequest httpRequest) {
         return hrService.getParentById(id, httpRequest);
     }
 
@@ -33,9 +28,23 @@ public class HRController {
         return hrService.updateParent(request, httpRequest);
     }
 
-    @PostMapping("/parent/remove")
+    @PutMapping("/parent/remove")
     @PreAuthorize("hasRole('hr')")// update later role can delete parent
-    public ResponseEntity<ResponseObject> deleteParent(@RequestBody int id, HttpServletRequest httpRequest) {
-        return hrService.deleteParent(id, httpRequest);
+    public ResponseEntity<ResponseObject> banParent(@RequestParam int id, HttpServletRequest httpRequest) {
+        System.out.println("id: "+id);
+        return hrService.banParent(id, httpRequest);
+    }
+
+    @PutMapping("/parent/unban")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> unbanParent(@RequestParam int id, HttpServletRequest httpRequest) {
+        System.out.println("id: "+id);
+        return hrService.unbanParent(id, httpRequest);
+    }
+
+    @GetMapping("/parent-list")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> getParentList(HttpServletRequest httpRequest) {
+        return hrService.getParentList(httpRequest);
     }
 }
