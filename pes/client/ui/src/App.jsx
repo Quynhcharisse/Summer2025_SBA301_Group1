@@ -21,6 +21,8 @@ import SyllabusList from "./components/educationManager/SyllabusList.jsx";
 import LessonList from "./components/educationManager/LessonList.jsx";
 import ProfileParent from "./components/parent/ProfileParent.jsx";
 import AssignStudentToClass from "./components/educationManager/AssignStudentToClass.jsx";
+import HrLayout from "./layouts/HrLayout.jsx";
+import ParentList from "./components/hrManager/ParentList.jsx";
 
 
 const router = createBrowserRouter([
@@ -116,6 +118,23 @@ const router = createBrowserRouter([
             {
                 path: 'lessons',
                 element: <LessonList/>
+            }
+        ]
+    },
+    {
+        path: "/hr",
+        element: (
+            <ProtectRoute allowedRoles={["HR"]}>
+                <HrLayout/>
+            </ProtectRoute>
+        ), children: [
+            {
+                index: true,
+                element: <Navigate to={"/hr/parent-list"}/>
+            },
+            {
+                path: 'parent-list',
+                element: <ParentList/>
             }
         ]
     },
