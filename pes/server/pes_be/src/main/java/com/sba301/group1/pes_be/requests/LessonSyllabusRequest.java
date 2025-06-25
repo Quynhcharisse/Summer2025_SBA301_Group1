@@ -15,5 +15,5 @@ import lombok.experimental.FieldDefaults;
 public class LessonSyllabusRequest {
     private Integer lessonId;
     private Integer syllabusId;
-    private String note;
+    private String description;
 }

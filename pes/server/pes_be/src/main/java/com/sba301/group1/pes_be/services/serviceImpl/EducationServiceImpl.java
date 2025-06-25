@@ -1,17 +1,42 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
-import com.sba301.group1.pes_be.response.ActivityResponse;
-import com.sba301.group1.pes_be.response.ScheduleResponse;
-import com.sba301.group1.pes_be.response.TeacherResponse;
 import com.sba301.group1.pes_be.enums.Grade;
-import com.sba301.group1.pes_be.models.*;
-import com.sba301.group1.pes_be.repositories.*;
-import com.sba301.group1.pes_be.requests.*;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Activity;
+import com.sba301.group1.pes_be.models.Classes;
+import com.sba301.group1.pes_be.models.Lesson;
+import com.sba301.group1.pes_be.models.Schedule;
+import com.sba301.group1.pes_be.models.Student;
+import com.sba301.group1.pes_be.models.StudentClass;
+import com.sba301.group1.pes_be.models.Syllabus;
+import com.sba301.group1.pes_be.models.SyllabusLesson;
+import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.ActivityRepo;
+import com.sba301.group1.pes_be.repositories.ClassesRepo;
+import com.sba301.group1.pes_be.repositories.LessonRepo;
+import com.sba301.group1.pes_be.repositories.ScheduleRepo;
+import com.sba301.group1.pes_be.repositories.StudentClassRepo;
+import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
+import com.sba301.group1.pes_be.repositories.SyllabusRepo;
+import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
+import com.sba301.group1.pes_be.requests.ClassRequest;
+import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
+import com.sba301.group1.pes_be.requests.CreateActivityRequest;
+import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
+import com.sba301.group1.pes_be.requests.LessonRequest;
+import com.sba301.group1.pes_be.requests.StudentClassRequest;
+import com.sba301.group1.pes_be.requests.SyllabusRequest;
+import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
+import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
+import com.sba301.group1.pes_be.response.ActivityResponse;
 import com.sba301.group1.pes_be.response.ClassesResponse;
 import com.sba301.group1.pes_be.response.LessonResponse;
-import com.sba301.group1.pes_be.response.SyllabusResponse;
+import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.ScheduleResponse;
 import com.sba301.group1.pes_be.response.SimpleStudentResponse;
+import com.sba301.group1.pes_be.response.SyllabusResponse;
+import com.sba301.group1.pes_be.response.TeacherResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ClassValidation.CreateClassValidation;
@@ -1249,7 +1274,7 @@ public class EducationServiceImpl implements EducationService {
             List<Lesson> lessons = lessonRepo.findBySyllabusId(syllabusId);
 
             if (lessons.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                     ResponseObject.builder()
                         .message("No lessons found for syllabus ID: " + syllabusId)
                         .success(false)
@@ -1370,6 +1395,54 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 ResponseObject.builder()
                     .message("Error deleting lesson: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getSyllabiByLessonId(Integer lessonId) {
+        try {
+            Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
+            if (lessonOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                        .message("Lesson not found")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            List<SyllabusLesson> syllabusLessons = syllabusLessonRepo.findByLessonId(lessonId);
+            List<SyllabusResponse> syllabusResponses = syllabusLessons.stream()
+                .map(syllabusLesson -> SyllabusResponse.fromEntity(syllabusLesson.getSyllabus()))
+                .collect(Collectors.toList());
+
+            if (syllabusResponses.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                    ResponseObject.builder()
+                        .message("No syllabi found for this lesson")
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                    .message("Syllabi retrieved successfully")
+                    .success(true)
+                    .data(syllabusResponses)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error retrieving syllabi: " + e.getMessage())
                     .success(false)
                     .data(null)
                     .build()
@@ -1759,6 +1832,7 @@ public class EducationServiceImpl implements EducationService {
                     .map(syllabus -> {
                         syllabus.setTitle(request.getTitle());
                         syllabus.setDescription(request.getDescription());
+                        try {
                         Syllabus updatedSyllabus = updateSyllabusLessons(request, syllabus);
 
                         if (updatedSyllabus.getSyllabusLessonList() == null || updatedSyllabus.getSyllabusLessonList().isEmpty()) {
@@ -1777,6 +1851,15 @@ public class EducationServiceImpl implements EducationService {
                                         .data(SyllabusResponse.fromEntity(syllabus))
                                         .build()
                         );
+                        } catch (IllegalAccessException ex) {
+                            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                                    ResponseObject.builder()
+                                            .message("Error updating syllabus: " + ex.getMessage())
+                                            .success(false)
+                                            .data(null)
+                                            .build()
+                            );
+                        }
                     })
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
@@ -1791,32 +1874,45 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Transactional
-    protected Syllabus updateSyllabusLessons(SyllabusRequest request, Syllabus syllabus) {
+    protected Syllabus updateSyllabusLessons(SyllabusRequest request, Syllabus syllabus) throws IllegalAccessException {
         syllabusRepo.save(syllabus);
 
         if (syllabus.getId() != null) {
-            syllabusLessonRepo.deleteSyllabusLessonBySyllabus(syllabus);
+            List<SyllabusLesson> existingLessons = syllabusLessonRepo.findBySyllabusId(syllabus.getId());
+            if (!existingLessons.isEmpty()) {
+                syllabusLessonRepo.deleteAll(existingLessons);
+                syllabusLessonRepo.flush();
+            }
         }
 
-        if (request.getLessons() != null) {
+        if (request.getLessons() != null && !request.getLessons().isEmpty()) {
             List<SyllabusLesson> syllabusLessons = new ArrayList<>();
 
             for (var lessonReq : request.getLessons()) {
                 Lesson lesson = lessonRepo.findById(lessonReq.getLessonId())
-                        .orElseThrow(() -> new RuntimeException("Lesson not found"));
+                        .orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + lessonReq.getLessonId()));
+
+                boolean alreadyExists = syllabusLessons.stream()
+                        .anyMatch(sl -> sl.getLesson().getId().equals(lesson.getId()));
+                if (alreadyExists) {
+                    throw new IllegalAccessException("Lesson with ID " + lesson.getId() + " is already assigned to this syllabus");
+                }
 
                 SyllabusLesson syllabusLesson = SyllabusLesson.builder()
                         .syllabus(syllabus)
                         .lesson(lesson)
-                        .note(lessonReq.getNote())
+                        .note(lessonReq.getDescription() != null ? lessonReq.getDescription() : "")
                         .build();
 
                 syllabusLessons.add(syllabusLesson);
             }
 
-            syllabusLessonRepo.saveAll(syllabusLessons);
-
-            syllabus.setSyllabusLessonList(syllabusLessons);
+            if (!syllabusLessons.isEmpty()) {
+                syllabusLessonRepo.saveAll(syllabusLessons);
+                syllabus.setSyllabusLessonList(syllabusLessons);
+            } else {
+                syllabus.setSyllabusLessonList(new ArrayList<>());
+            }
         } else {
             syllabus.setSyllabusLessonList(new ArrayList<>());
         }
@@ -1855,8 +1951,8 @@ public class EducationServiceImpl implements EducationService {
                     .build()
             );
         }
-    }    
-    
+    }
+
     // Student Management Methods
     @Override
     public ResponseEntity<ResponseObject> getAllStudents() {
@@ -1946,18 +2042,18 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllStudentClassAssignments() {
         try {
             List<StudentClass> studentClassList = studentClassRepo.findAll();
-            
+
             // Create a map to group assignments by student
             Map<Integer, List<Map<String, Object>>> studentAssignments = new HashMap<>();
-            
+
             for (StudentClass sc : studentClassList) {
                 Integer studentId = sc.getStudent().getId();
-                
+
                 Map<String, Object> assignment = new HashMap<>();
                 assignment.put("classId", sc.getClasses().getId());
                 assignment.put("className", sc.getClasses().getName());
                 assignment.put("classGrade", sc.getClasses().getGrade());
-                
+
                 studentAssignments.computeIfAbsent(studentId, k -> new ArrayList<>()).add(assignment);
             }
 
@@ -1983,7 +2079,7 @@ public class EducationServiceImpl implements EducationService {
     public ResponseEntity<ResponseObject> getAllTeachers() {
         try {
             List<Account> teachers = accountRepo.findByRoleWithClasses(com.sba301.group1.pes_be.enums.Role.TEACHER);
-            
+
             if (teachers.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ResponseObject.builder()
@@ -2058,3 +2154,4 @@ public class EducationServiceImpl implements EducationService {
         }
     }
 }
+

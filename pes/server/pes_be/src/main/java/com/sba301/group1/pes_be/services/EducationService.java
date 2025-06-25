@@ -254,13 +254,19 @@ public interface EducationService {
     ResponseEntity<ResponseObject> updateLesson(Integer lessonId, LessonRequest request);
 
     /**
-         * Deletes a lesson by its ID.
-         *
-         * @param lessonId the ID of the lesson to delete
-         * @return ResponseEntity containing the operation result
-         */
-        ResponseEntity<ResponseObject> deleteLesson(Integer lessonId);
+     * Deletes a lesson by its ID.
+     *
+     * @param lessonId the ID of the lesson to delete
+     * @return ResponseEntity containing the operation result
+     */
+    ResponseEntity<ResponseObject> deleteLesson(Integer lessonId);
 
+    /**
+     * Retrieves all syllabi assigned to a specific lesson
+     * @param lessonId the ID of the lesson
+     * @return ResponseEntity containing the list of syllabi
+     */
+    ResponseEntity<ResponseObject> getSyllabiByLessonId(Integer lessonId);
 
     // Schedule Service Methods
 
