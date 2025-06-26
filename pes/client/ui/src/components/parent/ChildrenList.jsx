@@ -18,20 +18,20 @@ import {
     FormHelperText,
     Grid,
     IconButton,
-    Paper,
+  Paper,
     Radio,
     RadioGroup,
     Snackbar,
     Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
     TextField,
     Toolbar,
-    Typography,
+  Typography,
     Tabs,
     Tab,
     Chip,
@@ -46,30 +46,30 @@ import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import axios from "axios";
 
 const ChildrenList = () => {
-    const [children, setChildren] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [children, setChildren] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
     // const [page, setPage] = useState(0);
     // const [rowsPerPage, setRowsPerPage] = useState(5);
     // const [remainingUpdates, setRemainingUpdates] = useState(5);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // Dialog state
-    const [open, setOpen] = useState(false);
-    const [form, setForm] = useState({
-        id: "",
-        name: "",
-        gender: "",
-        dateOfBirth: "",
+  // Dialog state
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    id: "",
+    name: "",
+    gender: "",
+    dateOfBirth: "",
         placeOfBirth: "",
         profileImage: "",
         birthCertificateImg: "",
         householdRegistrationImg: "",
-    });
-    const [editId, setEditId] = useState(null);
+  });
+  const [editId, setEditId] = useState(null);
 
-    // Snackbar state
+  // Snackbar state
     const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
 
     // Add state for file uploads
@@ -130,10 +130,10 @@ const ChildrenList = () => {
         }
     };
 
-    const add = async (child) => {
-        try {
+  const add = async (child) => {
+    try {
             setSaving(true);
-            const response = await addChild(child);
+      const response = await addChild(child);
             if (response?.success) {
                 setSnackbar({
                     open: true,
@@ -141,25 +141,25 @@ const ChildrenList = () => {
                     severity: "success"
                 });
                 await fetchChildren();
-                handleClose();
+      handleClose();
             } else {
                 throw new Error(response?.message || "Failed to add child");
             }
-        } catch (error) {
-            setSnackbar({
-                open: true,
+    } catch (error) {
+      setSnackbar({
+        open: true,
                 message: error.response?.data?.message || error.message,
-                severity: "error"
-            });
+        severity: "error"
+      });
         } finally {
             setSaving(false);
-        }
-    };
+    }
+  };
 
-    const update = async (child) => {
-        try {
+  const update = async (child) => {
+    try {
             setSaving(true);
-            const response = await updateChild(child);
+      const response = await updateChild(child);
             if (response?.success) {
                 setSnackbar({
                     open: true,
@@ -167,23 +167,23 @@ const ChildrenList = () => {
                     severity: "success"
                 });
                 await fetchChildren();
-                handleClose();
+      handleClose();
             } else {
                 throw new Error(response?.message || "Failed to update child");
             }
-        } catch (error) {
-            setSnackbar({
-                open: true,
+    } catch (error) {
+      setSnackbar({
+        open: true,
                 message: error.response?.data?.message || error.message,
-                severity: "error"
-            });
+        severity: "error"
+      });
         } finally {
             setSaving(false);
-        }
-    };
+    }
+  };
 
-    const handleOpen = () => {
-        setEditId(null);
+  const handleOpen = () => {
+    setEditId(null);
         setForm({
             name: "",
             gender: "",
@@ -199,10 +199,10 @@ const ChildrenList = () => {
             household: null,
         });
         setErrors({});
-        setOpen(true);
-    };
-
-    const handleEditOpen = (child) => {
+    setOpen(true);
+  };
+  
+  const handleEditOpen = (child) => {
         console.log("Opening edit dialog for child:", child);
         
         // Check if child object exists
@@ -231,10 +231,10 @@ const ChildrenList = () => {
 
         console.log("Formatted date:", formattedDate);
         console.log("Formatted gender:", formattedGender);
-
-        setEditId(child.id);
-        setForm({
-            id: child.id,
+    
+    setEditId(child.id);
+    setForm({
+      id: child.id,
             name: child.name || '',
             gender: formattedGender,
             dateOfBirth: formattedDate,
@@ -253,11 +253,11 @@ const ChildrenList = () => {
         
         console.log("Setting form data:", form);
         setErrors({});
-        setOpen(true);
-    };
+    setOpen(true);
+  };
 
-    const handleClose = () => {
-        setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
         setForm({
             name: "",
             gender: "",
@@ -267,15 +267,15 @@ const ChildrenList = () => {
             birthCertificateImg: "",
             householdRegistrationImg: "",
         });
-        setEditId(null);
+    setEditId(null);
         setErrors({});
-    };
+  };
 
-    const handleSnackbarClose = () => {
+  const handleSnackbarClose = () => {
         setSnackbar({...snackbar, open: false});
-    };
+  };
 
-    const handleChange = (e) => {
+  const handleChange = (e) => {
         const { name, value } = e.target;
         
         // Clear error for the field being changed
@@ -430,7 +430,7 @@ const ChildrenList = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
         const errors = validateForm();
 
         if (Object.keys(errors).length > 0) {
@@ -458,9 +458,9 @@ const ChildrenList = () => {
                 gender: form.gender // Already properly formatted in handleChange
             };
 
-            if (editId) {
+      if (editId) {
                 await update(formattedData);
-            } else {
+      } else {
                 await add(formattedData);
             }
         } catch (error) {
@@ -483,9 +483,9 @@ const ChildrenList = () => {
 
     // Function to fetch children data
     const fetchChildren = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+      try {
+        setLoading(true);
+        setError(null);
             const response = await getChildrenList();
 
             if (!response || !response.success) {
@@ -496,18 +496,18 @@ const ChildrenList = () => {
             console.log("Children data:", childrenData);
             console.log("Date format example:", childrenData[0]?.dateOfBirth);
             setChildren(childrenData);
-        } catch (err) {
-            console.error("Error fetching children:", err);
-            setError(err.message || "Failed to fetch children data");
-            setChildren([]);
-        } finally {
-            setLoading(false);
-        }
+      } catch (err) {
+        console.error("Error fetching children:", err);
+        setError(err.message || "Failed to fetch children data");
+        setChildren([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     useEffect(() => {
-        fetchChildren();
-    }, []);
+    fetchChildren();
+  }, []);
 
     // const handleChangePage = (event, newPage) => {
     //     setPage(newPage);
@@ -673,24 +673,24 @@ const ChildrenList = () => {
         setViewDialogOpen(true);
     };
 
-    if (loading) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                <CircularProgress/>
-            </Box>
-        );
-    }
-
-    if (error) {
-        return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                <Alert severity="error">{error}</Alert>
-            </Box>
-        );
-    }
-
-    console.log(form)
+  if (loading) {
     return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress/>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  console.log(form)
+  return (
         <Box sx={{p: 3, maxWidth: '1400px', mx: 'auto'}}>
             <Box sx={{
                 display: 'flex',
@@ -894,7 +894,7 @@ const ChildrenList = () => {
                     </Toolbar>
                 </AppBar>
 
-                <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
                     <DialogContent sx={{
                         p: 4,
                         maxWidth: '1200px',
@@ -916,26 +916,26 @@ const ChildrenList = () => {
                             Basic Information
                         </Typography>
                         <Stack spacing={3} sx={{mb: 6}}>
-                            <TextField
-                                label="Name"
-                                name="name"
-                                value={form.name}
-                                onChange={handleChange}
-                                required
+            <TextField
+              label="Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
                                 fullWidth
                                 variant="outlined"
                                 size="medium"
                                 error={Boolean(errors.name)}
                                 helperText={errors.name || ''}
-                            />
+            />
                             <FormControl component="fieldset" required error={Boolean(errors.gender)}>
-                                <FormLabel component="legend">Gender</FormLabel>
-                                <RadioGroup
-                                    row
-                                    name="gender"
+              <FormLabel component="legend">Gender</FormLabel>
+              <RadioGroup
+                row
+                name="gender"
                                     value={form.gender?.toLowerCase() || ""}
-                                    onChange={handleChange}
-                                >
+                onChange={handleChange}
+              >
                                     <FormControlLabel
                                         value="male"
                                         control={<Radio color="primary"/>}
@@ -946,28 +946,28 @@ const ChildrenList = () => {
                                         control={<Radio color="primary"/>}
                                         label="Female"
                                     />
-                                </RadioGroup>
+              </RadioGroup>
                                 {errors.gender && <FormHelperText>{errors.gender}</FormHelperText>}
-                            </FormControl>
-                            <TextField
-                                label="Date of Birth"
-                                name="dateOfBirth"
-                                type="date"
-                                value={form.dateOfBirth}
-                                onChange={handleChange}
+            </FormControl>
+            <TextField
+              label="Date of Birth"
+              name="dateOfBirth"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={handleChange}
                                 InputLabelProps={{shrink: true}}
-                                required
+              required
                                 fullWidth
                                 size="medium"
                                 error={Boolean(errors.dateOfBirth)}
                                 helperText={errors.dateOfBirth || 'Child must be between 3-5 years old'}
-                            />
-                            <TextField
-                                label="Place of Birth"
-                                name="placeOfBirth"
-                                value={form.placeOfBirth}
-                                onChange={handleChange}
-                                required
+            />
+            <TextField
+              label="Place of Birth"
+              name="placeOfBirth"
+              value={form.placeOfBirth}
+              onChange={handleChange}
+              required
                                 fullWidth
                                 size="medium"
                                 error={Boolean(errors.placeOfBirth)}
@@ -1047,7 +1047,7 @@ const ChildrenList = () => {
                                 </Grid>
                             </Grid>
                         </Stack>
-                    </DialogContent>
+          </DialogContent>
 
                     <Box sx={{
                         position: 'fixed',
@@ -1062,8 +1062,8 @@ const ChildrenList = () => {
                         justifyContent: 'flex-end',
                         zIndex: 1,
                     }}>
-                        <Button
-                            variant="contained"
+            <Button
+              variant="contained"
                             type="submit"
                             sx={{
                                 minWidth: 120,
@@ -1074,20 +1074,20 @@ const ChildrenList = () => {
                             }}
                         >
                             SAVE
-                        </Button>
+            </Button>
                     </Box>
-                </form>
-            </Dialog>
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={handleSnackbarClose}
+        </form>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
                 anchorOrigin={{vertical: "top", horizontal: "center"}}
-            >
+      >
                 <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{width: "100%"}}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
             {/* Add View Details Dialog */}
             <Dialog
@@ -1143,8 +1143,8 @@ const ChildrenList = () => {
                                                             </Typography>
                                                             <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
                                                                 {selectedChild.name}
-                                                            </Typography>
-                                                        </Box>
+            </Typography>
+          </Box>
                                                     </Grid>
                                                     <Grid item xs={12} sm={6}>
                                                         <Box>
@@ -1206,7 +1206,7 @@ const ChildrenList = () => {
                                             <Grid item xs={12} md={4}>
                                                 <Paper
                                                     elevation={0}
-                                                    sx={{
+                            sx={{
                                                         p: 2,
                                                         bgcolor: 'grey.50',
                                                         borderRadius: 2,
@@ -1277,7 +1277,7 @@ const ChildrenList = () => {
                                                             }}
                                                         />
                                                     </Card>
-                                                </Paper>
+      </Paper>
                                             </Grid>
                                         )}
                                         {selectedChild.householdRegistrationImg && (
@@ -1390,7 +1390,7 @@ const ChildrenList = () => {
                 </DialogContent>
             </Dialog>
         </Box>
-    );
+  );
 };
 
 export default ChildrenList;
