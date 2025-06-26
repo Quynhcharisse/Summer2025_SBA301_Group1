@@ -51,7 +51,7 @@ public class ParentServiceImpl implements ParentService {
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
-
+    
     private final AccountRepo accountRepo;
 
     private final MailService mailService;
@@ -233,12 +233,12 @@ public class ParentServiceImpl implements ParentService {
                 .parent(account.getParent())
                 .student(student)
                 .admissionTerm(activeTerm)
-                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                .commitmentImg(request.getCommitmentImg())
+                        .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                        .commitmentImg(request.getCommitmentImg())
                 .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
-                .note(request.getNote())
-                .submittedDate(LocalDate.now())
-                .status(Status.PENDING_APPROVAL.getValue())
+                        .note(request.getNote())
+                        .submittedDate(LocalDate.now())
+                        .status(Status.PENDING_APPROVAL.getValue())
                 .build();
 
         admissionFormRepo.save(form);

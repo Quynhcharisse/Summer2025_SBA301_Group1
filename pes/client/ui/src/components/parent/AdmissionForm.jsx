@@ -286,14 +286,14 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                         </Button>
 
                         {canCancel() && (
-                            <Button
-                                sx={{width: '10%', height: '5vh'}}
-                                variant="contained"
+                        <Button
+                            sx={{width: '10%', height: '5vh'}}
+                            variant="contained"
                                 color="error"
-                                onClick={handleOpenConfirm}
-                            >
+                            onClick={handleOpenConfirm}
+                        >
                                 Cancel Form
-                            </Button>
+                        </Button>
                         )}
 
                         <Dialog open={openConfirm} onClose={handleCloseConfirm}>
@@ -405,27 +405,27 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
     return (
         <Dialog
             fullScreen
-            open={isPopUpOpen}
-            onClose={handleClosePopUp}
-        >
+                    open={isPopUpOpen}
+                    onClose={handleClosePopUp}
+            >
             <AppBar sx={{ position: 'relative', bgcolor: '#2c3e50' }}>
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={handleClosePopUp}
-                        aria-label="close"
-                    >
+                    <Toolbar>
+                        <IconButton
+                            edge="start"
+                            color="inherit"
+                            onClick={handleClosePopUp}
+                            aria-label="close"
+                        >
                         <Close />
-                    </IconButton>
+                        </IconButton>
                     <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
-                        Create Admission Form
-                    </Typography>
-                </Toolbar>
-            </AppBar>
+                            Create Admission Form
+                        </Typography>
+                    </Toolbar>
+                </AppBar>
 
             <Box sx={{ p: 4, maxWidth: '1200px', mx: 'auto' }}>
-                <Typography 
+                    <Typography
                     variant="h4" 
                     sx={{ 
                         mb: 5, 
@@ -444,17 +444,17 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                             bgcolor: '#2c3e50'
                         }
                     }}
-                >
-                    Form Information
-                </Typography>
+                    >
+                        Form Information
+                    </Typography>
 
                 <Box sx={{ mb: 4 }}>
-                    <FormControl fullWidth>
-                        <InputLabel>Child Name</InputLabel>
-                        <Select
-                            value={selectedStudentId}
-                            onChange={(e) => setSelectedStudentId(e.target.value)}
-                            label="Child Name"
+                                <FormControl fullWidth>
+                                    <InputLabel>Child Name</InputLabel>
+                                    <Select
+                                        value={selectedStudentId}
+                                        onChange={(e) => setSelectedStudentId(e.target.value)}
+                                        label="Child Name"
                             sx={{
                                 bgcolor: '#fff',
                                 '& .MuiOutlinedInput-notchedOutline': {
@@ -464,9 +464,9 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                         >
                             {studentList?.filter(student => !student.hadForm).map((student) => (
                                 <MenuItem key={student.id} value={student.id}>{student.name}</MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                                            ))}
+                                    </Select>
+                                </FormControl>
 
                     <Typography 
                         color="error" 
@@ -510,7 +510,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                                 fullWidth
                                 label="Full Name"
                                 value={selectedStudent?.name || ''}
-                                disabled
+                                            disabled
                                 sx={{ bgcolor: '#fff' }}
                             />
                         </Grid>
@@ -519,7 +519,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                                 fullWidth
                                 label="Gender"
                                 value={selectedStudent?.gender || ''}
-                                disabled
+                                            disabled
                                 sx={{ bgcolor: '#fff' }}
                             />
                         </Grid>
@@ -528,16 +528,16 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                                 fullWidth
                                 label="Date of Birth"
                                 value={selectedStudent?.dateOfBirth || ''}
-                                disabled
+                                    disabled
                                 sx={{ bgcolor: '#fff' }}
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextField
-                                fullWidth
+                                <TextField
+                                    fullWidth
                                 label="Place of Birth"
                                 value={selectedStudent?.placeOfBirth || ''}
-                                disabled
+                                    disabled
                                 sx={{ bgcolor: '#fff' }}
                             />
                         </Grid>
@@ -720,10 +720,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                     fullWidth
                     required
                     label="Household Registration Address"
-                    value={input.address}
+                                           value={input.address}
                     onChange={(e) => setInput({ ...input, address: e.target.value })}
-                    error={isSubmit && !input.address.trim()}
-                    helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
+                                           error={isSubmit && !input.address.trim()}
+                                           helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
                     sx={{ 
                         mb: 3,
                         bgcolor: '#fff',
@@ -737,8 +737,8 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
 
                 <TextField
                     fullWidth
-                    label="Note"
-                    value={input.note}
+                                           label="Note"
+                                           value={input.note}
                     onChange={(e) => setInput({ ...input, note: e.target.value })}
                     multiline
                     rows={4}
@@ -762,7 +762,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                         borderRadius: 2
                     }}
                 >
-                    <Typography 
+                    <Typography
                         variant="h6" 
                         sx={{ 
                             mb: 3, 
@@ -814,7 +814,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                         <Grid item xs={12} md={6}>
                             <Typography 
                                 variant="subtitle1" 
-                                sx={{ 
+                        sx={{
                                     mb: 1,
                                     fontWeight: 500,
                                     color: '#2c3e50'
@@ -822,7 +822,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                             >
                                 Commitment
                             </Typography>
-                            <Button
+                        <Button
                                 component="label"
                                 variant="outlined"
                                 startIcon={<CloudUpload />}
@@ -846,13 +846,13 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                                         commitment: e.target.files[0]
                                     })}
                                 />
-                            </Button>
+                        </Button>
                         </Grid>
                     </Grid>
                 </Paper>
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                    <Button
+                        <Button
                         variant="outlined"
                         onClick={handleClosePopUp}
                         sx={{ 
@@ -868,7 +868,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                         CANCEL
                     </Button>
                     <Button
-                        variant="contained"
+                            variant="contained"
                         onClick={HandleSubmit}
                         sx={{ 
                             px: 4,
@@ -879,10 +879,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
                         }}
                     >
                         SUBMIT
-                    </Button>
+                        </Button>
                 </Box>
-            </Box>
-        </Dialog>
+                </Box>
+            </Dialog>
     );
 }
 

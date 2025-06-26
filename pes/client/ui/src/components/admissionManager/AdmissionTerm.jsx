@@ -8,11 +8,13 @@ import {
     DialogTitle,
     FormControl,
     FormControlLabel,
-    FormLabel,
+    Grid,
     IconButton,
+    InputLabel,
+    MenuItem,
     Paper,
     RadioGroup,
-    Stack,
+    Select,
     Table,
     TableBody,
     TableCell,
@@ -23,22 +25,18 @@ import {
     TextField,
     Toolbar,
     Tooltip,
-    Typography,
-    Grid,
-    InputLabel,
-    Select,
-    MenuItem
+    Typography
 } from "@mui/material";
 import {Add, Close, Visibility} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import Radio from '@mui/material/Radio';
 import {createTerm, getTermList} from "../../services/AdmissionService.jsx";
 import {useSnackbar} from "notistack";
-import {format} from 'date-fns';
 import '../../styles/admissionManager/AdmissionTerm.css'
 import {ValidateTermFormData} from "../validation/ValidateTermFormData.jsx";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
+import ExtraTermForm from "./ExtraTermForm.jsx";
 
 function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
     const [page, setPage] = useState(0);
@@ -167,7 +165,7 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
                                                 onClick={() => handleDetailClick(term, 'view')}
                                                 sx={{mr: 1}}
                                             >
-                                                <Visibility/>
+                                                <Visibility color={"success"}/>
                                             </IconButton>
                                         </Tooltip>
                                     </TableCell>
@@ -195,12 +193,13 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
         startDate: null,
         endDate: null,
         grade: '',
-        maxStudent: 0,
-        minStudent: 0,
+        maxNumberRegistration: 0,
+        approvedForm: 0,
         description: ''
     });
 
-    //Đồng bộ formData từ selectedTerm
+    const [showExtraTermForm, setShowExtraTermForm] = useState(false);
+
     useEffect(() => {
         if (selectedTerm) {
             setFormData({
@@ -208,8 +207,8 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                 startDate: selectedTerm.startDate ? new Date(selectedTerm.startDate) : null,
                 endDate: selectedTerm.endDate ? new Date(selectedTerm.endDate) : null,
                 grade: selectedTerm.grade ?? '',
-                maxStudent: selectedTerm.maxStudent ?? 0,
-                minStudent: selectedTerm.minStudent ?? 0,
+                maxNumberRegistration: selectedTerm.maxNumberRegistration ?? 0,
+                approvedForm: selectedTerm.approvedForm ?? 0,
                 description: selectedTerm.description ?? ''
             });
         }
@@ -228,166 +227,512 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
         }
     };
 
-    const handleInputChange = (event) => {
-        const {name, value} = event.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleDateChange = (field, newValue) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: newValue
-        }));
-    };
+    const canAddExtraTerm = selectedTerm?.status === 'locked' && 
+                           selectedTerm?.approvedForm < selectedTerm?.maxNumberRegistration;
 
     return (
         <Dialog
-            fullScreen
             open={isPopUpOpen}
             onClose={handleClosePopUp}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+                }
+            }}
         >
-            <AppBar sx={{position: 'relative', backgroundColor: '#07663a'}}>
-                <Toolbar>
-                    <IconButton edge="start"
-                                color="inherit"
-                                onClick={handleClosePopUp}
-                                aria-label="close">
-                        <Close/>
-                    </IconButton>
-                    <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
-                        Admission Term Detail
+            <DialogTitle 
+                sx={{ 
+                    bgcolor: '#07663a',
+                    color: 'white',
+                    p: 2.5,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600, letterSpacing: '0.5px' }}>
+                        Term Details
                     </Typography>
                     <Box sx={{
-                        backgroundColor: getStatusColor(formData.status),
+                        backgroundColor: getStatusColor(selectedTerm?.status),
                         padding: '6px 16px',
-                        borderRadius: '16px',
-                        marginLeft: 2
+                        borderRadius: '30px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                     }}>
                         <Typography sx={{
-                            color: '#ffffff',
+                            fontSize: '0.875rem',
                             fontWeight: 600,
-                            textTransform: 'uppercase'
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
                         }}>
-                            {formData.status}
+                            {selectedTerm?.status}
                         </Typography>
                     </Box>
-                </Toolbar>
-            </AppBar>
-
-            <Box p={4}>
-                <Typography
-                    variant='subtitle1'
-                    sx={{mb: 2, fontWeight: 'bold', fontSize: "2.5rem", textAlign: "center", color: '#07663a'}}
+                </Box>
+                <IconButton 
+                                onClick={handleClosePopUp}
+                    sx={{ 
+                        color: 'white',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.1)'
+                        }
+                    }}
                 >
-                    Term Information
+                    <Close />
+                    </IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ p: 4, bgcolor: '#f8faf8' }}>
+                <Grid container spacing={3}>
+                    {/* Basic Information */}
+                    <Grid item xs={12}>
+                        <Paper 
+                            elevation={0} 
+                            sx={{ 
+                                p: 3, 
+                                border: '1px solid #e0e0e0',
+                                borderRadius: '16px',
+                                bgcolor: '#fff',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+                                }
+                            }}
+                        >
+                <Typography
+                                variant="h6" 
+                                sx={{ 
+                                    color: '#07663a',
+                                    fontWeight: 600,
+                                    mb: 3,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1
+                                }}
+                            >
+                                Basic Information
                 </Typography>
 
-                <Paper elevation={3} sx={{p: 3, mb: 3}}>
-                    <Typography variant="h6" gutterBottom>Term Information</Typography>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <DateTimePicker
-                                label="Start Date"
-                                value={formData.startDate ? dayjs(formData.startDate) : null}
-                                onChange={(newValue) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        startDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                    }));
-                                }}
-                                renderInput={(params) => <TextField {...params} fullWidth required/>}
-                                format="DD/MM/YYYY HH:mm"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <DateTimePicker
-                                label="End Date"
-                                value={formData.endDate ? dayjs(formData.endDate) : null}
-                                onChange={(newValue) => {
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        endDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                    }));
-                                }}
-                                renderInput={(params) => <TextField {...params} fullWidth required/>}
-                                format="DD/MM/YYYY HH:mm"
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <FormControl fullWidth required>
-                                <InputLabel>Grade</InputLabel>
-                                <Select
-                                    name="grade"
-                                    value={formData.grade}
-                                    onChange={handleInputChange}
-                                    label="Grade"
-                                >
-                                    <MenuItem value="GRADE_3">Grade 3</MenuItem>
-                                    <MenuItem value="GRADE_4">Grade 4</MenuItem>
-                                    <MenuItem value="GRADE_5">Grade 5</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Maximum Students"
-                                name="maxStudent"
-                                type="number"
-                                value={formData.maxStudent}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Minimum Students"
-                                name="minStudent"
-                                type="number"
-                                value={formData.minStudent}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                label="Description"
-                                name="description"
-                                multiline
-                                rows={4}
-                                value={formData.description}
-                                onChange={handleInputChange}
-                            />
-                        </Grid>
-                    </Grid>
-                </Paper>
-            </Box>
+                            <Grid container spacing={3}>
+                                {/* Name and Grade Row */}
+                                <Grid item xs={12} sm={8}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        p: 2,
+                                        bgcolor: '#f8faf8',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e0e0e0',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 600, 
+                                            width: 120,
+                                            color: '#666',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '":"',
+                                                position: 'absolute',
+                                                right: '16px'
+                                            }
+                                        }}>
+                                            Name
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            flex: 1,
+                                            color: '#2c3e50',
+                                            fontWeight: 500
+                                        }}>
+                                            {formData.name}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
 
-            <DialogActions sx={{justifyContent: 'flex-end', px: 4, py: 3}}>
-                <Button
-                    sx={{minWidth: 120, height: '44px'}}
-                    variant="contained"
-                    color="warning"
-                    onClick={handleClosePopUp}
-                >
-                    Close
-                </Button>
-            </DialogActions>
+                                <Grid item xs={12} sm={4}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        p: 2,
+                                        bgcolor: '#f8faf8',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e0e0e0',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 600, 
+                                            width: 120,
+                                            color: '#666',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '":"',
+                                                position: 'absolute',
+                                                right: '16px'
+                                            }
+                                        }}>
+                                            Grade
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            flex: 1,
+                                            color: '#2c3e50',
+                                            fontWeight: 500,
+                                            textTransform: 'capitalize'
+                                        }}>
+                                            {formData.grade?.toLowerCase()}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                {/* Start Date and End Date Row */}
+                                <Grid item xs={12} sm={6}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        p: 2,
+                                        bgcolor: '#f8faf8',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e0e0e0',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 600, 
+                                            width: 120,
+                                            color: '#666',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '":"',
+                                                position: 'absolute',
+                                                right: '16px'
+                                            }
+                                        }}>
+                                            Start Date
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            flex: 1,
+                                            color: '#2c3e50',
+                                            fontWeight: 500
+                                        }}>
+                                            {formData.startDate ? (
+                                                <Box component="span" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 600 }}>{dayjs(formData.startDate).format('DD/MM/YYYY')}</span>
+                                                    <span style={{ color: '#666' }}>at</span>
+                                                    <span>{dayjs(formData.startDate).format('HH:mm')}</span>
+                                                </Box>
+                                            ) : '-'}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={12} sm={6}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        p: 2,
+                                        bgcolor: '#f8faf8',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e0e0e0',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 600, 
+                                            width: 120,
+                                            color: '#666',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '":"',
+                                                position: 'absolute',
+                                                right: '16px'
+                                            }
+                                        }}>
+                                            End Date
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            flex: 1,
+                                            color: '#2c3e50',
+                                            fontWeight: 500
+                                        }}>
+                                            {formData.endDate ? (
+                                                <Box component="span" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 600 }}>{dayjs(formData.endDate).format('DD/MM/YYYY')}</span>
+                                                    <span style={{ color: '#666' }}>at</span>
+                                                    <span>{dayjs(formData.endDate).format('HH:mm')}</span>
+                                                </Box>
+                                            ) : '-'}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+
+                                {/* Registration Row */}
+                                <Grid item xs={12}>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center',
+                                        p: 2,
+                                        bgcolor: '#f8faf8',
+                                        borderRadius: '12px',
+                                        border: '1px solid #e0e0e0'
+                                    }}>
+                                        <Typography sx={{ 
+                                            fontWeight: 600, 
+                                            width: 120,
+                                            color: '#666',
+                                            position: 'relative',
+                                            '&::after': {
+                                                content: '":"',
+                                                position: 'absolute',
+                                                right: '16px'
+                                            }
+                                        }}>
+                                            Registration
+                                        </Typography>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 1,
+                                            flex: 1
+                                        }}>
+                                            <Typography sx={{ 
+                                                color: formData.approvedForm >= formData.maxNumberRegistration ? '#d32f2f' : '#07663a',
+                                                fontWeight: 700,
+                                                fontSize: '1.1rem'
+                                            }}>
+                                                {formData.approvedForm}
+                                            </Typography>
+                                            <Typography sx={{ color: '#666' }}>/</Typography>
+                                            <Typography sx={{ 
+                                                fontWeight: 700,
+                                                fontSize: '1.1rem',
+                                                color: '#2c3e50'
+                                            }}>
+                                                {formData.maxNumberRegistration}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Grid>
+
+                    {/* Extra Terms Section */}
+                    <Grid item xs={12}>
+                        <Paper 
+                            elevation={0} 
+                            sx={{ 
+                                bgcolor: 'white',
+                                borderRadius: '12px',
+                                p: 3,
+                                mt: 2
+                            }}
+                        >
+                            <Box sx={{ 
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                mb: 2
+                            }}>
+                                <Typography variant="h6" sx={{ color: '#07663a', fontWeight: 600 }}>
+                                    Extra Terms
+                                </Typography>
+                                {canAddExtraTerm && (
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<Add />}
+                                        onClick={() => setShowExtraTermForm(true)}
+                                        sx={{
+                                            bgcolor: '#07663a',
+                                            '&:hover': {
+                                                bgcolor: '#07663a',
+                                                opacity: 0.9
+                                            }
+                                        }}
+                                    >
+                                        Add Extra Term
+                                    </Button>
+                                )}
+                            </Box>
+
+                            {selectedTerm?.extraTerms && selectedTerm.extraTerms.length > 0 ? (
+                                <TableContainer sx={{ 
+                                    borderRadius: '12px', 
+                                    border: '1px solid #e0e0e0',
+                                    maxHeight: 300,
+                                    '&::-webkit-scrollbar': {
+                                        width: '8px',
+                                        height: '8px'
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        bgcolor: '#f1f1f1',
+                                        borderRadius: '4px'
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        bgcolor: '#888',
+                                        borderRadius: '4px',
+                                        '&:hover': {
+                                            bgcolor: '#555'
+                                        }
+                                    }
+                                }}>
+                                    <Table stickyHeader size="medium">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        fontWeight: 600,
+                                                        bgcolor: '#f8faf8',
+                                                        color: '#07663a',
+                                                        borderBottom: '2px solid #e0e0e0'
+                                                    }}
+                                                >
+                                                    Start Date
+                                                </TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        fontWeight: 600,
+                                                        bgcolor: '#f8faf8',
+                                                        color: '#07663a',
+                                                        borderBottom: '2px solid #e0e0e0'
+                                                    }}
+                                                >
+                                                    End Date
+                                                </TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        fontWeight: 600,
+                                                        bgcolor: '#f8faf8',
+                                                        color: '#07663a',
+                                                        borderBottom: '2px solid #e0e0e0'
+                                                    }}
+                                                >
+                                                    Registration
+                                                </TableCell>
+                                                <TableCell 
+                                                    sx={{ 
+                                                        fontWeight: 600,
+                                                        bgcolor: '#f8faf8',
+                                                        color: '#07663a',
+                                                        borderBottom: '2px solid #e0e0e0'
+                                                    }}
+                                                >
+                                                    Status
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {selectedTerm.extraTerms.map((extraTerm, index) => (
+                                                <TableRow 
+                                                    key={index}
+                                                    sx={{
+                                                        '&:last-child td, &:last-child th': { 
+                                                            border: 0 
+                                                        },
+                                                        '&:hover': { 
+                                                            bgcolor: '#f5f5f5',
+                                                            transition: 'all 0.2s ease'
+                                                        },
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <TableCell sx={{ color: '#2c3e50' }}>
+                                                        {dayjs(extraTerm.startDate).format('DD/MM/YYYY HH:mm')}
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#2c3e50' }}>
+                                                        {dayjs(extraTerm.endDate).format('DD/MM/YYYY HH:mm')}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1
+                                                        }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: extraTerm.approvedForm >= extraTerm.maxNumberRegistration ? '#d32f2f' : '#07663a',
+                                                                    fontWeight: 700,
+                                                                    fontSize: '0.95rem'
+                                                                }}
+                                                            >
+                                                                {extraTerm.approvedForm}
+                                                            </Typography>
+                                                            <Typography sx={{ color: '#666' }}>/</Typography>
+                                                            <Typography sx={{ 
+                                                                fontWeight: 700,
+                                                                fontSize: '0.95rem',
+                                                                color: '#2c3e50'
+                                                            }}>
+                                                                {extraTerm.maxNumberRegistration}
+                                                            </Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Box sx={{
+                                                            backgroundColor: getStatusColor(extraTerm.status),
+                                                            padding: '6px 16px',
+                                                            borderRadius: '20px',
+                                                            display: 'inline-block',
+                                                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                                                        }}>
+                                                            <Typography sx={{
+                                                                color: '#ffffff',
+                                                                fontWeight: 600,
+                                                                fontSize: '0.75rem',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.5px'
+                                                            }}>
+                                                                {extraTerm.status}
+                                                            </Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            ) : (
+                                <Box sx={{
+                                    p: 4,
+                                    textAlign: 'center',
+                                    bgcolor: '#f8faf8',
+                                    borderRadius: '12px',
+                                    border: '1px dashed #ccc'
+                                }}>
+                                    <Typography 
+                                        variant="body1" 
+                                        sx={{ 
+                                            color: '#666',
+                                            fontStyle: 'italic',
+                                            mb: 1
+                                        }}
+                                    >
+                                        No extra terms available
+                                    </Typography>
+                                    {canAddExtraTerm && (
+                                        <Typography 
+                                            variant="body2" 
+                                            sx={{ color: '#07663a' }}
+                                        >
+                                            Click the button above to add a new extra term
+                                        </Typography>
+                                    )}
+                                </Box>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
+            </DialogContent>
+
+            {/* Extra Term Form Dialog */}
+            {showExtraTermForm && (
+                <ExtraTermForm
+                    formData={selectedTerm}
+                    onClose={() => setShowExtraTermForm(false)}
+                    getStatusColor={getStatusColor}
+                />
+            )}
         </Dialog>
     );
 }
@@ -414,19 +759,19 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
         }
 
         try {
-            const response = await createTerm(
-                formData.startDate,
-                formData.endDate,
+        const response = await createTerm(
+            formData.startDate,
+            formData.endDate,
                 formData.grade,
                 formData.maxNumberRegistration
-            );
+        );
 
-            if (response.success) {
+        if (response.success) {
                 enqueueSnackbar("Term created successfully", {variant: "success"});
-                handleClosePopUp();
+            handleClosePopUp();
                 GetTerm();
-            } else {
-                enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
+        } else {
+            enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
             }
         } catch (error) {
             console.error("Error creating term:", error);
@@ -490,7 +835,7 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
                                 control={
                                     <Radio sx={{
                                         color: '#2e7d32',
-                                        '&.Mui-checked': {
+                                '&.Mui-checked': {
                                             color: '#2e7d32',
                                         }
                                     }}/>
@@ -520,7 +865,7 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
                                 control={
                                     <Radio sx={{
                                         color: '#ed6c02',
-                                        '&.Mui-checked': {
+                                '&.Mui-checked': {
                                             color: '#ed6c02',
                                         }
                                     }}/>
@@ -550,7 +895,7 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
                                 control={
                                     <Radio sx={{
                                         color: '#0288d1',
-                                        '&.Mui-checked': {
+                                '&.Mui-checked': {
                                             color: '#0288d1',
                                         }
                                     }}/>
@@ -676,6 +1021,10 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
 
     const seedMaxRegistrations = terms.filter(term => term.grade === 'SEED').reduce((sum, term) => sum + term.maxNumberRegistration, 0);
     const seedRegistered = terms.filter(term => term.grade === 'SEED').reduce((sum, term) => sum + (term.approvedForm || 0), 0);
+
+
+    const leafMaxRegistrations = terms.filter(term => term.grade === 'LEAF').reduce((sum, term) => sum + term.maxNumberRegistration, 0);
+    const leafRegistered = terms.filter(term => term.grade === 'LEAF').reduce((sum, term) => sum + (term.approvedForm || 0), 0);
 
     return (
         <div className="container">
@@ -809,6 +1158,56 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelect
                             <Typography variant="h5" sx={{color: '#666'}}>/</Typography>
                             <Typography variant="h5" sx={{color: '#2c3e50', fontWeight: 700}}>
                                 {seedMaxRegistrations}
+                            </Typography>
+                        </Box>
+                    </Box>
+                </Paper>
+
+                {/* LEAF Grade Stats */}
+                <Paper sx={{
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundColor: '#f8faf8',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '12px'
+                }}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2
+                    }}>
+                        <Box sx={{
+                            backgroundColor: '#3B86CB',
+                            color: 'white',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: '16px',
+                            fontWeight: 600
+                        }}>
+                            LEAF
+                        </Box>
+                        <Typography variant="h6" sx={{color: '#07663a', fontWeight: 600}}>
+                            Registration:
+                        </Typography>
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}>
+                            <Typography
+                                variant="h5"
+                                sx={{
+                                    color: leafRegistered >= leafMaxRegistrations ? '#d32f2f' : '#07663a',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {leafRegistered}
+                            </Typography>
+                            <Typography variant="h5" sx={{color: '#666'}}>/</Typography>
+                            <Typography variant="h5" sx={{color: '#2c3e50', fontWeight: 700}}>
+                                {leafMaxRegistrations}
                             </Typography>
                         </Box>
                     </Box>

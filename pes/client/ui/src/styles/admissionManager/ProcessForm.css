@@ -31,6 +31,7 @@ p {
 }
 
 .css-1umw9bq-MuiSvgIcon-root {
+    fill: darkgray !important;
 }
 
 .css-1yndtgp-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiSvgIcon-root {
@@ -59,10 +60,6 @@ p {
 
 .status-color-blue{
     color: blue !important;
-}
-
-.css-1umw9bq-MuiSvgIcon-root {
-    fill: white !important;
 }
 
 .css-35pwe3-MuiPaper-root-MuiAppBar-root {
