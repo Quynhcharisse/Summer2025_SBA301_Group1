@@ -25,13 +25,13 @@ function ClassForm({
 }) {
     const [formData, setFormData] = useState({
         name: '',
-        teacherId: '',
+        teacherId: null,
         syllabusId: '',
         numberStudent: 1,
         roomNumber: '',
         startDate: '',
         endDate: '',
-        status: 'active',
+        status: 'ACTIVE_TERM',
         grade: ''
     });
 
@@ -41,13 +41,13 @@ function ClassForm({
         if (open) {
             setFormData({
                 name: '',
-                teacherId: '',
+                teacherId: null,
                 syllabusId: '',
                 numberStudent: 1,
                 roomNumber: '',
                 startDate: '',
                 endDate: '',
-                status: 'active',
+                status: 'ACTIVE_TERM',
                 grade: ''
             });
             setErrors([]);
@@ -153,7 +153,14 @@ function ClassForm({
     const statusOptions = [
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
-        { value: 'pending', label: 'Pending' }
+        { value: 'PENDING_APPROVAL', label: 'Pending Approval' },
+        { value: 'DRAFT', label: 'Draft' },
+        { value: 'CANCELLED', label: 'Cancelled' },
+        { value: 'APPROVED', label: 'Approved' },
+        { value: 'REJECTED', label: 'Rejected' },
+        { value: 'ACTIVE_TERM', label: 'Active Term' },
+        { value: 'INACTIVE_TERM', label: 'Inactive Term' },
+        { value: 'LOCKED_TERM', label: 'Locked Term' }
     ];
 
     return (

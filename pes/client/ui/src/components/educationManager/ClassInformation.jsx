@@ -30,7 +30,7 @@ const ClassInformation = ({
     classLessons,
     onTeacherClick,
     teachers = [],
-    syllabi = [],
+    syllabi,
     onUpdateClass
 }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -40,8 +40,8 @@ const ClassInformation = ({
     const initializeEditData = () => {
         setEditData({
             name: classData?.name || '',
-            teacherId: classData?.teacher?.id || '',
-            syllabusId: classData?.syllabus?.id || '',
+            teacherId: classData?.teacher?.id || null,
+            syllabusId: classData?.syllabus?.id || null,
             numberStudent: classData?.numberStudent || 1,
             roomNumber: classData?.roomNumber || '',
             startDate: classData?.startDate || '',
@@ -152,7 +152,7 @@ const ClassInformation = ({
     const statusOptions = [
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
-        { value: 'pending', label: 'Pending' }
+        { value: 'pending approval', label: 'Pending Approval' }
     ];
 
     const getStatusColor = (status) => {
@@ -233,9 +233,11 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Status</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
+                                    <InputLabel>Status</InputLabel>
                                     <Select
                                         value={editData.status}
                                         onChange={(e) => handleFieldChange('status', e.target.value)}
+                                        label="Status"
                                     >
                                         {statusOptions.map((status) => (
                                             <MenuItem key={status.value} value={status.value}>
@@ -315,9 +317,11 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
+                                    <InputLabel>Teacher</InputLabel>
                                     <Select
                                         value={editData.teacherId}
                                         onChange={(e) => handleFieldChange('teacherId', e.target.value)}
+                                        label="Teacher"
                                         error={errors.some(error => error.includes('Teacher'))}
                                     >
                                         {teachers && teachers
@@ -455,54 +459,72 @@ const ClassInformation = ({
             {/* Syllabus Section */}
             <Box>
                 <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <Assignment sx={{color: '#1976d2'}}/>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Assignment sx={{ color: '#1976d2' }} />
                     <Typography variant="h6" color="primary">
                         Syllabus Information
                     </Typography>
                 </Box>
-                {syllabus ? (
-                    <Stack spacing={2}>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
-                            <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
-                        </Box>
-                        {syllabus.description && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Description</Typography>
-                                <Typography variant="body1">{syllabus.description}</Typography>
-                            </Box>
-                        )}
-                        {classLessons.length > 0 && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
-                                    Associated Lessons ({classLessons.length})
-                                </Typography>
-                                <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
-                                    {classLessons.slice(0, 5).map((lesson) => (
-                                        <Chip
-                                            key={lesson.id}
-                                            label={lesson.topic}
-                                            size="small"
-                                            variant="outlined"
-                                            color="secondary"
-                                        />
-                                    ))}
-                                    {classLessons.length > 5 && (
-                                        <Chip
-                                            label={`+${classLessons.length - 5} more`}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    </Stack>
+                {isEditing ? (
+                    <FormControl size="small" fullWidth>
+                        <InputLabel>Syllabus</InputLabel>
+                        <Select
+                            value={editData.syllabusId}
+                            onChange={(e) => handleFieldChange('syllabusId', e.target.value)}
+                            label="Syllabus"
+                            error={errors.some(error => error.includes('Syllabus'))}
+                        >
+                            {syllabi && syllabi.map((syl) => (
+                                <MenuItem key={syl.id} value={syl.id}>
+                                    {syl.title}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 ) : (
-                    <Alert severity="info">
-                        No syllabus assigned to this class yet.
-                    </Alert>
+                    syllabus ? (
+                        <Stack spacing={2}>
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
+                                <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
+                            </Box>
+                            {syllabus.description && (
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">Description</Typography>
+                                    <Typography variant="body1">{syllabus.description}</Typography>
+                                </Box>
+                            )}
+                            {classLessons.length > 0 && (
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Associated Lessons ({classLessons.length})
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        {classLessons.slice(0, 5).map((lesson) => (
+                                            <Chip
+                                                key={lesson.id}
+                                                label={lesson.topic}
+                                                size="small"
+                                                variant="outlined"
+                                                color="secondary"
+                                            />
+                                        ))}
+                                        {classLessons.length > 5 && (
+                                            <Chip
+                                                label={`+${classLessons.length - 5} more`}
+                                                size="small"
+                                                variant="outlined"
+                                            />
+                                        )}
+                                    </Box>
+                                </Box>
+                            )}
+                        </Stack>
+                    ) : (
+                        <Alert severity="info">
+                            No syllabus assigned to this class yet.
+                        </Alert>
+                    )
                 )}
             </Box>
         </Box>
