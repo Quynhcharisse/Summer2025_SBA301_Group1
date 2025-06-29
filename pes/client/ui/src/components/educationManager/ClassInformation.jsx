@@ -45,8 +45,7 @@ const ClassInformation = ({
             syllabusId: classData?.syllabus?.id || null,
             numberStudent: classData?.numberStudent || 1,
             roomNumber: classData?.roomNumber || '',
-            startDate: classData?.startDate || '',
-            endDate: classData?.endDate || '',
+            startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
             status: classData?.status || 'active',
             grade: classData?.grade || ''
         });
@@ -86,16 +85,8 @@ const ClassInformation = ({
             validationErrors.push('Start date is required');
         }
         
-        if (!editData.endDate) {
-            validationErrors.push('End date is required');
-        }
-        
         if (editData.numberStudent <= 0) {
             validationErrors.push('Number of students must be greater than 0');
-        }
-        
-        if (editData.startDate && editData.endDate && new Date(editData.startDate) >= new Date(editData.endDate)) {
-            validationErrors.push('End date must be after start date');
         }
         
         if (editData.startDate) {
@@ -131,7 +122,12 @@ const ClassInformation = ({
         }
 
         try {
-            await onUpdateClass(classData.id, editData);
+            const updatedClassData = { ...editData };
+            if (updatedClassData.startDate) {
+                updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
+            }
+            updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
+            await onUpdateClass(classData.id, updatedClassData);
             setIsEditing(false);
             setErrors([]);
         } catch (error) {
@@ -141,10 +137,20 @@ const ClassInformation = ({
     };
 
     const handleFieldChange = (field, value) => {
-        setEditData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setEditData(prev => {
+            const newState = {
+                ...prev,
+                [field]: value
+            };
+
+            if (field === 'startDate' && value) {
+                const startYear = parseInt(value);
+                if (!isNaN(startYear)) {
+                    newState.endDate = (startYear + 1).toString();
+                }
+            }
+            return newState;
+        });
         
         if (errors.length > 0) {
             setErrors(errors.filter(error => !error.toLowerCase().includes(field.toLowerCase())));
@@ -402,15 +408,22 @@ const ClassInformation = ({
                         <Box>
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>
                             {isEditing ? (
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    value={editData.roomNumber}
-                                    onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
-                                    error={errors.some(error => error.includes('Room number'))}
-                                />
+                                <FormControl size="small" fullWidth error={errors.some(error => error.includes('Room number'))}>
+                                    <InputLabel>Room Number</InputLabel>
+                                    <Select
+                                        value={editData.roomNumber}
+                                        onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
+                                        label="Room Number"
+                                    >
+                                        {[...Array(20)].map((_, i) => (
+                                            <MenuItem key={i + 1} value={(i + 1).toString()}>
+                                                {`Room ${i + 1}`}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                             ) : (
-                                <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
+                                <Typography variant="body1">{classData?.roomNumber ? `Room ${classData.roomNumber}` : 'Not assigned'}</Typography>
                             )}
                         </Box>
                         <Box>
@@ -442,35 +455,20 @@ const ClassInformation = ({
                 </Box>
                 <Box sx={{display: 'flex', gap: 2}}>
                     <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">Start Date</Typography>
+                        <Typography variant="body2" color="text.secondary">Start Year</Typography>
                         {isEditing ? (
                             <TextField
-                                type="date"
+                                type="number"
                                 size="small"
-                                fullWidth
+                                sx={{ width: '120px' }}
                                 value={editData.startDate}
                                 onChange={(e) => handleFieldChange('startDate', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
                                 error={errors.some(error => error.includes('Start date'))}
+                                inputProps={{ min: 1900, max: 2100 }}
                             />
                         ) : (
                             <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">End Date</Typography>
-                        {isEditing ? (
-                            <TextField
-                                type="date"
-                                size="small"
-                                fullWidth
-                                value={editData.endDate}
-                                onChange={(e) => handleFieldChange('endDate', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                error={errors.some(error => error.includes('End date'))}
-                            />
-                        ) : (
-                            <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
                         )}
                     </Box>
                 </Box>
