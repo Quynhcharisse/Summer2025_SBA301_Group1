@@ -23,7 +23,6 @@ import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.repositories.StudentClassRepo;
 import com.sba301.group1.pes_be.models.StudentClass;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -57,8 +56,6 @@ public class PesBeApplication {
     private final StudentRepo studentRepo;
 
     private final ParentRepo parentRepo;
-
-    private final EntityManager entityManager;
 
     public static void main(String[] args) {
         SpringApplication.run(PesBeApplication.class, args);

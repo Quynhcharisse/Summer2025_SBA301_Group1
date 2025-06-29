@@ -35,6 +35,7 @@ import com.sba301.group1.pes_be.response.LessonResponse;
 import com.sba301.group1.pes_be.response.ResponseObject;
 import com.sba301.group1.pes_be.response.ScheduleResponse;
 import com.sba301.group1.pes_be.response.SimpleStudentResponse;
+import com.sba301.group1.pes_be.response.RoomResponse;
 import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.response.TeacherResponse;
 import com.sba301.group1.pes_be.services.EducationService;
@@ -49,11 +50,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -2233,6 +2239,43 @@ public class EducationServiceImpl implements EducationService {
                     .data(null)
                     .build()
             );
+        }
+    }
+
+    @Override
+    public ResponseEntity<List<RoomResponse>> getAllRoomsWithStatus() {
+        try {
+            List<Classes> allClasses = classesRepo.findAll();
+            Set<String> occupiedRooms = new HashSet<>();
+            LocalDate currentDate = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            for (Classes classEntity : allClasses) {
+                try {
+                    LocalDate endDate = LocalDate.parse(classEntity.getEndDate(), formatter);
+                    if (endDate.isAfter(currentDate) || endDate.isEqual(currentDate)) {
+                        occupiedRooms.add(classEntity.getRoomNumber());
+                    }
+                } catch (Exception e) {
+                    // Log error or handle invalid date format
+                    System.err.println("Error parsing end date for class " + classEntity.getId() + ": " + e.getMessage());
+                }
+            }
+
+            List<String> allRooms = Arrays.asList("Room 101", "Room 102", "Room 103", "Room 104", "Room 105");
+            List<RoomResponse> roomResponses = allRooms.stream()
+                .map(roomNumber -> new RoomResponse(roomNumber, occupiedRooms.contains(roomNumber)))
+                .collect(Collectors.toList());
+
+            if (roomResponses.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>()); // Return empty list for 404
+            }
+
+            return ResponseEntity.ok().body(roomResponses);
+        } catch (Exception e) {
+            // Log the exception for debugging
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>()); // Return empty list for error
         }
     }
 }
