@@ -61,8 +61,8 @@ public class TeacherResponse {
 
         // Add class information if available and check if teacher is occupied
         boolean isOccupied = false;
-        if (account.getClasses() != null) {
-            Classes classEntity = account.getClasses();
+        if (account.getClassesList() != null && !account.getClassesList().isEmpty()) {
+            Classes classEntity = account.getClassesList().get(0); // Assuming a teacher is associated with one primary class for this response
             isOccupied = "active".equalsIgnoreCase(classEntity.getStatus());
             
             ClassInfo classInfo = ClassInfo.builder()
