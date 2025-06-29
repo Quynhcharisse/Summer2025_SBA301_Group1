@@ -278,6 +278,13 @@ public interface EducationService {
     ResponseEntity<ResponseObject> createSchedule(CreateScheduleRequest request);
 
     /**
+     * Creates a new schedule with associated activities.
+     * @param request the schedule creation request including activities
+     * @return ResponseEntity containing the operation result
+     */
+    ResponseEntity<ResponseObject> createScheduleWithActivities(CreateScheduleRequest request);
+
+    /**
      * Updates an existing schedule
      * @param scheduleId the ID of the schedule to update
      * @param request the schedule update request

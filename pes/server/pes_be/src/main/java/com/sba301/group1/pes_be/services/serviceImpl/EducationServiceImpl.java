@@ -1497,6 +1497,88 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
+    public ResponseEntity<ResponseObject> createScheduleWithActivities(CreateScheduleRequest request) {
+        try {
+            // Validate schedule request (includes duplicate check)
+            String validationError = CreateScheduleValidation.validate(request, classesRepo, scheduleRepo);
+            if (!validationError.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                        .message(validationError)
+                        .success(false)
+                        .data(null)
+                        .build()
+                );
+            }
+
+            // Get class (validation already checked it exists)
+            Classes classes = classesRepo.findById(request.getClassId()).get();
+
+            // Create and save the schedule first
+            Schedule schedule = Schedule.builder()
+                .weekNumber(request.getWeekNumber())
+                .note(request.getNote())
+                .classes(classes)
+                .build();
+
+            Schedule savedSchedule = scheduleRepo.save(schedule);
+
+            // Process activities if provided
+            List<Activity> savedActivities = new ArrayList<>();
+            if (request.getActivities() != null && !request.getActivities().isEmpty()) {
+                for (CreateActivityRequest activityRequest : request.getActivities()) {
+                    // Validate activity request (without scheduleId, as it's being set here)
+                    String activityValidationError = CreateActivityValidation.validate(activityRequest, scheduleRepo);
+                    // Temporarily remove scheduleId validation for this context
+                    // Re-validate if needed, but for now, assume activities are valid in themselves
+                    if (!activityValidationError.isEmpty() && !activityValidationError.contains("Schedule not found")) {
+                        throw new RuntimeException("Activity validation failed: " + activityValidationError);
+                    }
+
+                    Activity activity = Activity.builder()
+                        .topic(activityRequest.getTopic())
+                        .description(activityRequest.getDescription())
+                        .dayOfWeek(activityRequest.getDayOfWeek())
+                        .startTime(activityRequest.getStartTime())
+                        .endTime(activityRequest.getEndTime())
+                        .schedule(savedSchedule) // Associate with the newly created schedule
+                        .build();
+
+                    if (activityRequest.getLessonId() != null) {
+                        if (lessonRepo.existsById(activityRequest.getLessonId())) {
+                            activity.setLesson(Lesson.builder().id(activityRequest.getLessonId()).build());
+                        } else {
+                            throw new RuntimeException("Lesson not found for activity: " + activityRequest.getLessonId());
+                        }
+                    }
+                    savedActivities.add(activity);
+                }
+                activityRepo.saveAll(savedActivities);
+                savedSchedule.setActivities(savedActivities); // Set activities on the schedule
+            }
+
+            ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(savedSchedule);
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                ResponseObject.builder()
+                    .message("Schedule and activities created successfully")
+                    .success(true)
+                    .data(scheduleResponse)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ResponseObject.builder()
+                    .message("Error creating schedule with activities: " + e.getMessage())
+                    .success(false)
+                    .data(null)
+                    .build()
+            );
+        }
+    }
+
+    @Override
     public ResponseEntity<ResponseObject> updateSchedule(Integer scheduleId, UpdateScheduleRequest request) {
         try {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);

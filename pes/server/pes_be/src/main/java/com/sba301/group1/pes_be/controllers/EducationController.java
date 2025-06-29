@@ -134,6 +134,13 @@ public class EducationController {
         return educationService.createSchedule(request);
     }
 
+    @PostMapping("/schedules/with-activities")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a new schedule with associated activities")
+    public ResponseEntity<ResponseObject> createScheduleWithActivities(@RequestBody CreateScheduleRequest request) {
+        return educationService.createScheduleWithActivities(request);
+    }
+
     @PutMapping("/schedules/{scheduleId}")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Update an existing schedule")
