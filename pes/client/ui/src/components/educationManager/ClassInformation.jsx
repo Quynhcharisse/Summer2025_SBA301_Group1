@@ -89,12 +89,10 @@ const ClassInformation = ({
         }
         
         if (editData.startDate) {
-            const today = new Date();
-            const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const startDate = new Date(editData.startDate);
-            
-            if (startDate < oneWeekFromNow) {
-                validationErrors.push('Start date must be at least 1 week from now');
+            const currentYear = new Date().getFullYear();
+            const startYear = parseInt(editData.startDate);
+            if (startYear < currentYear) {
+                validationErrors.push('Start year cannot be in the past');
             }
         }
         
@@ -181,9 +179,11 @@ const ClassInformation = ({
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString();
+    const formatSchoolYear = (startDateString, endDateString) => {
+        if (!startDateString || !endDateString) return 'Not set';
+        const startYear = new Date(startDateString).getFullYear();
+        const endYear = new Date(endDateString).getFullYear();
+        return `${startYear} - ${endYear}`;
     };
 
     return (
@@ -446,17 +446,17 @@ const ClassInformation = ({
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
                     <CalendarToday sx={{color: '#1976d2'}}/>
                     <Typography variant="h6" color="primary">
-                        Schedule Period
+                        Class Period
                     </Typography>
                 </Box>
                 <Box sx={{display: 'flex', gap: 2}}>
                     <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">Start Year</Typography>
                         {isEditing ? (
                             <TextField
                                 type="number"
                                 size="small"
                                 sx={{ width: '120px' }}
+                                label="Start Year"
                                 value={editData.startDate}
                                 onChange={(e) => handleFieldChange('startDate', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
@@ -464,7 +464,10 @@ const ClassInformation = ({
                                 inputProps={{ min: 1900, max: 2100 }}
                             />
                         ) : (
-                            <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">School Year</Typography>
+                                <Typography variant="body1">{formatSchoolYear(classData?.startDate, classData?.endDate)}</Typography>
+                            </Box>
                         )}
                     </Box>
                 </Box>
