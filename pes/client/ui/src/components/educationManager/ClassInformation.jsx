@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     Alert,
     Box,
@@ -11,8 +11,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
-} from '@mui/material';
+    MenuItem} from '@mui/material';
 import {
     Assignment,
     CalendarToday,
@@ -22,6 +21,7 @@ import {
     Save,
     Cancel
 } from '@mui/icons-material';
+import { getRoomAvailability } from '../../services/EducationService.jsx';
 
 const ClassInformation = ({
     classData,
@@ -36,6 +36,7 @@ const ClassInformation = ({
     const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
+    const [roomAvailability, setRoomAvailability] = useState([]);
 
     const initializeEditData = useCallback(() => {
         setEditData({
@@ -43,7 +44,7 @@ const ClassInformation = ({
             teacherId: classData?.teacher?.id || null,
             syllabusId: classData?.syllabus?.id || null,
             numberStudent: classData?.numberStudent || 1,
-            roomNumber: classData?.roomNumber || '',
+            roomNumber: classData?.roomNumber || null,
             startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
             status: classData?.status?.toLowerCase() || 'active',
             grade: classData?.grade || ''
@@ -51,11 +52,28 @@ const ClassInformation = ({
     }, [classData]);
 
     // Effect to initialize editData when in create mode or when classData changes
-    React.useEffect(() => {
+    useEffect(() => {
         if (isCreateMode || classData) {
             initializeEditData();
         }
-    }, [isCreateMode, classData, initializeEditData]); 
+    }, [isCreateMode, classData, initializeEditData]);
+
+    // Effect to fetch room availability when in edit mode or create mode
+    useEffect(() => {
+        const fetchRoomData = async () => {
+            try {
+                const data = await getRoomAvailability();
+                setRoomAvailability(data);
+            } catch (error) {
+                console.error('Failed to fetch room availability:', error);
+                setErrors(prev => [...prev, 'Failed to load room availability.']);
+            }
+        };
+
+        if (isEditing || isCreateMode) {
+            fetchRoomData();
+        }
+    }, [isEditing, isCreateMode]);
 
     const validateForm = () => {
         const validationErrors = [];
@@ -123,6 +141,9 @@ const ClassInformation = ({
             if (updatedClassData.startDate) {
                 updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
             }
+            if (updatedClassData.roomNumber) {
+                updatedClassData.roomNumber = updatedClassData.roomNumber.replace('Room ', '');
+            }
             updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
             await onUpdateClass(classData.id, updatedClassData);
             setIsEditing(false);
@@ -135,9 +156,16 @@ const ClassInformation = ({
 
     const handleFieldChange = (field, value) => {
         setEditData(prev => {
+            let processedValue = value;
+            if (field === 'roomNumber') {
+                processedValue = parseInt(value, 10);
+                if (isNaN(processedValue)) {
+                    processedValue = ''; // Handle invalid input, e.g., empty string
+                }
+            }
             const newState = {
                 ...prev,
-                [field]: value
+                [field]: processedValue
             };
 
             if (field === 'startDate' && value) {
@@ -406,16 +434,37 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth error={errors.some(error => error.includes('Room number'))}>
-                                    {!isEditing && <InputLabel shrink={false}>Room Number</InputLabel>}
                                     <Select
                                         value={editData.roomNumber}
                                         onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
+                                        displayEmpty // Allows displaying the placeholder when value is null/undefined
+                                        renderValue={(selected) => {
+                                            if (selected === null || selected === '') {
+                                                return <em>Room Number</em>; // Placeholder text
+                                            }
+                                            return `Room ${selected}`;
+                                        }}
                                     >
-                                        {[...Array(20)].map((_, i) => (
-                                            <MenuItem key={i + 1} value={(i + 1).toString()}>
-                                                {`Room ${i + 1}`}
-                                            </MenuItem>
-                                        ))}
+                                        {roomAvailability.map((room) => {
+                                            const isCurrentRoom = room.roomNumber.toString() === classData?.roomNumber?.toString();
+                                            const isDisabled = room.isOccupied && !isCurrentRoom;
+                                            const showOccupied = room.isOccupied && !isCurrentRoom;
+
+                                            return (
+                                                <MenuItem
+                                                    key={room.roomNumber}
+                                                    value={room.roomNumber}
+                                                    disabled={isDisabled}
+                                                    sx={{
+                                                        color: isDisabled ? 'text.disabled' : 'text.primary',
+                                                        opacity: isDisabled ? 0.6 : 1
+                                                    }}
+                                                >
+                                                    {`Room ${room.roomNumber}`}
+                                                    {showOccupied && ' (occupied)'}
+                                                </MenuItem>
+                                            );
+                                        })}
                                     </Select>
                                 </FormControl>
                             ) : (

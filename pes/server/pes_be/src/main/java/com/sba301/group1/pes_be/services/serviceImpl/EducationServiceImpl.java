@@ -2278,5 +2278,38 @@ public class EducationServiceImpl implements EducationService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>()); // Return empty list for error
         }
     }
+
+    @Override
+    public ResponseEntity<List<RoomResponse>> getRoomAvailability() {
+        try {
+            List<Classes> allClasses = classesRepo.findAll();
+            Set<Integer> occupiedRoomNumbers = new HashSet<>();
+
+            for (Classes classEntity : allClasses) {
+                if (classEntity.getRoomNumber() != null && !classEntity.getRoomNumber().isEmpty()) {
+                    try {
+                        // Extract room number from string like "Room 1"
+                        String roomNumStr = classEntity.getRoomNumber().replaceAll("[^0-9]", "");
+                        if (!roomNumStr.isEmpty()) {
+                            occupiedRoomNumbers.add(Integer.parseInt(roomNumStr));
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing room number for class " + classEntity.getId() + ": " + classEntity.getRoomNumber());
+                    }
+                }
+            }
+
+            List<RoomResponse> roomAvailabilityList = new ArrayList<>();
+            for (int i = 1; i <= 20; i++) {
+                boolean isOccupied = occupiedRoomNumbers.contains(i);
+                roomAvailabilityList.add(new RoomResponse("Room " + i, isOccupied));
+            }
+
+            return ResponseEntity.ok().body(roomAvailabilityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
 }
 

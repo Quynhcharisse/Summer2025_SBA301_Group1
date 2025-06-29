@@ -402,4 +402,11 @@ public interface EducationService {
      * @return ResponseEntity containing a list of RoomResponse objects with occupancy status.
      */
     ResponseEntity<List<RoomResponse>> getAllRoomsWithStatus();
+
+    /**
+     * Retrieves a list of all rooms (1-20) with their occupancy status.
+     * A room is considered occupied if there is at least one class assigned to it.
+     * @return ResponseEntity containing a list of RoomResponse objects.
+     */
+    ResponseEntity<List<RoomResponse>> getRoomAvailability();
 }

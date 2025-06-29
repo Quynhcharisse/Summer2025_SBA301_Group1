@@ -437,4 +437,11 @@ public class EducationController {
     public ResponseEntity<List<RoomResponse>> getAllRoomsWithStatus() {
         return educationService.getAllRoomsWithStatus();
     }
+
+    @GetMapping("/rooms/availability")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get room availability (1-20)", description = "Retrieves a list of rooms from 1 to 20 with their occupancy status.")
+    public ResponseEntity<List<RoomResponse>> getRoomAvailability() {
+        return educationService.getRoomAvailability();
+    }
 }
