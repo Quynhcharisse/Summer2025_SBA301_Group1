@@ -31,9 +31,10 @@ const ClassInformation = ({
     onTeacherClick,
     teachers = [],
     syllabi,
-    onUpdateClass
+    onUpdateClass,
+    isCreateMode // Add isCreateMode prop
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
 
@@ -50,6 +51,13 @@ const ClassInformation = ({
             grade: classData?.grade || ''
         });
     };
+
+    // Effect to initialize editData when in create mode or when classData changes
+    React.useEffect(() => {
+        if (isCreateMode || classData) {
+            initializeEditData();
+        }
+    }, [isCreateMode, classData]); // Depend on isCreateMode and classData
 
     const validateForm = () => {
         const validationErrors = [];
@@ -266,51 +274,63 @@ const ClassInformation = ({
                                 </Typography>
                             </Box>
                             {/* Edit button positioned to the right of Details heading */}
-                            {!isEditing ? (
+                            {isCreateMode ? (
                                 <Button
-                                    variant="outlined"
-                                    startIcon={<Edit sx={{ color: '#1976d2' }} />}
-                                    onClick={handleEdit}
+                                    variant="contained"
+                                    startIcon={<Save sx={{ color: 'white' }} />}
+                                    onClick={handleSave}
                                     size="small"
-                                    sx={{
-                                        borderColor: '#1976d2',
-                                        color: '#1976d2',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                            borderColor: '#1976d2'
-                                        }
-                                    }}
+                                    color="primary"
                                 >
-                                    Edit Class
+                                    Create
                                 </Button>
                             ) : (
-                                <Stack direction="row" spacing={1}>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<Save sx={{ color: 'white' }} />}
-                                        onClick={handleSave}
-                                        size="small"
-                                        color="primary"
-                                    >
-                                        Save
-                                    </Button>
+                                !isEditing ? (
                                     <Button
                                         variant="outlined"
-                                        startIcon={<Cancel sx={{ color: '#666' }} />}
-                                        onClick={handleCancel}
+                                        startIcon={<Edit sx={{ color: '#1976d2' }} />}
+                                        onClick={handleEdit}
                                         size="small"
                                         sx={{
-                                            borderColor: '#666',
-                                            color: '#666',
+                                            borderColor: '#1976d2',
+                                            color: '#1976d2',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(102, 102, 102, 0.08)',
-                                                borderColor: '#666'
+                                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                borderColor: '#1976d2'
                                             }
                                         }}
                                     >
-                                        Cancel
+                                        Edit Class
                                     </Button>
-                                </Stack>
+                                ) : (
+                                    <Stack direction="row" spacing={1}>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={<Save sx={{ color: 'white' }} />}
+                                            onClick={handleSave}
+                                            size="small"
+                                            color="primary"
+                                        >
+                                            Save
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Cancel sx={{ color: '#666' }} />}
+                                            onClick={handleCancel}
+                                            size="small"
+                                            sx={{
+                                                borderColor: '#666',
+                                                color: '#666',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(102, 102, 102, 0.08)',
+                                                    borderColor: '#666'
+                                                }
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </Stack>
+                                )
                             )}
                         </Box>
                         <Box>
