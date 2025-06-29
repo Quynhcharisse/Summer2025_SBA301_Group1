@@ -442,10 +442,15 @@ const ClassInformation = ({
                                                 return selected;
                                             }}
                                     >
-                                        {roomAvailability.map((room) => {
-                                            const isCurrentRoom = room.roomNumber.toString() === classData?.roomNumber?.toString();
-                                            const isDisabled = room.isOccupied && !isCurrentRoom;
-                                            const showOccupied = room.isOccupied && !isCurrentRoom;
+                                        {roomAvailability
+                                            .sort((a, b) => {
+                                                if (a.occupied === b.occupied) return 0;
+                                                return a.occupied ? 1 : -1;
+                                            })
+                                            .map((room) => {
+                                                const isCurrentRoom = room.roomNumber.toString() === classData?.roomNumber?.toString();
+                                                const isDisabled = room.occupied && !isCurrentRoom;
+                                                const showOccupied = room.occupied && !isCurrentRoom;
 
                                             return (
                                                 <MenuItem
