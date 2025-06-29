@@ -237,18 +237,19 @@ function ScheduleForm({
                                 </Typography>
                                 
                                 <WeeklyActivitiesView
+                                    isScheduleForm={true}
+                                    formMode={mode}
                                     currentWeek={formData.weekNumber}
                                     weekInput={formData.weekNumber}
                                     currentWeekSchedule={selectedSchedule}
                                     activitiesByDay={currentActivitiesByDay}
-                                    onPreviousWeek={() => {}} // Disabled in schedule form
-                                    onNextWeek={() => {}} // Disabled in schedule form
-                                    onWeekInputChange={() => {}} // Disabled in schedule form
+                                    disableWeekNavigation={true} // Disable week navigation when embedded in ScheduleForm
                                     onEditSchedule={() => {}} // Disabled since we're already editing
                                     onDeleteSchedule={() => {}} // Disabled in schedule form
-                                    onCreateActivity={handleCreateActivity}
+                                    onCreateActivity={(slotContextData) => handleCreateActivity(selectedSchedule?.id, slotContextData)}
                                     onEditActivity={handleEditActivity}
                                     onDeleteActivity={onDeleteActivity}
+                                    onAddTempActivity={(slotContextData) => handleCreateActivity(null, slotContextData)} // Pass null for scheduleId in create mode
                                 />
                             </Box>
                         </>
@@ -277,8 +278,9 @@ function ScheduleForm({
                 initialData={editingActivity}
                 lessons={lessons}
                 loading={loading}
-                scheduleId={selectedSchedule?.id}
+                scheduleId={mode === 'create' ? null : selectedSchedule?.id}
                 slotContext={slotContext}
+                isCreateMode={mode === 'create'}
             />
         </>
     );
