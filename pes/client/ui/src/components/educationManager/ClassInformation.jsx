@@ -45,7 +45,7 @@ const ClassInformation = ({
             numberStudent: classData?.numberStudent || 1,
             roomNumber: classData?.roomNumber || '',
             startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
-            status: classData?.status || 'active',
+            status: classData?.status?.toLowerCase() || 'active',
             grade: classData?.grade || ''
         });
     };
@@ -246,7 +246,7 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Status</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel shrink={false}>Status</InputLabel>
+                                    {!isEditing && <InputLabel shrink={false}>Status</InputLabel>}
                                     <Select
                                         value={editData.status}
                                         onChange={(e) => handleFieldChange('status', e.target.value)}
@@ -341,7 +341,7 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel shrink={false}>Teacher</InputLabel>
+                                    {!isEditing && <InputLabel shrink={false}>Teacher</InputLabel>}
                                     <Select
                                         value={editData.teacherId}
                                         onChange={(e) => handleFieldChange('teacherId', e.target.value)}
@@ -406,7 +406,7 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth error={errors.some(error => error.includes('Room number'))}>
-                                    <InputLabel shrink={false}>Room Number</InputLabel>
+                                    {!isEditing && <InputLabel shrink={false}>Room Number</InputLabel>}
                                     <Select
                                         value={editData.roomNumber}
                                         onChange={(e) => handleFieldChange('roomNumber', e.target.value)}

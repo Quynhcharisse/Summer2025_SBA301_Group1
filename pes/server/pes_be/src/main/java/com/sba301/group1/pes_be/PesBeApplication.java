@@ -298,7 +298,7 @@ public class PesBeApplication {
             // Create sample classes for each grade
             String[] classNames = {"Sunshine Seeds", "Growing Buds", "Learning Leaves"};
             Grade[] grades = {Grade.SEED, Grade.BUD, Grade.LEAF};
-            String[] roomNumbers = {"Room A1", "Room B2", "Room C3"};
+            String[] roomNumbers = {"1", "2", "3"};
 
             for (int i = 0; i < 3; i++) {
                 if (classesRepo.findByNameContaining(classNames[i]).isEmpty()) {
