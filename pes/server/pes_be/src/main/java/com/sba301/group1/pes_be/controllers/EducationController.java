@@ -9,6 +9,8 @@ import com.sba301.group1.pes_be.requests.LessonRequest;
 import com.sba301.group1.pes_be.requests.StudentClassRequest;
 import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.RoomResponse;
+import java.util.List;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
 import com.sba301.group1.pes_be.services.EducationService;
@@ -132,6 +134,13 @@ public class EducationController {
     @Operation(summary = "Create a new schedule")
     public ResponseEntity<ResponseObject> createSchedule(@RequestBody CreateScheduleRequest request) {
         return educationService.createSchedule(request);
+    }
+
+    @PostMapping("/schedules/with-activities")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Create a new schedule with associated activities")
+    public ResponseEntity<ResponseObject> createScheduleWithActivities(@RequestBody CreateScheduleRequest request) {
+        return educationService.createScheduleWithActivities(request);
     }
 
     @PutMapping("/schedules/{scheduleId}")
@@ -420,5 +429,12 @@ public class EducationController {
     @Operation(summary = "Get all student class assignments", description = "Retrieves all student-class assignment relationships")
     public ResponseEntity<ResponseObject> getAllStudentClassAssignments() {
         return educationService.getAllStudentClassAssignments();
+    }
+    
+    @GetMapping("/rooms/availability")
+    @PreAuthorize("hasRole('education')")
+    @Operation(summary = "Get room availability (1-20)", description = "Retrieves a list of rooms from 1 to 20 with their occupancy status.")
+    public ResponseEntity<List<RoomResponse>> getRoomAvailability() {
+        return educationService.getRoomAvailability();
     }
 }

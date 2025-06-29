@@ -17,15 +17,11 @@ import {DataGrid} from '@mui/x-data-grid';
 import {Add, Delete, Info, PersonAdd, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
 import {
-    createClass,
     getAllClasses,
-    getAllSyllabi,
-    getAllTeachers,
     getTeacherById,
     removeClass
 } from "../../services/EducationService.jsx";
 import {enqueueSnackbar} from 'notistack';
-import ClassForm from './ClassForm.jsx';
 import TeacherDetailView from './TeacherDetailView.jsx';
 
 function ClassList() {
@@ -35,16 +31,11 @@ function ClassList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState(null);
-    const [classFormOpen, setClassFormOpen] = useState(false);
-    const [teachers, setTeachers] = useState([]);
-    const [syllabi, setSyllabi] = useState([]);
     const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
 
     useEffect(() => {
         fetchClasses();
-        fetchTeachers();
-        fetchSyllabi();
     }, []);
 
     const fetchClasses = async () => {
@@ -67,29 +58,6 @@ function ClassList() {
             setClasses([]);
         } finally {
             setLoading(false);
-        }
-    };
-    const fetchTeachers = async () => {
-        try {
-            const teachersResponse = await getAllTeachers();
-            if (teachersResponse && teachersResponse.success) {
-                setTeachers(teachersResponse.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching teachers:', error);
-            setTeachers([]);
-        }
-    };
-
-    const fetchSyllabi = async () => {
-        try {
-            const syllabiResponse = await getAllSyllabi();
-            if (syllabiResponse && syllabiResponse.success) {
-                setSyllabi(syllabiResponse.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching syllabi:', error);
-            setSyllabi([]);
         }
     };
 
@@ -132,29 +100,6 @@ function ClassList() {
         setClassToDelete(null);
     };
 
-    const handleCreateClass = () => {
-        setClassFormOpen(true);
-    };
-
-    const handleClassFormSubmit = async (classData) => {
-        try {
-            const response = await createClass(classData);
-            if (response && response.success) {
-                enqueueSnackbar('Class created successfully', {variant: 'success'});
-                setClassFormOpen(false);
-                fetchClasses();
-            } else {
-                enqueueSnackbar('Failed to create class', {variant: 'error'});
-            }
-        } catch (error) {
-            console.error('Error creating class:', error);
-            enqueueSnackbar('Error creating class', {variant: 'error'});
-        }
-    };
-
-    const handleClassFormClose = () => {
-        setClassFormOpen(false);
-    };
 
     const handleTeacherClick = async (teacher) => {
         try {
@@ -373,7 +318,7 @@ function ClassList() {
             <Button
                 variant="contained"
                 startIcon={<Add/>}
-                onClick={handleCreateClass}
+                onClick={() => navigate('/education/classes/new')}
                 sx={{
                     backgroundColor: '#1976d2',
                     color: 'white',
@@ -469,15 +414,6 @@ function ClassList() {
                 </DialogActions>
             </Dialog>
 
-            <ClassForm
-                open={classFormOpen}
-                onClose={handleClassFormClose}
-                onSubmit={handleClassFormSubmit}
-                mode="create"
-                teachers={teachers}
-                syllabi={syllabi}
-                loading={loading}
-            />
 
             <TeacherDetailView
                 teacher={selectedTeacher}

@@ -34,9 +34,9 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
+            @SuppressWarnings("null") @NonNull HttpServletRequest request,
+            @SuppressWarnings("null") @NonNull HttpServletResponse response,
+            @SuppressWarnings("null") @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
         String requestURI = request.getRequestURI();

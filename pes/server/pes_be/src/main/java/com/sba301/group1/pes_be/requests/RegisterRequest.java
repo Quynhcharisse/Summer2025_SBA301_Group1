@@ -1,6 +1,5 @@
 package com.sba301.group1.pes_be.requests;
 
-import com.sba301.group1.pes_be.enums.Role;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

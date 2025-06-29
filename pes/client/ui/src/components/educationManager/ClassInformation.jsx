@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
     Alert,
     Box,
@@ -11,9 +11,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem,
-    IconButton
-} from '@mui/material';
+    MenuItem} from '@mui/material';
 import {
     Assignment,
     CalendarToday,
@@ -23,6 +21,7 @@ import {
     Save,
     Cancel
 } from '@mui/icons-material';
+import { getRoomAvailability } from '../../services/EducationService.jsx';
 
 const ClassInformation = ({
     classData,
@@ -30,26 +29,51 @@ const ClassInformation = ({
     classLessons,
     onTeacherClick,
     teachers = [],
-    syllabi = [],
-    onUpdateClass
+    syllabi,
+    onUpdateClass,
+    isCreateMode // Add isCreateMode prop
 }) => {
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
+    const [roomAvailability, setRoomAvailability] = useState([]);
 
-    const initializeEditData = () => {
+    const initializeEditData = useCallback(() => {
         setEditData({
             name: classData?.name || '',
-            teacherId: classData?.teacher?.id || '',
-            syllabusId: classData?.syllabus?.id || '',
+            teacherId: classData?.teacher?.id || null,
+            syllabusId: classData?.syllabus?.id || null,
             numberStudent: classData?.numberStudent || 1,
-            roomNumber: classData?.roomNumber || '',
-            startDate: classData?.startDate || '',
-            endDate: classData?.endDate || '',
-            status: classData?.status || 'active',
+            roomNumber: classData?.roomNumber || null,
+            startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
+            status: classData?.status?.toLowerCase() || 'active',
             grade: classData?.grade || ''
         });
-    };
+    }, [classData]);
+
+    // Effect to initialize editData when in create mode or when classData changes
+    useEffect(() => {
+        if (isCreateMode || classData) {
+            initializeEditData();
+        }
+    }, [isCreateMode, classData, initializeEditData]);
+
+    // Effect to fetch room availability when in edit mode or create mode
+    useEffect(() => {
+        const fetchRoomData = async () => {
+            try {
+                const data = await getRoomAvailability();
+                setRoomAvailability(data);
+            } catch (error) {
+                console.error('Failed to fetch room availability:', error);
+                setErrors(prev => [...prev, 'Failed to load room availability.']);
+            }
+        };
+
+        if (isEditing || isCreateMode) {
+            fetchRoomData();
+        }
+    }, [isEditing, isCreateMode]);
 
     const validateForm = () => {
         const validationErrors = [];
@@ -70,7 +94,7 @@ const ClassInformation = ({
             validationErrors.push('Grade is required');
         }
         
-        if (!editData.roomNumber?.trim()) {
+        if (editData.roomNumber === null || editData.roomNumber === undefined || isNaN(editData.roomNumber)) {
             validationErrors.push('Room number is required');
         }
         
@@ -78,25 +102,15 @@ const ClassInformation = ({
             validationErrors.push('Start date is required');
         }
         
-        if (!editData.endDate) {
-            validationErrors.push('End date is required');
-        }
-        
         if (editData.numberStudent <= 0) {
             validationErrors.push('Number of students must be greater than 0');
         }
         
-        if (editData.startDate && editData.endDate && new Date(editData.startDate) >= new Date(editData.endDate)) {
-            validationErrors.push('End date must be after start date');
-        }
-        
         if (editData.startDate) {
-            const today = new Date();
-            const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const startDate = new Date(editData.startDate);
-            
-            if (startDate < oneWeekFromNow) {
-                validationErrors.push('Start date must be at least 1 week from now');
+            const currentYear = new Date().getFullYear();
+            const startYear = parseInt(editData.startDate);
+            if (startYear < currentYear) {
+                validationErrors.push('Start year cannot be in the past');
             }
         }
         
@@ -123,7 +137,12 @@ const ClassInformation = ({
         }
 
         try {
-            await onUpdateClass(classData.id, editData);
+            const updatedClassData = { ...editData };
+            if (updatedClassData.startDate) {
+                updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
+            }
+            updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
+            await onUpdateClass(classData.id, updatedClassData);
             setIsEditing(false);
             setErrors([]);
         } catch (error) {
@@ -133,10 +152,27 @@ const ClassInformation = ({
     };
 
     const handleFieldChange = (field, value) => {
-        setEditData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setEditData(prev => {
+            let processedValue = value;
+            if (field === 'roomNumber') {
+                processedValue = parseInt(value, 10);
+                if (isNaN(processedValue)) {
+                    processedValue = ''; // Handle invalid input, e.g., empty string
+                }
+            }
+            const newState = {
+                ...prev,
+                [field]: processedValue
+            };
+
+            if (field === 'startDate' && value) {
+                const startYear = parseInt(value);
+                if (!isNaN(startYear)) {
+                    newState.endDate = (startYear + 1).toString();
+                }
+            }
+            return newState;
+        });
         
         if (errors.length > 0) {
             setErrors(errors.filter(error => !error.toLowerCase().includes(field.toLowerCase())));
@@ -152,7 +188,7 @@ const ClassInformation = ({
     const statusOptions = [
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
-        { value: 'pending', label: 'Pending' }
+        { value: 'pending approval', label: 'Pending Approval' }
     ];
 
     const getStatusColor = (status) => {
@@ -168,9 +204,11 @@ const ClassInformation = ({
         }
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'Not set';
-        return new Date(dateString).toLocaleDateString();
+    const formatSchoolYear = (startDateString, endDateString) => {
+        if (!startDateString || !endDateString) return 'Not set';
+        const startYear = new Date(startDateString).getFullYear();
+        const endYear = new Date(endDateString).getFullYear();
+        return `${startYear} - ${endYear}`;
     };
 
     return (
@@ -233,6 +271,7 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Status</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
+                                    {!isEditing && <InputLabel shrink={false}>Status</InputLabel>}
                                     <Select
                                         value={editData.status}
                                         onChange={(e) => handleFieldChange('status', e.target.value)}
@@ -264,57 +303,70 @@ const ClassInformation = ({
                                 </Typography>
                             </Box>
                             {/* Edit button positioned to the right of Details heading */}
-                            {!isEditing ? (
+                            {isCreateMode ? (
                                 <Button
-                                    variant="outlined"
-                                    startIcon={<Edit sx={{ color: '#1976d2' }} />}
-                                    onClick={handleEdit}
+                                    variant="contained"
+                                    startIcon={<Save sx={{ color: 'white' }} />}
+                                    onClick={handleSave}
                                     size="small"
-                                    sx={{
-                                        borderColor: '#1976d2',
-                                        color: '#1976d2',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                            borderColor: '#1976d2'
-                                        }
-                                    }}
+                                    color="primary"
                                 >
-                                    Edit Class
+                                    Create
                                 </Button>
                             ) : (
-                                <Stack direction="row" spacing={1}>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<Save sx={{ color: 'white' }} />}
-                                        onClick={handleSave}
-                                        size="small"
-                                        color="primary"
-                                    >
-                                        Save
-                                    </Button>
+                                !isEditing ? (
                                     <Button
                                         variant="outlined"
-                                        startIcon={<Cancel sx={{ color: '#666' }} />}
-                                        onClick={handleCancel}
+                                        startIcon={<Edit sx={{ color: '#1976d2' }} />}
+                                        onClick={handleEdit}
                                         size="small"
                                         sx={{
-                                            borderColor: '#666',
-                                            color: '#666',
+                                            borderColor: '#1976d2',
+                                            color: '#1976d2',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(102, 102, 102, 0.08)',
-                                                borderColor: '#666'
+                                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                                borderColor: '#1976d2'
                                             }
                                         }}
                                     >
-                                        Cancel
+                                        Edit Class
                                     </Button>
-                                </Stack>
+                                ) : (
+                                    <Stack direction="row" spacing={1}>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={<Save sx={{ color: 'white' }} />}
+                                            onClick={handleSave}
+                                            size="small"
+                                            color="primary"
+                                        >
+                                            Save
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Cancel sx={{ color: '#666' }} />}
+                                            onClick={handleCancel}
+                                            size="small"
+                                            sx={{
+                                                borderColor: '#666',
+                                                color: '#666',
+                                                '&:hover': {
+                                                    backgroundColor: 'rgba(102, 102, 102, 0.08)',
+                                                    borderColor: '#666'
+                                                }
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </Stack>
+                                )
                             )}
                         </Box>
                         <Box>
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
+                                    {!isEditing && <InputLabel shrink={false}>Teacher</InputLabel>}
                                     <Select
                                         value={editData.teacherId}
                                         onChange={(e) => handleFieldChange('teacherId', e.target.value)}
@@ -378,15 +430,47 @@ const ClassInformation = ({
                         <Box>
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>
                             {isEditing ? (
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    value={editData.roomNumber}
-                                    onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
-                                    error={errors.some(error => error.includes('Room number'))}
-                                />
+                                <FormControl size="small" fullWidth error={errors.some(error => error.includes('Room number'))}>
+                                    <Select
+                                        value={editData.roomNumber}
+                                        onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
+                                        displayEmpty // Allows displaying the placeholder when value is null/undefined
+                                        renderValue={(selected) => {
+                                            if (selected === null || selected === '') {
+                                                return <em>Room Number</em>; // Placeholder text
+                                                }
+                                                return selected;
+                                            }}
+                                    >
+                                        {roomAvailability
+                                            .sort((a, b) => {
+                                                if (a.occupied === b.occupied) return 0;
+                                                return a.occupied ? 1 : -1;
+                                            })
+                                            .map((room) => {
+                                                const isCurrentRoom = room.roomNumber.toString() === classData?.roomNumber?.toString();
+                                                const isDisabled = room.occupied && !isCurrentRoom;
+                                                const showOccupied = room.occupied && !isCurrentRoom;
+
+                                            return (
+                                                <MenuItem
+                                                    key={room.roomNumber}
+                                                    value={room.roomNumber}
+                                                    disabled={isDisabled}
+                                                    sx={{
+                                                        color: isDisabled ? 'text.disabled' : 'text.primary',
+                                                        opacity: isDisabled ? 0.6 : 1
+                                                    }}
+                                                >
+                                                    {`${room.roomNumber}`}
+                                                    {showOccupied && ' (occupied)'}
+                                                </MenuItem>
+                                            );
+                                        })}
+                                    </Select>
+                                </FormControl>
                             ) : (
-                                <Typography variant="body1">{classData?.roomNumber || 'Not assigned'}</Typography>
+                                <Typography variant="body1">{classData?.roomNumber ? classData.roomNumber : 'Not assigned'}</Typography>
                             )}
                         </Box>
                         <Box>
@@ -413,40 +497,28 @@ const ClassInformation = ({
                 <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
                     <CalendarToday sx={{color: '#1976d2'}}/>
                     <Typography variant="h6" color="primary">
-                        Schedule Period
+                        Class Period
                     </Typography>
                 </Box>
                 <Box sx={{display: 'flex', gap: 2}}>
                     <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">Start Date</Typography>
                         {isEditing ? (
                             <TextField
-                                type="date"
+                                type="number"
                                 size="small"
-                                fullWidth
+                                sx={{ width: '120px' }}
+                                label="Start Year"
                                 value={editData.startDate}
                                 onChange={(e) => handleFieldChange('startDate', e.target.value)}
                                 InputLabelProps={{ shrink: true }}
                                 error={errors.some(error => error.includes('Start date'))}
+                                inputProps={{ min: 1900, max: 2100 }}
                             />
                         ) : (
-                            <Typography variant="body1">{formatDate(classData?.startDate)}</Typography>
-                        )}
-                    </Box>
-                    <Box sx={{flex: 1}}>
-                        <Typography variant="body2" color="text.secondary">End Date</Typography>
-                        {isEditing ? (
-                            <TextField
-                                type="date"
-                                size="small"
-                                fullWidth
-                                value={editData.endDate}
-                                onChange={(e) => handleFieldChange('endDate', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                error={errors.some(error => error.includes('End date'))}
-                            />
-                        ) : (
-                            <Typography variant="body1">{formatDate(classData?.endDate)}</Typography>
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">School Year</Typography>
+                                <Typography variant="body1">{formatSchoolYear(classData?.startDate, classData?.endDate)}</Typography>
+                            </Box>
                         )}
                     </Box>
                 </Box>
@@ -455,54 +527,72 @@ const ClassInformation = ({
             {/* Syllabus Section */}
             <Box>
                 <Divider sx={{my: 2}}/>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 2}}>
-                    <Assignment sx={{color: '#1976d2'}}/>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Assignment sx={{ color: '#1976d2' }} />
                     <Typography variant="h6" color="primary">
                         Syllabus Information
                     </Typography>
                 </Box>
-                {syllabus ? (
-                    <Stack spacing={2}>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
-                            <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
-                        </Box>
-                        {syllabus.description && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary">Description</Typography>
-                                <Typography variant="body1">{syllabus.description}</Typography>
-                            </Box>
-                        )}
-                        {classLessons.length > 0 && (
-                            <Box>
-                                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
-                                    Associated Lessons ({classLessons.length})
-                                </Typography>
-                                <Box sx={{display: 'flex', gap: 1, flexWrap: 'wrap'}}>
-                                    {classLessons.slice(0, 5).map((lesson) => (
-                                        <Chip
-                                            key={lesson.id}
-                                            label={lesson.topic}
-                                            size="small"
-                                            variant="outlined"
-                                            color="secondary"
-                                        />
-                                    ))}
-                                    {classLessons.length > 5 && (
-                                        <Chip
-                                            label={`+${classLessons.length - 5} more`}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
-                            </Box>
-                        )}
-                    </Stack>
+                {isEditing ? (
+                    <FormControl size="small" fullWidth>
+                        <InputLabel>Syllabus</InputLabel>
+                        <Select
+                            value={editData.syllabusId}
+                            onChange={(e) => handleFieldChange('syllabusId', e.target.value)}
+                            label="Syllabus"
+                            error={errors.some(error => error.includes('Syllabus'))}
+                        >
+                            {syllabi && syllabi.map((syl) => (
+                                <MenuItem key={syl.id} value={syl.id}>
+                                    {syl.title}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
                 ) : (
-                    <Alert severity="info">
-                        No syllabus assigned to this class yet.
-                    </Alert>
+                    syllabus ? (
+                        <Stack spacing={2}>
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">Syllabus Name</Typography>
+                                <Typography variant="body1">{syllabus.title || 'Untitled Syllabus'}</Typography>
+                            </Box>
+                            {syllabus.description && (
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">Description</Typography>
+                                    <Typography variant="body1">{syllabus.description}</Typography>
+                                </Box>
+                            )}
+                            {classLessons.length > 0 && (
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                        Associated Lessons ({classLessons.length})
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        {classLessons.slice(0, 5).map((lesson) => (
+                                            <Chip
+                                                key={lesson.id}
+                                                label={lesson.topic}
+                                                size="small"
+                                                variant="outlined"
+                                                color="secondary"
+                                            />
+                                        ))}
+                                        {classLessons.length > 5 && (
+                                            <Chip
+                                                label={`+${classLessons.length - 5} more`}
+                                                size="small"
+                                                variant="outlined"
+                                            />
+                                        )}
+                                    </Box>
+                                </Box>
+                            )}
+                        </Stack>
+                    ) : (
+                        <Alert severity="info">
+                            No syllabus assigned to this class yet.
+                        </Alert>
+                    )
                 )}
             </Box>
         </Box>
