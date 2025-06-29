@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomResponse {
-    private String roomNumber;
+    private Integer roomNumber;
     private boolean isOccupied;
 }

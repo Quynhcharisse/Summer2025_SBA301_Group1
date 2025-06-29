@@ -50,10 +50,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -925,7 +922,7 @@ public class EducationServiceImpl implements EducationService {
                     .teacher(teacher)
                     .syllabus(syllabus)
                     .numberStudent(request.getNumberStudent())
-                    .roomNumber(request.getRoomNumber())
+                    .roomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null)
                     .startDate(request.getStartDate().toString())
                     .endDate(request.getEndDate().toString())
                     .status(request.getStatus())
@@ -984,7 +981,7 @@ public class EducationServiceImpl implements EducationService {
             existingClass.setTeacher(teacher);
             existingClass.setSyllabus(syllabus);
             existingClass.setNumberStudent(request.getNumberStudent());
-            existingClass.setRoomNumber(request.getRoomNumber());
+            existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null);
             existingClass.setStartDate(request.getStartDate().toString());
             existingClass.setEndDate(request.getEndDate().toString());
             existingClass.setStatus(request.getStatus());
@@ -2251,11 +2248,7 @@ public class EducationServiceImpl implements EducationService {
             for (Classes classEntity : allClasses) {
                 if (classEntity.getRoomNumber() != null && !classEntity.getRoomNumber().isEmpty()) {
                     try {
-                        // Extract room number from string like "Room 1"
-                        String roomNumStr = classEntity.getRoomNumber().replaceAll("[^0-9]", "");
-                        if (!roomNumStr.isEmpty()) {
-                            occupiedRoomNumbers.add(Integer.parseInt(roomNumStr));
-                        }
+                        occupiedRoomNumbers.add(Integer.parseInt(classEntity.getRoomNumber()));
                     } catch (NumberFormatException e) {
                         System.err.println("Error parsing room number for class " + classEntity.getId() + ": " + classEntity.getRoomNumber());
                     }
@@ -2265,7 +2258,7 @@ public class EducationServiceImpl implements EducationService {
             List<RoomResponse> roomAvailabilityList = new ArrayList<>();
             for (int i = 1; i <= 20; i++) {
                 boolean isOccupied = occupiedRoomNumbers.contains(i);
-                roomAvailabilityList.add(new RoomResponse("Room " + i, isOccupied));
+                roomAvailabilityList.add(new RoomResponse(i, isOccupied));
             }
 
             return ResponseEntity.ok().body(roomAvailabilityList);

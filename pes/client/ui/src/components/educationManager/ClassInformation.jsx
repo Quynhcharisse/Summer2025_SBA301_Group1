@@ -94,7 +94,7 @@ const ClassInformation = ({
             validationErrors.push('Grade is required');
         }
         
-        if (!editData.roomNumber?.trim()) {
+        if (editData.roomNumber === null || editData.roomNumber === undefined || isNaN(editData.roomNumber)) {
             validationErrors.push('Room number is required');
         }
         
@@ -140,9 +140,6 @@ const ClassInformation = ({
             const updatedClassData = { ...editData };
             if (updatedClassData.startDate) {
                 updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
-            }
-            if (updatedClassData.roomNumber) {
-                updatedClassData.roomNumber = updatedClassData.roomNumber.replace('Room ', '');
             }
             updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
             await onUpdateClass(classData.id, updatedClassData);
@@ -441,9 +438,9 @@ const ClassInformation = ({
                                         renderValue={(selected) => {
                                             if (selected === null || selected === '') {
                                                 return <em>Room Number</em>; // Placeholder text
-                                            }
-                                            return `Room ${selected}`;
-                                        }}
+                                                }
+                                                return selected;
+                                            }}
                                     >
                                         {roomAvailability.map((room) => {
                                             const isCurrentRoom = room.roomNumber.toString() === classData?.roomNumber?.toString();
