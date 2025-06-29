@@ -11,8 +11,7 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem,
-    IconButton
+    MenuItem
 } from '@mui/material';
 import {
     Assignment,
@@ -247,11 +246,10 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Status</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel>Status</InputLabel>
+                                    <InputLabel shrink={false}>Status</InputLabel>
                                     <Select
                                         value={editData.status}
                                         onChange={(e) => handleFieldChange('status', e.target.value)}
-                                        label="Status"
                                     >
                                         {statusOptions.map((status) => (
                                             <MenuItem key={status.value} value={status.value}>
@@ -343,11 +341,10 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
-                                    <InputLabel>Teacher</InputLabel>
+                                    <InputLabel shrink={false}>Teacher</InputLabel>
                                     <Select
                                         value={editData.teacherId}
                                         onChange={(e) => handleFieldChange('teacherId', e.target.value)}
-                                        label="Teacher"
                                         error={errors.some(error => error.includes('Teacher'))}
                                     >
                                         {teachers && teachers
@@ -409,11 +406,10 @@ const ClassInformation = ({
                             <Typography variant="body2" color="text.secondary">Room Number</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth error={errors.some(error => error.includes('Room number'))}>
-                                    <InputLabel>Room Number</InputLabel>
+                                    <InputLabel shrink={false}>Room Number</InputLabel>
                                     <Select
                                         value={editData.roomNumber}
                                         onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
-                                        label="Room Number"
                                     >
                                         {[...Array(20)].map((_, i) => (
                                             <MenuItem key={i + 1} value={(i + 1).toString()}>
