@@ -269,8 +269,15 @@ function ClassList() {
             }
         },
         {
-            field: 'numberStudent',
+            field: 'numberOfStudents',
             headerName: 'Number of Students',
+            width: 180,
+            headerAlign: 'center',
+            align: 'center'
+        },
+        {
+            field: 'numberStudent',
+            headerName: 'Students capacity',
             width: 180,
             headerAlign: 'center',
             align: 'center'

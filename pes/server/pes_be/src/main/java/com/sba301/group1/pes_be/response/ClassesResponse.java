@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 public class ClassesResponse {
     private Integer id;
     private String name;
-    private int numberStudent;
+    private int numberOfStudents;
+    private int numberStudent; // This is the capacity of the class, not the actual number of students
     private String roomNumber;
     private String startDate;
     private String endDate;
@@ -105,7 +106,8 @@ public class ClassesResponse {
         return ClassesResponse.builder()
             .id(classes.getId())
             .name(classes.getName())
-            .numberStudent(actualStudentCount) // Use calculated student count instead of static field
+            .numberOfStudents(actualStudentCount) // Actual number of students enrolled
+            .numberStudent(classes.getNumberStudent()) // Capacity of the class
             .roomNumber(classes.getRoomNumber())
             .startDate(classes.getStartDate())
             .endDate(classes.getEndDate())
