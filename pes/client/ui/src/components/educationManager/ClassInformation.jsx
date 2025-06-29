@@ -460,7 +460,7 @@ const ClassInformation = ({
                                                         opacity: isDisabled ? 0.6 : 1
                                                     }}
                                                 >
-                                                    {`Room ${room.roomNumber}`}
+                                                    {`${room.roomNumber}`}
                                                     {showOccupied && ' (occupied)'}
                                                 </MenuItem>
                                             );
@@ -468,7 +468,7 @@ const ClassInformation = ({
                                     </Select>
                                 </FormControl>
                             ) : (
-                                <Typography variant="body1">{classData?.roomNumber ? `Room ${classData.roomNumber}` : 'Not assigned'}</Typography>
+                                <Typography variant="body1">{classData?.roomNumber ? classData.roomNumber : 'Not assigned'}</Typography>
                             )}
                         </Box>
                         <Box>

@@ -395,14 +395,7 @@ public interface EducationService {
      * @return ResponseEntity containing the list of student-class assignments
      */
     ResponseEntity<ResponseObject> getAllStudentClassAssignments();
-
-    /**
-     * Retrieves a list of all rooms with their occupancy status.
-     * Rooms are considered occupied if they are assigned to classes with an end date in the future or today.
-     * @return ResponseEntity containing a list of RoomResponse objects with occupancy status.
-     */
-    ResponseEntity<List<RoomResponse>> getAllRoomsWithStatus();
-
+    
     /**
      * Retrieves a list of all rooms (1-20) with their occupancy status.
      * A room is considered occupied if there is at least one class assigned to it.
