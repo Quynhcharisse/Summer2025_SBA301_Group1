@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     Alert,
     Box,
@@ -37,7 +37,7 @@ const ClassInformation = ({
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
 
-    const initializeEditData = () => {
+    const initializeEditData = useCallback(() => {
         setEditData({
             name: classData?.name || '',
             teacherId: classData?.teacher?.id || null,
@@ -48,14 +48,14 @@ const ClassInformation = ({
             status: classData?.status?.toLowerCase() || 'active',
             grade: classData?.grade || ''
         });
-    };
+    }, [classData]);
 
     // Effect to initialize editData when in create mode or when classData changes
     React.useEffect(() => {
         if (isCreateMode || classData) {
             initializeEditData();
         }
-    }, [isCreateMode, classData]); // Depend on isCreateMode and classData
+    }, [isCreateMode, classData, initializeEditData]); 
 
     const validateForm = () => {
         const validationErrors = [];
