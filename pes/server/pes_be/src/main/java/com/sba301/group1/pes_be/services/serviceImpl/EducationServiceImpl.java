@@ -1059,7 +1059,8 @@ public class EducationServiceImpl implements EducationService {
             }
 
             Classes classEntity = classOpt.get();
-            List<String> errors = new ArrayList<>();            for (Integer studentId : studentIds) {
+            List<String> errors = new ArrayList<>();
+            for (Integer studentId : studentIds) {
                 Optional<Student> studentOpt = studentRepo.findById(studentId);
                 if (studentOpt.isEmpty()) {
                     errors.add("Student not found: " + studentId);
@@ -1072,6 +1073,11 @@ public class EducationServiceImpl implements EducationService {
                     Integer existingClassId = existingAssignments.get(0).getClasses().getId();
                     errors.add("Student " + student.getId() + " is already assigned to class: " + existingClassId);
                     continue;
+                }
+
+                if (classEntity.getStudentClassList().size() >= classEntity.getNumberStudent()) {
+                    errors.add("Class " + classEntity.getId() + " has reached its maximum capacity of " + classEntity.getNumberStudent());
+                    break;
                 }
 
                 StudentClass studentClass = StudentClass.builder()

@@ -1,47 +1,42 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
+    Alert,
     Box,
-    Typography,
+    Button,
     Card,
     CardContent,
-    Button,
+    Chip,
+    CircularProgress,
     FormControl,
     InputLabel,
-    Select,
     MenuItem,
-    Chip,
-    Alert,
-    Divider,
-    CircularProgress,
-    TextField,
-    Grid,
-    Avatar,
-    Checkbox,
     Paper,
-    Stack
+    Select,
+    Stack,
+    TextField,
+    Typography
 } from '@mui/material';
 import {
     ArrowBack,
-    School,
+    CheckCircle,
+    Group,
     Person,
     PersonAdd,
-    Group,
-    CheckCircle,
-    Search,
-    FilterList,
-    CheckCircleOutline,
+    PersonRemove,
     RemoveCircle,
-    PersonRemove
+    School,
+    Search
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import StudentCard from './StudentCard';
+import {useNavigate} from 'react-router-dom';
+import {useSnackbar} from 'notistack';
 import {
+    assignStudentsToClass,
     getAllClasses,
     getAllStudents,
+    getStudentClassAssignments,
     getStudentsByClassId,
-    assignStudentsToClass,
-    unassignStudentsFromClass,
-    getStudentClassAssignments
+    unassignStudentsFromClass
 } from '../../services/EducationService';
 import '../../styles/educationManager/AssignStudentToClass.css';
 
@@ -52,12 +47,15 @@ function AssignStudentToClass() {
     const [allStudents, setAllStudents] = useState([]);
     const [assignedStudents, setAssignedStudents] = useState([]);
     const [studentAssignments, setStudentAssignments] = useState({});
-    const [selectedClass, setSelectedClass] = useState('');const [selectedStudents, setSelectedStudents] = useState([]);
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedStudents, setSelectedStudents] = useState([]);
     const [selectedAssignedStudents, setSelectedAssignedStudents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterGrade, setFilterGrade] = useState('');// Filter options
+    const [filterGrade, setFilterGrade] = useState('');
+    const [assignedSearchTerm, setAssignedSearchTerm] = useState('');
+    const [assignedFilterGrade, setAssignedFilterGrade] = useState('');// Filter options
     const gradeOptions = [
         { value: '', label: 'All Grades' },
         { value: 'SEED', label: 'Seed (Age 3)' },
@@ -115,7 +113,8 @@ function AssignStudentToClass() {
             setSelectedStudents([]);
             setSelectedAssignedStudents([]);
         }
-    }, [selectedClass, fetchAssignedStudents]);    const getAvailableStudents = () => {
+    }, [selectedClass, fetchAssignedStudents]);
+    const getAvailableStudents = () => {
         // Get all students who are assigned to ANY class
         const assignedStudentIds = new Set();
         Object.keys(studentAssignments).forEach(studentIdString => {
@@ -124,7 +123,7 @@ function AssignStudentToClass() {
                 assignedStudentIds.add(studentId);
             }
         });
-        
+
         // Filter out students who are already assigned to any class
         const availableStudents = allStudents.filter(student => !assignedStudentIds.has(student.id));
 
@@ -146,6 +145,40 @@ function AssignStudentToClass() {
                 if (!student.dateOfBirth) return false;
                 const age = calculateAge(student.dateOfBirth);
                 switch (filterGrade) {
+                    case 'SEED':
+                        return age <= 3;
+                    case 'BUD':
+                        return age === 4;
+                    case 'LEAF':
+                        return age >= 5;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return filtered;
+    };
+
+    const getFilteredAssignedStudents = () => {
+        let filtered = assignedStudents;
+
+        // Apply search filter
+        if (assignedSearchTerm) {
+            const searchLower = assignedSearchTerm.toLowerCase();
+            filtered = filtered.filter(student =>
+                student.name?.toLowerCase().includes(searchLower) ||
+                student.gender?.toLowerCase().includes(searchLower) ||
+                student.placeOfBirth?.toLowerCase().includes(searchLower)
+            );
+        }
+
+        // Apply grade filter based on student age
+        if (assignedFilterGrade) {
+            filtered = filtered.filter(student => {
+                if (!student.dateOfBirth) return false;
+                const age = calculateAge(student.dateOfBirth);
+                switch (assignedFilterGrade) {
                     case 'SEED':
                         return age <= 3;
                     case 'BUD':
@@ -200,6 +233,19 @@ function AssignStudentToClass() {
             return;
         }
 
+        // Check class capacity
+        const classData = classes.find(c => c.id === parseInt(selectedClass));
+        if (classData && classData.numberStudent) {
+            const availableSpots = classData.numberStudent - assignedStudents.length;
+            if (selectedStudents.length > availableSpots) {
+                enqueueSnackbar(
+                    `Cannot assign ${selectedStudents.length} students. Only ${availableSpots} spots available in this class.`,
+                    {variant: 'error'}
+                );
+                return;
+            }
+        }
+
         try {
             setSubmitting(true);
             const assignData = {
@@ -207,7 +253,8 @@ function AssignStudentToClass() {
                 studentIds: selectedStudents
             };
 
-            const response = await assignStudentsToClass(assignData);            if (response && response.success) {
+            const response = await assignStudentsToClass(assignData);
+            if (response && response.success) {
                 enqueueSnackbar(`Successfully assigned ${selectedStudents.length} student(s) to class`, { variant: 'success' });
                 setSelectedStudents([]);
                 await Promise.all([
@@ -238,7 +285,8 @@ function AssignStudentToClass() {
                 studentIds: selectedAssignedStudents
             };
 
-            const response = await unassignStudentsFromClass(unassignData);            if (response && response.success) {
+            const response = await unassignStudentsFromClass(unassignData);
+            if (response && response.success) {
                 enqueueSnackbar(`Successfully unassigned ${selectedAssignedStudents.length} student(s) from class`, { variant: 'success' });
                 setSelectedAssignedStudents([]);
                 await Promise.all([
@@ -274,12 +322,11 @@ function AssignStudentToClass() {
         }
     };
 
-    const selectedClassData = classes.find(c => c.id === parseInt(selectedClass));
+    const selectedClassData = selectedClass ? classes.find(c =>
+        c.id === selectedClass || c.id === parseInt(selectedClass) || c.id === String(selectedClass)
+    ) : null;
     const availableStudents = getAvailableStudents();
-
-    const getStudentClasses = (studentId) => {
-        return studentAssignments[studentId] || [];
-    };
+    const filteredAssignedStudents = getFilteredAssignedStudents();
 
     if (loading) {
         return (
@@ -287,15 +334,10 @@ function AssignStudentToClass() {
                 <CircularProgress />
             </Box>
         );
-    } return (<Stack spacing={3} sx={{ p: { xs: 2, md: 3 }, width: '100%', minHeight: '100vh' }}>
+    }
+    return (<Stack spacing={3} sx={{p: {xs: 2, md: 3}}}>
         {/* Header Stack */}
-        <Stack
-            direction={{ xs: 'column', lg: 'row' }}
-            alignItems={{ xs: 'flex-start', lg: 'center' }}
-            justifyContent="space-between"
-            spacing={2}
-            sx={{ mb: 1 }}
-        >
+            <Stack>
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Button
                     variant="outlined"
@@ -318,77 +360,12 @@ function AssignStudentToClass() {
                 >
                     Assign Students to Class
                 </Typography>
-            </Stack>                {/* Action Buttons in Header */}
-            <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
-                sx={{ width: { xs: '100%', lg: 'auto' } }}
-            >
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate('/education/classes')}
-                    size="large"
-                    sx={{
-                        minHeight: 48,
-                        borderColor: 'grey.400',
-                        color: 'text.primary'
-                    }}
-                >
-                    Cancel
-                </Button>
-                {selectedClass && selectedAssignedStudents.length > 0 && (
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<PersonRemove />}
-                        onClick={handleUnassignStudents}
-                        disabled={submitting}
-                        size="large"
-                        sx={{
-                            minWidth: { xs: '100%', sm: 200 },
-                            minHeight: 48,
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        {submitting ? (
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                                <CircularProgress size={20} color="inherit" />
-                                <span>Unassigning...</span>
-                            </Stack>
-                        ) : (
-                            `Unassign ${selectedAssignedStudents.length} Student${selectedAssignedStudents.length !== 1 ? 's' : ''}`
-                        )}
-                    </Button>
-                )}
-                <Button
-                    variant="contained"
-                    startIcon={<PersonAdd />}
-                    onClick={handleAssignStudents}
-                    disabled={selectedStudents.length === 0 || submitting || !selectedClass}
-                    size="large"
-                    sx={{
-                        bgcolor: '#1976d2',
-                        '&:hover': { bgcolor: '#1565c0' },
-                        '&:disabled': { bgcolor: 'grey.300' },
-                        minWidth: { xs: '100%', sm: 250 },
-                        minHeight: 48,
-                        fontWeight: 'bold'
-                    }}
-                >
-                    {submitting ? (
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                            <CircularProgress size={20} color="inherit" />
-                            <span>Assigning...</span>
-                        </Stack>
-                    ) : (
-                        `Assign ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`
-                    )}
-                </Button>
             </Stack>
-        </Stack>{/* Class Selection Card */}
-        <Card elevation={2} sx={{ borderRadius: 2 }}>
+            </Stack>
+            {/* Class Selection Card */}
+            <Card sx={{borderRadius: 2}}>
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                     <Stack direction="row" alignItems="center" spacing={1}>
                         <School sx={{ color: '#1976d2', fontSize: 28 }} />
                         <Typography variant="h6" color="primary" fontWeight="bold">
@@ -402,142 +379,154 @@ function AssignStudentToClass() {
                             value={selectedClass}
                             onChange={(e) => setSelectedClass(e.target.value)}
                             label="Class"
-                            sx={{ minHeight: 56 }}
+                            sx={{
+                                minHeight: 56,
+                                mb: 2 // Add margin bottom to prevent overlap with content below
+                            }}
+                            renderValue={(selected) => {
+                                if (!selected) {
+                                    return <em>Select a class</em>;
+                                }
+                                const selectedClassItem = classes.find(c => c.id === selected);
+                                return selectedClassItem ? `${selectedClassItem.name} - ${selectedClassItem.grade}` : selected;
+                            }}
+                            MenuProps={{
+                                PaperProps: {
+                                    sx: {
+                                        maxHeight: 300,
+                                        zIndex: 1300,
+                                        mt: 1, // Add margin top to create space
+                                        '& .MuiMenuItem-root': {
+                                            whiteSpace: 'normal',
+                                            height: 'auto',
+                                            minHeight: 48,
+                                            py: 1.5
+                                        }
+                                    }
+                                },
+                                anchorOrigin: {
+                                    vertical: 'bottom',
+                                    horizontal: 'left'
+                                },
+                                transformOrigin: {
+                                    vertical: 'top',
+                                    horizontal: 'left'
+                                }
+                            }}
                         >
                             <MenuItem value="">
                                 <em>Select a class</em>
                             </MenuItem>
                             {classes.map((classItem) => (
                                 <MenuItem key={classItem.id} value={classItem.id}>
-                                    {classItem.name} - {classItem.grade} ({classItem.numberStudent || 0} students)
+                                    <Box>
+                                        <Typography variant="body1" fontWeight="medium">
+                                            {classItem.name} - {classItem.grade}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Capacity: {classItem.numberStudent || 'No limit'} |
+                                            Room: {classItem.roomNumber} |
+                                            Teacher: {classItem.teacher?.name || 'Not assigned'}
+                                        </Typography>
+                                    </Box>
                                 </MenuItem>
                             ))}
                         </Select>
                     </FormControl>
 
+                    {/* Show class details after selection */}
                     {selectedClassData && (
                         <Paper
+                            elevation={3}
                             sx={{
                                 p: { xs: 2, md: 3 },
-                                bgcolor: 'grey.50',
+                                bgcolor: 'primary.50',
                                 borderRadius: 2,
-                                border: '1px solid',
-                                borderColor: 'grey.200'
+                                border: '2px solid',
+                                borderColor: 'primary.main',
+                                mt: 2,
+                                mb: 2 // Add margin bottom to create space after the details box
                             }}
                         >
                             <Stack spacing={2}>
-                                <Typography variant="h6" fontWeight="bold" color="primary">
-                                    {selectedClassData.name}
-                                </Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6} sm={3}>
+                                <Stack direction="row" alignItems="center" spacing={1}
+                                       sx={{minHeight: '36px', flexWrap: 'wrap'}}>
+                                    <School sx={{color: 'primary.main', fontSize: 24}}/>
+                                    <Typography variant="h6" fontWeight="bold" color="primary.main"
+                                                sx={{lineHeight: 1.5}}>
+                                        Class Details: {selectedClassData.name}
+                                    </Typography>
+                                </Stack>
+                                <Stack
+                                    direction={{xs: 'column', sm: 'row'}}
+                                    spacing={2}
+                                    sx={{flexWrap: 'wrap', mt: 1}}
+                                >
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Grade
                                         </Typography>
                                         <Typography variant="body1" fontWeight="medium">
                                             {selectedClassData.grade}
                                         </Typography>
-                                    </Grid>
-                                    <Grid item xs={6} sm={3}>
+                                    </Box>
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Room
                                         </Typography>
                                         <Typography variant="body1" fontWeight="medium">
                                             {selectedClassData.roomNumber}
                                         </Typography>
-                                    </Grid>
-                                    <Grid item xs={6} sm={3}>
+                                    </Box>
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Teacher
                                         </Typography>
                                         <Typography variant="body1" fontWeight="medium">
                                             {selectedClassData.teacher?.name || 'No teacher assigned'}
                                         </Typography>
-                                    </Grid>
-                                    <Grid item xs={6} sm={3}>
+                                    </Box>
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
                                             Current Students
                                         </Typography>
                                         <Typography variant="body1" fontWeight="medium">
                                             {assignedStudents.length}
                                         </Typography>
-                                    </Grid>
-                                </Grid>
-                            </Stack>
-                        </Paper>
-                    )}
-                </Stack>
-            </CardContent>
-        </Card>            {selectedClass && (<Grid container spacing={3} sx={{ height: 'fit-content' }}>
-            {/* Available Students Section */}
-            <Grid item xs={12} lg={8}>
-                <Card elevation={2} sx={{ borderRadius: 2, height: 'fit-content' }}>
-                    <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                        <Stack spacing={3}>                            <Stack direction="row" alignItems="center" spacing={1}>
-                                <Person sx={{ color: '#1976d2', fontSize: 28 }} />
-                                <Stack>
-                                    <Typography variant="h6" color="primary" fontWeight="bold">
-                                        Available Students ({availableStudents.length})
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Students can only be assigned to one class at a time
-                                    </Typography>
-                                    {allStudents.length > availableStudents.length && (
-                                        <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'medium' }}>
-                                            {allStudents.length - availableStudents.length} student(s) already assigned to other classes
+                                    </Box>
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
+                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                            Class Capacity
                                         </Typography>
-                                    )}
+                                        <Typography variant="body1" fontWeight="medium">
+                                            {selectedClassData.numberStudent || 'No limit'}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{flex: 1, minWidth: '120px'}}>
+                                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                                            Available Spots
+                                        </Typography>
+                                        <Typography
+                                            variant="body1"
+                                            fontWeight="medium"
+                                            color={
+                                                selectedClassData.numberStudent && assignedStudents.length >= selectedClassData.numberStudent
+                                                    ? 'error.main'
+                                                    : 'success.main'
+                                            }
+                                        >
+                                            {selectedClassData.numberStudent
+                                                ? Math.max(0, selectedClassData.numberStudent - assignedStudents.length)
+                                                : 'Unlimited'
+                                            }
+                                        </Typography>
+                                    </Box>
                                 </Stack>
-                            </Stack>
 
-                            {/* Search and Filter Controls Stack */}
-                            <Stack spacing={2}>                                        <Stack
-                                direction={{ xs: 'column', md: 'row' }}
-                                spacing={2}
-                                alignItems={{ xs: 'stretch', md: 'center' }}
-                            >
-                                <TextField
-                                    placeholder="Search students by name, gender, or place of birth..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    InputProps={{
-                                        startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
-                                    }}
-                                    sx={{ flex: 1 }}
-                                    variant="outlined"
-                                />
-
-                                <FormControl sx={{ minWidth: { xs: '100%', md: 200 } }}>
-                                    <InputLabel>Filter by Age Group</InputLabel>
-                                    <Select
-                                        value={filterGrade}
-                                        onChange={(e) => setFilterGrade(e.target.value)}
-                                        label="Filter by Age Group"
-                                    >
-                                        {gradeOptions.map((option) => (
-                                            <MenuItem key={option.value} value={option.value}>
-                                                {option.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-
-                                <Button
-                                    variant="outlined"
-                                    onClick={handleSelectAll}
-                                    disabled={availableStudents.length === 0}
-                                    sx={{
-                                        whiteSpace: 'nowrap',
-                                        minWidth: { xs: '100%', md: 140 }
-                                    }}
-                                >
-                                    {selectedStudents.length === availableStudents.length ? 'Deselect All' : 'Select All'}
-                                </Button>
-                            </Stack>
-
-                                {selectedStudents.length > 0 && (
+                                {/* Class Capacity Warning */}
+                                {selectedClassData.numberStudent && assignedStudents.length >= selectedClassData.numberStudent && (
                                     <Alert
-                                        severity="info"
+                                        severity="warning"
                                         sx={{
                                             borderRadius: 2,
                                             '& .MuiAlert-message': {
@@ -545,316 +534,482 @@ function AssignStudentToClass() {
                                             }
                                         }}
                                     >
-                                        {selectedStudents.length} student(s) selected for assignment
+                                        This class is at maximum capacity ({selectedClassData.numberStudent} students).
+                                        You must unassign students before adding new ones.
                                     </Alert>
                                 )}
-                            </Stack>                                    {/* Student List */}
-                            <Stack spacing={2}>
-                                {availableStudents.length === 0 ? (
-                                    <Paper
-                                        sx={{
-                                            p: 4,
-                                            textAlign: 'center',
-                                            bgcolor: 'grey.50',
-                                            borderRadius: 2,
-                                            border: '2px dashed',
-                                            borderColor: 'grey.300'
-                                        }}
-                                    >                                        <Stack spacing={2} alignItems="center">
-                                            <Group sx={{ fontSize: 64, color: 'text.secondary' }} />
-                                            <Typography variant="h6" color="text.secondary" fontWeight="medium">
-                                                No available students found
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                                {allStudents.length > 0 
-                                                    ? "All students are already assigned to classes (one class per student limit)"
-                                                    : "No students found or filtered out by current search criteria"
-                                                }
+                            </Stack>
+                        </Paper>
+                    )}
+                    {!selectedClassData && selectedClass && (
+                        <Alert severity="warning" sx={{mt: 2}}>
+                            Class data not found. Please try selecting the class again.
+                        </Alert>
+                    )}
+                </Stack>
+            </CardContent>
+            </Card> {selectedClass && (
+            <Stack
+                direction={{xs: 'column', md: 'row'}}
+                spacing={3}
+
+            >
+                {/* Available Students Section */}
+                <Box sx={{flex: 1}}>
+                    <Card elevation={2}
+                          sx={{borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column'}}>
+                        <CardContent sx={{p: {xs: 2, md: 3}, flex: 1, display: 'flex', flexDirection: 'column'}}>
+                            <Stack spacing={3}>
+                                <Stack spacing={2}>
+                                    <Stack spacing={2}>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Person sx={{color: '#1976d2', fontSize: 28}}/>
+                                            <Typography variant="h6" color="primary" fontWeight="bold">
+                                                Available Students ({availableStudents.length})
                                             </Typography>
                                         </Stack>
-                                    </Paper>) : (
+                                        <Stack sx={{ml: 4}}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Students can only be assigned to one class at a time
+                                            </Typography>
+                                            {(allStudents.length > availableStudents.length) && (
+                                                <Typography variant="caption" color="warning.main"
+                                                            sx={{fontWeight: 'medium'}}>
+                                                    {Math.max(0, allStudents.length - availableStudents.length - assignedStudents.length) > 0 &&
+                                                        `${allStudents.length - availableStudents.length - assignedStudents.length} student(s) already assigned to other classes`}
+                                                    {Math.max(0, allStudents.length - availableStudents.length - assignedStudents.length) > 0 &&
+                                                        assignedStudents.length > 0 && ` • `}
+                                                    {assignedStudents.length > 0 && `${assignedStudents.length} student(s) in current class`}
+                                                </Typography>
+                                            )}
+                                        </Stack>
+                                    </Stack>
+
+
+                                    {/* Select All/Deselect All Button removed from here - moved to student list header */}
+                                </Stack>
+
+                                {/* Search and Filter Controls Stack */}
+                                <Stack spacing={2}>
                                     <Stack
+                                        direction={{xs: 'column', md: 'row'}}
                                         spacing={2}
-                                        sx={{
-                                            maxHeight: 'calc(100vh - 400px)',
-                                            overflow: 'auto',
-                                            pr: 1 // Add padding for scrollbar
-                                        }}
+                                        alignItems={{xs: 'stretch', md: 'center'}}
                                     >
-                                        {availableStudents.map((student) => (
-                                            <Paper
-                                                key={student.id}
-                                                elevation={selectedStudents.includes(student.id) ? 4 : 2}
+                                        <TextField
+                                            placeholder="Search students by name, gender, or place of birth..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <Search sx={{mr: 1, color: 'text.secondary'}}/>
+                                            }}
+                                            sx={{flex: 1}}
+                                            variant="outlined"
+                                        />
+
+                                        <FormControl sx={{minWidth: {xs: '100%', md: 200}}}>
+                                            <InputLabel>Filter by Age Group</InputLabel>
+                                            <Select
+                                                value={filterGrade}
+                                                onChange={(e) => setFilterGrade(e.target.value)}
+                                                label="Filter by Age Group"
+                                            >
+                                                {gradeOptions.map((option) => (
+                                                    <MenuItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Stack>
+
+                                    {/* Selection information moved to the student count display */}
+
+                                    {/* Warning when too many students selected */}
+                                    {selectedStudents.length > 0 && selectedClassData?.numberStudent &&
+                                        selectedStudents.length > (selectedClassData.numberStudent - assignedStudents.length) && (
+                                            <Alert
+                                                severity="warning"
                                                 sx={{
-                                                    p: { xs: 2, md: 3 },
-                                                    border: '2px solid',
-                                                    borderColor: selectedStudents.includes(student.id)
-                                                        ? 'primary.main'
-                                                        : 'transparent',
-                                                    bgcolor: selectedStudents.includes(student.id)
-                                                        ? 'primary.50'
-                                                        : 'background.paper',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.3s ease',
                                                     borderRadius: 2,
-                                                    '&:hover': {
-                                                        boxShadow: 2,
+                                                    '& .MuiAlert-message': {
+                                                        fontWeight: 'medium'
                                                     }
                                                 }}
-                                                onClick={() => handleStudentSelection(student.id)}
                                             >
-                                                <Stack
-                                                    direction={{ xs: 'column', sm: 'row' }}
-                                                    alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                                    spacing={3}
-                                                >
-                                                    <Stack
-                                                        direction="row"
-                                                        alignItems="center"
-                                                        spacing={2}
-                                                        sx={{ width: { xs: '100%', sm: 'auto' } }}
-                                                    >
-                                                        <Avatar
-                                                            src={student.profileImage}
-                                                            sx={{
-                                                                bgcolor: 'primary.main',
-                                                                width: { xs: 56, md: 64 },
-                                                                height: { xs: 56, md: 64 },
-                                                                fontSize: { xs: '1.5rem', md: '1.75rem' }
-                                                            }}
-                                                        >
-                                                            {student.name?.charAt(0)?.toUpperCase()}
-                                                        </Avatar>
-
-                                                        <Stack spacing={1} sx={{ flex: 1 }}>
-                                                            <Stack
-                                                                direction={{ xs: 'column', sm: 'row' }}
-                                                                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                                                spacing={1}
-                                                            >
-                                                                <Typography
-                                                                    variant="h6"
-                                                                    fontWeight="bold"
-                                                                    sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}
-                                                                >
-                                                                    {student.name}
-                                                                </Typography>
-                                                                <Chip
-                                                                    label={`Age ${calculateAge(student.dateOfBirth)}`}
-                                                                    size="small"
-                                                                    color="secondary"
-                                                                    sx={{ fontWeight: 'medium' }}
-                                                                />
-                                                            </Stack>                                                            <Grid container spacing={1}>
-                                                                <Grid item xs={12} sm={4}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        <strong>Gender:</strong> {student.gender}
-                                                                    </Typography>
-                                                                </Grid>
-                                                                <Grid item xs={12} sm={4}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        <strong>Born:</strong> {student.dateOfBirth}
-                                                                    </Typography>
-                                                                </Grid>
-                                                                <Grid item xs={12} sm={4}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        <strong>Place:</strong> {student.placeOfBirth}
-                                                                    </Typography>
-                                                                </Grid>
-                                                                {getStudentClasses(student.id).length > 0 && (
-                                                                    <Grid item xs={12}>
-                                                                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                                                                            <strong>Currently assigned to:</strong>
-                                                                        </Typography>
-                                                                        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.5 }}>
-                                                                            {getStudentClasses(student.id).map((classInfo, index) => (
-                                                                                <Chip
-                                                                                    key={index}
-                                                                                    label={`${classInfo.className} (${classInfo.classGrade})`}
-                                                                                    size="small"
-                                                                                    variant="outlined"
-                                                                                    color="info"
-                                                                                    sx={{ fontSize: '0.75rem' }}
-                                                                                />
-                                                                            ))}
-                                                                        </Stack>
-                                                                    </Grid>
-                                                                )}
-                                                            </Grid>
-                                                        </Stack>
-                                                    </Stack>
-
-                                                    <Checkbox
-                                                        icon={<CheckCircleOutline color='primary' />}
-                                                        checkedIcon={<CheckCircle color='primary' />}
-                                                        color="primary"
-                                                        checked={selectedStudents.includes(student.id)}
-                                                        onChange={(e) => {
-                                                            e.stopPropagation();
-                                                            handleStudentSelection(student.id);
-                                                        }}
-                                                        sx={{
-                                                            '& .MuiSvgIcon-root': {
-                                                                fontSize: { xs: 28, md: 32 }
-                                                            }
-                                                        }}
-                                                    />
-                                                </Stack>
-                                            </Paper>
-                                        ))}
-                                    </Stack>
-                                )}
-                            </Stack>
-                        </Stack>
-                    </CardContent>
-                </Card>
-            </Grid>                    {/* Currently Assigned Students Section */}
-            <Grid item xs={12} lg={4}>
-                <Card
-                    elevation={2}
-                    sx={{
-                        height: 'fit-content',
-                        borderRadius: 2,
-                        position: { lg: 'sticky' },
-                        top: { lg: 24 }
-                    }}
-                >                            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                        <Stack spacing={3}>
-                            <Stack direction="row" alignItems="center" justifyContent="space-between">
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                    <CheckCircle sx={{ color: 'success.main', fontSize: 28 }} />
-                                    <Typography variant="h6" color="success.main" fontWeight="bold">
-                                        Assigned ({assignedStudents.length})
-                                    </Typography>
+                                                You've selected {selectedStudents.length} students but
+                                                only {Math.max(0, selectedClassData.numberStudent - assignedStudents.length)} spots
+                                                available.
+                                                Please
+                                                deselect {selectedStudents.length - (selectedClassData.numberStudent - assignedStudents.length)} student(s).
+                                            </Alert>
+                                        )}
                                 </Stack>
-                                {assignedStudents.length > 0 && (
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={handleSelectAllAssigned}
-                                        sx={{
-                                            fontSize: '0.75rem',
-                                            minWidth: 'auto',
-                                            px: 1
-                                        }}
-                                    >
-                                        {selectedAssignedStudents.length === assignedStudents.length ? 'Deselect All' : 'Select All'}
-                                    </Button>
-                                )}
-                            </Stack>
 
-                            {selectedAssignedStudents.length > 0 && (
-                                <Alert
-                                    severity="warning"
-                                    sx={{
-                                        borderRadius: 2,
-                                        '& .MuiAlert-message': {
-                                            fontWeight: 'medium'
-                                        }
-                                    }}
-                                >
-                                    {selectedAssignedStudents.length} student(s) selected for removal
-                                </Alert>
-                            )}
-
-                            {assignedStudents.length === 0 ? (
-                                <Paper
-                                    sx={{
-                                        p: 3,
-                                        textAlign: 'center',
-                                        bgcolor: 'grey.50',
-                                        borderRadius: 2,
-                                        border: '2px dashed',
-                                        borderColor: 'grey.300'
-                                    }}
-                                >
-                                    <Stack spacing={2} alignItems="center">
-                                        <CheckCircle sx={{ fontSize: 48, color: 'text.secondary' }} />
-                                        <Typography variant="body1" color="text.secondary" fontWeight="medium">
-                                            No students assigned yet
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Students you assign will appear here
-                                        </Typography>
-                                    </Stack>
-                                </Paper>
-                            ) : (<Stack
-                                spacing={2}
-                                sx={{
-                                    maxHeight: 'calc(100vh - 450px)',
-                                    overflow: 'auto',
-                                    pr: 1
-                                }}
-                            >
-                                {assignedStudents.map((student) => (
-                                    <Paper
-                                        key={student.id}
-                                        elevation={selectedAssignedStudents.includes(student.id) ? 4 : 2}
-                                        sx={{
-                                            p: 2,
-                                            borderRadius: 2,
-                                            border: '2px solid',
-                                            borderColor: selectedAssignedStudents.includes(student.id)
-                                                ? 'error.main'
-                                                : 'success.200',
-                                            bgcolor: selectedAssignedStudents.includes(student.id)
-                                                ? 'error.50'
-                                                : 'success.50',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.3s ease',
-                                            '&:hover': {
-                                                boxShadow: 3,
-                                                transform: 'translateY(-1px)'
-                                            }
-                                        }}
-                                        onClick={() => handleAssignedStudentSelection(student.id)}
-                                    >
-                                        <Stack direction="row" alignItems="center" spacing={2}>
-                                            <Avatar
-                                                src={student.profileImage}
-                                                sx={{
-                                                    bgcolor: selectedAssignedStudents.includes(student.id)
-                                                        ? 'error.main'
-                                                        : 'success.main',
-                                                    width: 48,
-                                                    height: 48,
-                                                    fontSize: '1.25rem'
-                                                }}
-                                            >
-                                                {student.name?.charAt(0)?.toUpperCase()}
-                                            </Avatar>
-                                            <Stack spacing={0.5} sx={{ flex: 1 }}>
-                                                <Typography variant="body1" fontWeight="bold">
-                                                    {student.name}
+                                {/* Student List */}
+                                <Box sx={{flex: 1, minHeight: 0}}>
+                                    {availableStudents.length === 0 ? (
+                                        <Paper
+                                            sx={{
+                                                p: 4,
+                                                textAlign: 'center',
+                                                bgcolor: 'grey.50',
+                                                borderRadius: 2,
+                                                border: '2px dashed',
+                                                borderColor: 'grey.300',
+                                                height: '100%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <Stack spacing={2} alignItems="center">
+                                                <Group sx={{fontSize: 64, color: 'text.secondary'}}/>
+                                                <Typography variant="h6" color="text.secondary" fontWeight="medium">
+                                                    No available students found
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Age {calculateAge(student.dateOfBirth)} • {student.gender}
+                                                <Typography variant="body2" color="text.secondary"
+                                                            sx={{textAlign: 'center'}}>
+                                                    {allStudents.length > 0
+                                                        ? "All students are already assigned to classes (one class per student limit)"
+                                                        : "No students found or filtered out by current search criteria"
+                                                    }
                                                 </Typography>
                                             </Stack>
-                                            <Checkbox
-                                                icon={<CheckCircleOutline color='primary' />}
-                                                checkedIcon={<RemoveCircle color='primary' />}
-                                                color={selectedAssignedStudents.includes(student.id) ? 'error' : 'success'}
-                                                checked={selectedAssignedStudents.includes(student.id)}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    handleAssignedStudentSelection(student.id);
-                                                }}
+                                        </Paper>
+                                    ) : (
+                                        <Stack spacing={2} sx={{height: '100%'}}>
+                                            {/* Select All/Deselect All Button - moved here to be with student list */}
+                                            {availableStudents.length > 0 && (
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    py: 1,
+                                                    px: 1,
+                                                    bgcolor: 'grey.50',
+                                                    borderRadius: 1,
+                                                    border: '1px solid',
+                                                    borderColor: 'grey.200'
+                                                }}>
+                                                    <Typography variant="body2" fontWeight="medium" sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        color: selectedStudents.length > 0 ? (
+                                                            selectedClassData?.numberStudent &&
+                                                            selectedStudents.length > (selectedClassData.numberStudent - assignedStudents.length)
+                                                                ? 'warning.main'
+                                                                : 'primary.main'
+                                                        ) : 'text.secondary'
+                                                    }}>
+                                                        {availableStudents.length} student{availableStudents.length !== 1 ? 's' : ''} available
+                                                        {selectedStudents.length > 0 && (
+                                                            <Chip
+                                                                label={`${selectedStudents.length} selected`}
+                                                                size="small"
+                                                                color={
+                                                                    selectedClassData?.numberStudent &&
+                                                                    selectedStudents.length > (selectedClassData.numberStudent - assignedStudents.length)
+                                                                        ? 'warning'
+                                                                        : 'primary'
+                                                                }
+                                                                sx={{ml: 1, fontWeight: 'medium'}}
+                                                            />
+                                                        )}
+                                                    </Typography>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={handleSelectAll}
+                                                        startIcon={selectedStudents.length === availableStudents.length ?
+                                                            <RemoveCircle/> : <CheckCircle/>}
+                                                        sx={{
+                                                            fontSize: '0.75rem',
+                                                            minWidth: 'auto',
+                                                            px: 2
+                                                        }}
+                                                    >
+                                                        {selectedStudents.length === availableStudents.length ? 'Deselect All' : 'Select All'}
+                                                    </Button>
+                                                </Box>
+                                            )}
+
+                                            <Stack
+                                                spacing={2}
                                                 sx={{
-                                                    '& .MuiSvgIcon-root': {
-                                                        fontSize: 24
-                                                    }
+                                                    flex: 1,
+                                                    pr: 1
                                                 }}
-                                            />
+                                            >
+                                                {availableStudents.map((student) => (
+                                                    <StudentCard 
+                                                        key={student.id}
+                                                        student={student}
+                                                        isSelected={selectedStudents.includes(student.id)}
+                                                        onClick={() => handleStudentSelection(student.id)}
+                                                        onCheckboxChange={handleStudentSelection}
+                                                        variant="available"
+                                                        calculateAge={calculateAge}
+                                                    />
+                                                ))}
+                                            </Stack>
                                         </Stack>
-                                    </Paper>
-                                ))}
+                                    )}
+                                </Box>
                             </Stack>
-                            )}                                </Stack>
-                    </CardContent>
-                </Card>
-            </Grid>
-        </Grid>
+                        </CardContent>
+
+                        {/* Card Footer with Assign Button */}
+                        <Box sx={{
+                            p: {xs: 2, md: 3},
+                            pt: 0,
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                            bgcolor: 'grey.50'
+                        }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<PersonAdd/>}
+                                onClick={handleAssignStudents}
+                                disabled={
+                                    selectedStudents.length === 0 ||
+                                    submitting ||
+                                    !selectedClass ||
+                                    (selectedClassData && selectedClassData.numberStudent && (
+                                        assignedStudents.length >= selectedClassData.numberStudent ||
+                                        selectedStudents.length > (selectedClassData.numberStudent - assignedStudents.length)
+                                    ))
+                                }
+                                size="large"
+                                fullWidth
+                                sx={{
+                                    bgcolor: '#1976d2',
+                                    '&:hover': {bgcolor: '#1565c0'},
+                                    '&:disabled': {bgcolor: 'grey.300'},
+                                    minHeight: 48,
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                {submitting ? (
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <CircularProgress size={20} color="inherit"/>
+                                        <span>Assigning...</span>
+                                    </Stack>
+                                ) : (
+                                    `Assign ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''}`
+                                )}
+                            </Button>
+                        </Box>
+                    </Card>
+                </Box>
+                {/* Currently Assigned Students Section */}
+                <Box sx={{flex: 1}}>
+                    <Card elevation={2}
+                          sx={{borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column'}}>
+                        <CardContent sx={{p: {xs: 2, md: 3}, flex: 1, display: 'flex', flexDirection: 'column'}}>
+                            <Stack spacing={3} sx={{height: '100%'}}>
+                                <Stack spacing={2}>
+                                    <Stack spacing={2}>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <CheckCircle sx={{color: 'success.main', fontSize: 28}}/>
+                                            <Typography variant="h6" color="success.main" fontWeight="bold">
+                                                Assigned
+                                                ({filteredAssignedStudents.length}{assignedSearchTerm || assignedFilterGrade ? ` of ${assignedStudents.length}` : ''})
+                                            </Typography>
+                                        </Stack>
+                                        <Stack sx={{ml: 4}}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Click on a student to select or deselect for removal
+                                            </Typography>
+                                            {(allStudents.length > assignedStudents.length) && (
+                                                <Typography variant="caption" color="warning.main"
+                                                            sx={{fontWeight: 'medium'}}>
+                                                    {Math.max(0, allStudents.length - assignedStudents.length - availableStudents.length) > 0 &&
+                                                        `${allStudents.length - assignedStudents.length - availableStudents.length} student(s) already assigned to other classes`}
+                                                    {Math.max(0, allStudents.length - assignedStudents.length - availableStudents.length) > 0 &&
+                                                        assignedStudents.length > 0 && ` • `}
+                                                    {availableStudents.length > 0 && `${availableStudents.length} student(s) available for assignment`}
+                                                </Typography>
+                                            )}
+                                        </Stack>
+                                    </Stack>
+
+                                    {/* Select All/Deselect All Button removed from here - moved to student list header */}
+                                </Stack>
+
+                                {/* Search and Filter Controls for Assigned Students */}
+                                <Stack spacing={2}>
+                                    <Stack
+                                        direction={{xs: 'column', md: 'row'}}
+                                        spacing={2}
+                                        alignItems={{xs: 'stretch', md: 'center'}}
+                                    >
+                                        <TextField
+                                            placeholder="Search assigned students..."
+                                            value={assignedSearchTerm}
+                                            onChange={(e) => setAssignedSearchTerm(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <Search sx={{mr: 1, color: 'text.secondary'}}/>
+                                            }}
+                                            sx={{flex: 1}}
+                                            variant="outlined"
+                                        />
+
+                                        <FormControl sx={{minWidth: {xs: '100%', md: 200}}}>
+                                            <InputLabel>Filter by Age Group</InputLabel>
+                                            <Select
+                                                value={assignedFilterGrade}
+                                                onChange={(e) => setAssignedFilterGrade(e.target.value)}
+                                                label="Filter by Age Group"
+                                            >
+                                                {gradeOptions.map((option) => (
+                                                    <MenuItem key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Stack>
+
+                                    {/* Selection information moved to the student count display */}
+                                </Stack>
+
+                                <Box sx={{flex: 1, minHeight: 0}}>
+                                    {assignedStudents.length === 0 ? (
+                                        <Paper
+                                            sx={{
+                                                p: 3,
+                                                textAlign: 'center',
+                                                bgcolor: 'grey.50',
+                                                borderRadius: 2,
+                                                border: '2px dashed',
+                                                borderColor: 'grey.300',
+                                                height: '100%',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <Stack spacing={2} alignItems="center">
+                                                <CheckCircle sx={{fontSize: 48, color: 'text.secondary'}}/>
+                                                <Typography variant="body1" color="text.secondary" fontWeight="medium">
+                                                    No students assigned yet
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Students you assign will appear here
+                                                </Typography>
+                                            </Stack>
+                                        </Paper>
+                                    ) : (
+                                        <Stack spacing={2} sx={{height: '100%'}}>
+                                            {/* Select All/Deselect All Button - moved here to be with student list */}
+                                            {assignedStudents.length > 0 && (
+                                                <Box sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    py: 1,
+                                                    px: 1,
+                                                    bgcolor: 'grey.50',
+                                                    borderRadius: 1,
+                                                    border: '1px solid',
+                                                    borderColor: 'grey.200'
+                                                }}>
+                                                    <Typography variant="body2" fontWeight="medium" sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        color: selectedAssignedStudents.length > 0 ? 'error.main' : 'text.secondary'
+                                                    }}>
+                                                        {assignedStudents.length} student{assignedStudents.length !== 1 ? 's' : ''} assigned
+                                                        {selectedAssignedStudents.length > 0 && (
+                                                            <Chip
+                                                                label={`${selectedAssignedStudents.length} selected`}
+                                                                size="small"
+                                                                color="error"
+                                                                sx={{ml: 1, fontWeight: 'medium'}}
+                                                            />
+                                                        )}
+                                                    </Typography>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        onClick={handleSelectAllAssigned}
+                                                        startIcon={selectedAssignedStudents.length === assignedStudents.length ?
+                                                            <RemoveCircle/> : <CheckCircle/>}
+                                                        sx={{
+                                                            fontSize: '0.75rem',
+                                                            minWidth: 'auto',
+                                                            px: 2
+                                                        }}
+                                                    >
+                                                        {selectedAssignedStudents.length === assignedStudents.length ? 'Deselect All' : 'Select All'}
+                                                    </Button>
+                                                </Box>
+                                            )}
+
+                                            <Stack
+                                                spacing={2}
+                                                sx={{
+                                                    flex: 1,
+                                                    pr: 1
+                                                }}
+                                            >
+                                                {assignedStudents.map((student) => (
+                                                    <StudentCard
+                                                        key={student.id}
+                                                        student={student}
+                                                        isSelected={selectedAssignedStudents.includes(student.id)}
+                                                        onClick={() => handleAssignedStudentSelection(student.id)}
+                                                        onCheckboxChange={handleAssignedStudentSelection}
+                                                        variant="assigned"
+                                                        calculateAge={calculateAge}
+                                                    />
+                                                ))}
+                                            </Stack>
+                                        </Stack>
+                                    )}
+                                </Box>
+                            </Stack>
+                        </CardContent>
+
+                        {/* Card Footer with Unassign Button */}
+                        {selectedClass && (
+                            <Box sx={{
+                                p: {xs: 2, md: 3},
+                                pt: 0,
+                                borderTop: '1px solid',
+                                borderColor: 'divider',
+                                bgcolor: selectedAssignedStudents.length > 0 ? 'error.50' : 'grey.50'
+                            }}>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={<PersonRemove/>}
+                                    onClick={handleUnassignStudents}
+                                    disabled={selectedAssignedStudents.length === 0 || submitting}
+                                    size="large"
+                                    fullWidth
+                                    sx={{
+                                        minHeight: 48,
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {submitting ? (
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <CircularProgress size={20} color="inherit"/>
+                                            <span>Unassigning...</span>
+                                        </Stack>
+                                    ) : selectedAssignedStudents.length > 0 ? (
+                                        `Unassign ${selectedAssignedStudents.length} Student${selectedAssignedStudents.length !== 1 ? 's' : ''}`
+                                    ) : (
+                                        'Select students to unassign'
+                                    )}
+                                </Button>
+                            </Box>
+                        )}
+                    </Card>
+                </Box>
+            </Stack>
         )}
     </Stack>
     );
