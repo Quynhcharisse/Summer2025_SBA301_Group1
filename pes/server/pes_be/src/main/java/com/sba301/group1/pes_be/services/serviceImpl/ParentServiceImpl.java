@@ -2,22 +2,17 @@ package com.sba301.group1.pes_be.services.serviceImpl;
 
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
-import com.sba301.group1.pes_be.models.Account;
-import com.sba301.group1.pes_be.models.AdmissionForm;
-import com.sba301.group1.pes_be.models.AdmissionTerm;
-import com.sba301.group1.pes_be.models.Parent;
-import com.sba301.group1.pes_be.models.Student;
-import com.sba301.group1.pes_be.repositories.AccountRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
-import com.sba301.group1.pes_be.repositories.ParentRepo;
-import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.models.*;
+import com.sba301.group1.pes_be.repositories.*;
 import com.sba301.group1.pes_be.requests.AddChildRequest;
 import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
 import com.sba301.group1.pes_be.requests.UpdateChildRequest;
 import com.sba301.group1.pes_be.requests.UpdateParentRequest;
+import com.sba301.group1.pes_be.response.ActivityResponse;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.ScheduleResponse;
+import com.sba301.group1.pes_be.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
@@ -55,6 +50,22 @@ public class ParentServiceImpl implements ParentService {
     private final AccountRepo accountRepo;
 
     private final MailService mailService;
+
+    private final ActivityRepo activityRepo;
+
+    private final SyllabusRepo syllabusRepo;
+
+    private final ClassesRepo classesRepo;
+
+    // Private helper method to convert list of Activity entities to Responses
+    private List<ActivityResponse> convertToResponse(List<Activity> activities) {
+        return ActivityResponse.fromEntityList(activities);
+    }
+
+    // Private helper method to convert list of Schedule entities to Responses
+    private List<ScheduleResponse> convertScheduleToResponse(List<Schedule> schedules) {
+        return ScheduleResponse.fromEntityList(schedules);
+    }
 
     @Override
     public ResponseEntity<ResponseObject> viewAdmissionFormList(HttpServletRequest request) {
@@ -643,6 +654,122 @@ public class ParentServiceImpl implements ParentService {
                         .data(null)
                         .build()
         );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getStudentClasses(int studentId, HttpServletRequest request) {
+        Account account = jwtService.extractAccountFromCookie(request);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    ResponseObject.builder()
+                            .message("Forbidden: Only parents can access this resource")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        // Tìm học sinh theo ID
+        Student student = studentRepo.findById(studentId).orElse(null);
+        if (student == null || !Objects.equals(student.getParent().getId(), account.getParent().getId())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                            .message("Student not found or access denied")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        // Lấy danh sách lớp học của học sinh
+        List<Map<String, Object>> classes = student.getStudentClassList().stream()
+                .map(studentClass -> {
+                    Map<String, Object> classData = new HashMap<>();
+                    classData.put("id", studentClass.getId());
+                    classData.put("class", studentClass.getClasses().getName());
+                    classData.put("student", studentClass.getStudent().getName());
+                    classData.put("grade", studentClass.getClasses().getGrade());
+                    classData.put("startDate", studentClass.getClasses().getStartDate());
+                    classData.put("endDate", studentClass.getClasses().getEndDate());
+                    classData.put("room", studentClass.getClasses().getRoomNumber());
+                    classData.put("syllabus", getSyllabusByClassId(studentClass.getId(), request).getBody().getData());
+                    classData.put("activities", getActivitiesByClassId(studentClass.getId(), request).getBody().getData());
+                    return classData;
+                })
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseObject.builder()
+                        .message("Student classes retrieved successfully")
+                        .success(true)
+                        .data(classes)
+                        .build()
+        );
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request) {
+        try {
+            List<Activity> activities = activityRepo.findByClassId(classId);
+            List<ActivityResponse> activityResponses = convertToResponse(activities);
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request) {
+        try {
+            if (!classesRepo.existsById(classId)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            Syllabus syllabus = syllabusRepo.findByClassId(classId);
+            if (syllabus == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("No syllabus found for this class")
+                                .success(false)
+                                .data(null)
+                                .build()
+                );
+            }
+
+            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
+            return ResponseEntity.ok().body(
+                    ResponseObject.builder()
+                            .message("Syllabus retrieved successfully")
+                            .success(true)
+                            .data(syllabusResponse)
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabus: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
     }
 }
 

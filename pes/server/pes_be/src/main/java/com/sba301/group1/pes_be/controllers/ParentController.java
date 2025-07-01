@@ -66,4 +66,22 @@ public class ParentController {
     public ResponseEntity<ResponseObject> updateProfileParent(@RequestBody UpdateParentRequest request, HttpServletRequest httpRequest) {
         return parentService.updateProfileParent(request, httpRequest);
     }
+
+    @GetMapping("/student-classes/{studentId}")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> getStudentClasses(@PathVariable int studentId, HttpServletRequest request) {
+        return parentService.getStudentClasses(studentId, request);
+    }
+
+    @GetMapping("/activities/{classId}")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> getActivitiesByClassId(@PathVariable int classId, HttpServletRequest request) {
+        return parentService.getActivitiesByClassId(classId, request);
+    }
+
+    @GetMapping("/syllabus/{classId}")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> getSyllabusByClassId(@PathVariable int classId, HttpServletRequest request) {
+        return parentService.getSyllabusByClassId(classId, request);
+    }
 }
