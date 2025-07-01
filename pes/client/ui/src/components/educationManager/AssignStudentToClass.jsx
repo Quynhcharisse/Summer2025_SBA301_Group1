@@ -742,7 +742,7 @@ function AssignStudentToClass() {
                                                 }}
                                             >
                                                 {availableStudents.map((student) => (
-                                                    <StudentCard 
+                                                    <StudentCard
                                                         key={student.id}
                                                         student={student}
                                                         isSelected={selectedStudents.includes(student.id)}
