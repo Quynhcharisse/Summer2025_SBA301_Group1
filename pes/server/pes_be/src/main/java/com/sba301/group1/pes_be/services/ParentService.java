@@ -28,4 +28,8 @@ public interface ParentService {
     ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request);
 
     ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request);
+
+    ResponseEntity<ResponseObject> refillForm(RefillFormRequest request, HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> viewRefillFormList(HttpServletRequest request);
 }

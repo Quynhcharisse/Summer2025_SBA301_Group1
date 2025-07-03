@@ -49,7 +49,7 @@ public class MailServiceImpl implements MailService {
             helper.setText(html, true);
 
             // 4) Đính kèm logo inline (CID = "logo")
-            ClassPathResource logo = new ClassPathResource("static/img/logo.png");
+            ClassPathResource logo = new ClassPathResource("static/img/mam-non-merrystar-long-bien-5.jpg");
             helper.addInline("logo", logo);
 
             // 5) Gửi mail
