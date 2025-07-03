@@ -23,4 +23,7 @@ public interface ParentService {
 
     ResponseEntity<ResponseObject> updateProfileParent(UpdateParentRequest request, HttpServletRequest httpRequest);
 
+    ResponseEntity<ResponseObject> refillForm(RefillFormRequest request, HttpServletRequest httpRequest);
+
+    ResponseEntity<ResponseObject> viewRefillFormList(HttpServletRequest request);
 }

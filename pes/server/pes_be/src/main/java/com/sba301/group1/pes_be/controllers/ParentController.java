@@ -28,6 +28,18 @@ public class ParentController {
         return parentService.submitAdmissionForm(request, httpRequest);
     }
 
+    @PostMapping("/form/refill")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> refillForm(@RequestBody RefillFormRequest request, HttpServletRequest httpRequest) {
+        return parentService.refillForm(request, httpRequest);
+    }
+
+    @GetMapping("/form/refill/list")
+    @PreAuthorize("hasRole('parent')")
+    public ResponseEntity<ResponseObject> viewRefillFormList(HttpServletRequest request) {
+        return parentService.viewRefillFormList(request);
+    }
+
     @PutMapping("/form/cancel")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> cancelAdmissionForm(@RequestBody CancelAdmissionForm request, HttpServletRequest httpRequest) {
