@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.email.Format;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
@@ -243,13 +244,16 @@ public class ParentServiceImpl implements ParentService {
 
         admissionFormRepo.save(form);
 
-        // 8. Gửi email
+        //Gửi email thông báo hủy
         try {
+            String subject = "[PES] Admission Form Cancelled";
+            String heading = "Admission Form Cancelled";
+            String bodyHtml = Format.getAdmissionCancelledBody(account.getName());
             mailService.sendMail(
                     account.getEmail(),
-                    "Admission Form Submitted",
-                    "Dear Parent,\n\nYour admission form for your child has been successfully submitted on "
-                            + LocalDateTime.now() + ".\n\nRegards,\nSunShine Preschool"
+                    subject,
+                    heading,
+                    bodyHtml
             );
         } catch (Exception e) {
             System.err.println("Failed to send email notification: " + e.getMessage());

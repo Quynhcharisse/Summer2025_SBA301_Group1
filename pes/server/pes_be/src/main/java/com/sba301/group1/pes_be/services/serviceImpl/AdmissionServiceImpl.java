@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.email.Format;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.AdmissionForm;
@@ -337,10 +338,8 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        //lấy email ph từ account
-        String parentEmail = form.getParent().getAccount().getEmail();//account phải có email
-
-        if (form.getStudent() == null) {
+        Student student = form.getStudent();
+        if (student == null) {
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("Form has no associated student.")
@@ -350,31 +349,28 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
+        //lấy email ph từ account
+        String parentEmail = form.getParent().getAccount().getEmail();//account phải có email
         if (request.isApproved()) {
             form.setStatus(Status.APPROVED.getValue());
 
-            Student student = form.getStudent();
+
             student.setStudent(true);// Đánh dấu đã trở thành học sinh chính thức
             studentRepo.save(student);
 
-            //gửi email thành công
-            mailService.sendMail(
-                    parentEmail,
-                    "Admission Approved",
-                    "Congratulations!\n\nThe admission form for " + form.getStudent().getName() +
-                            " has been approved.\nWe look forward to seeing you at our school!"
-            );
+            String subject = "[PES] Admission Approved";
+            String heading = "Admission Approved";
+            String bodyHtml = Format.getAdmissionApprovedBody(student.getName());
+            mailService.sendMail(parentEmail, subject, heading, bodyHtml);
+
         } else {
             form.setStatus(Status.REJECTED.getValue());
             form.setCancelReason(request.getReason());
 
-            //gửi email từ chối
-            mailService.sendMail(
-                    parentEmail,
-                    "Admission Rejected",
-                    "We're sorry.\n\nThe admission form for " + form.getStudent().getName() +
-                            " has been rejected.\nReason: " + request.getReason()
-            );
+            String subject = "[PES] Admission Rejected";
+            String heading = "Admission Rejected";
+            String bodyHtml = Format.getAdmissionRejectedBody(student.getName(), request.getReason());
+            mailService.sendMail(parentEmail, subject, heading, bodyHtml);
         }
 
         admissionFormRepo.save(form);

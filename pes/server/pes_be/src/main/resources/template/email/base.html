@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${title}">MerryStar</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f9f9f9;font-family:'Helvetica Neue',Arial,sans-serif;color:#333;">
+<div style="max-width:600px;margin:0 auto;background-color:#fff;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+    <!-- HEADER -->
+    <div style="background-color:#163C9D;padding:20px;text-align:center;">
+        <img
+                src="cid:logo"
+                alt="MerryStar Logo"
+                style="max-height:60px;border-radius:50%;"
+        />
+    </div>
+
+    <!-- CONTENT -->
+    <div style="padding:30px;">
+        <h2 th:text="${heading}" style="color:#163C9D;margin-top:0;">[Heading]</h2>
+
+        <!-- đây sẽ được Thymeleaf chèn fragment body -->
+        <div th:utext="${body}"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="background-color:#DF913F;border-top:1px solid #DF913F;padding:20px 30px;font-size:12px;color:white;text-align:left;">
+        <ul style="list-style:none;padding:0;margin:0;">
+            <li style="margin:8px 0;line-height:1.4;">Sunshine Preschool</li>
+            <li style="margin:8px 0;line-height:1.4;">Providing quality early childhood education in a nurturing
+                environment
+            </li>
+            <li style="margin:8px 0;line-height:1.4;">📍 Tulip 09-38 & 40, Vinhomes Riverside 2, Việt Hưng Commune, Long Biên District, Hà Nội</li>
+            <li style="margin:8px 0;line-height:1.4;">📞 (443) 235-5647 | ✉️ contact@merrystarpreschool.edu.vn</li>
+            <li style="margin:8px 0;line-height:1.4;text-align:center;">© 2024 MerryStar Preschool. All rights reserved
+            </li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
