@@ -11,7 +11,9 @@ import com.sba301.group1.pes_be.requests.SyllabusRequest;
 import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
 import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
 import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.response.RoomResponse;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 
 /**
  * Consolidated education service interface that encompasses all education-related operations
@@ -278,6 +280,13 @@ public interface EducationService {
     ResponseEntity<ResponseObject> createSchedule(CreateScheduleRequest request);
 
     /**
+     * Creates a new schedule with associated activities.
+     * @param request the schedule creation request including activities
+     * @return ResponseEntity containing the operation result
+     */
+    ResponseEntity<ResponseObject> createScheduleWithActivities(CreateScheduleRequest request);
+
+    /**
      * Updates an existing schedule
      * @param scheduleId the ID of the schedule to update
      * @param request the schedule update request
@@ -386,4 +395,11 @@ public interface EducationService {
      * @return ResponseEntity containing the list of student-class assignments
      */
     ResponseEntity<ResponseObject> getAllStudentClassAssignments();
+    
+    /**
+     * Retrieves a list of all rooms (1-20) with their occupancy status.
+     * A room is considered occupied if there is at least one class assigned to it.
+     * @return ResponseEntity containing a list of RoomResponse objects.
+     */
+    ResponseEntity<List<RoomResponse>> getRoomAvailability();
 }

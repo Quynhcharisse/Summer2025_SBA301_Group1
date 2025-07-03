@@ -23,6 +23,8 @@ import {
 import ActivityDetailView from './ActivityDetailView';
 
 const WeeklyActivitiesView = ({
+    isScheduleForm = false, // New prop to indicate if it's embedded in ScheduleForm
+    formMode, // New prop to indicate the form mode ('create' or 'edit')
     currentWeek,
     weekInput,
     currentWeekSchedule,
@@ -34,7 +36,9 @@ const WeeklyActivitiesView = ({
     onDeleteSchedule,
     onCreateActivity,
     onEditActivity,
-    onDeleteActivity
+    onDeleteActivity,
+    onAddTempActivity, // New prop for adding activities in create mode
+    disableWeekNavigation = false // New prop to disable week navigation
 }) => {
     const [selectedActivity, setSelectedActivity] = useState(null);
     const [detailViewOpen, setDetailViewOpen] = useState(false);
@@ -62,7 +66,13 @@ const WeeklyActivitiesView = ({
             startTime: slot.startTime,
             endTime: slot.endTime
         };
-        onCreateActivity(scheduleId, slotContext);
+        if (isScheduleForm && formMode === 'create') {
+            // In create mode, use the temporary activity handler
+            onAddTempActivity(slotContext);
+        } else {
+            // In edit mode or regular view, use the standard onCreateActivity
+            onCreateActivity(scheduleId, slotContext);
+        }
     };
     const days = [
         { key: 'MONDAY', label: 'Monday', color: '#FF6B6B', lightColor: '#FFE5E5' },
@@ -133,164 +143,166 @@ const WeeklyActivitiesView = ({
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                    <IconButton
-                        onClick={onPreviousWeek}
-                        disabled={currentWeek <= 1}
-                        sx={{
-                            bgcolor: 'rgba(255, 255, 255, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            backdropFilter: 'blur(10px)',
-                            '&:hover': {
-                                bgcolor: 'rgba(255, 255, 255, 0.3)',
-                                transform: 'scale(1.05)'
-                            },
-                            '&:disabled': {
-                                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                color: 'rgba(255, 255, 255, 0.5)'
-                            },
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <ChevronLeft />
-                    </IconButton>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="h6" fontWeight="600" sx={{ color: 'white' }}>
-                            Week
-                        </Typography>
-                        <TextField
-                            size="small"
-                            value={weekInput}
-                            onChange={onWeekInputChange}
-                            type="number"
-                            inputProps={{
-                                min: 1,
-                                style: { textAlign: 'center', width: '60px' }
-                            }}
+                        <IconButton
+                            onClick={onPreviousWeek}
+                            disabled={currentWeek <= 1 || disableWeekNavigation}
                             sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                    backdropFilter: 'blur(10px)',
-                                    height: '40px',
-                                    borderRadius: 2,
-                                    '& fieldset': {
-                                        border: '1px solid rgba(255, 255, 255, 0.3)'
-                                    },
-                                    '&:hover fieldset': {
-                                        borderColor: 'rgba(255, 255, 255, 0.5)'
-                                    }
+                                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                color: 'white',
+                                backdropFilter: 'blur(10px)',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255, 255, 255, 0.3)',
+                                    transform: 'scale(1.05)'
                                 },
-                                '& input[type=number]::-webkit-outer-spin-button': {
-                                    WebkitAppearance: 'none',
-                                    margin: 0
+                                '&:disabled': {
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                    color: 'rgba(255, 255, 255, 0.5)'
                                 },
-                                '& input[type=number]::-webkit-inner-spin-button': {
-                                    WebkitAppearance: 'none',
-                                    margin: 0
-                                },
-                                '& input[type=number]': {
-                                    MozAppearance: 'textfield'
-                                }
+                                transition: 'all 0.2s ease'
                             }}
-                        />
+                        >
+                            <ChevronLeft />
+                        </IconButton>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="h6" fontWeight="600" sx={{ color: 'white' }}>
+                                Week
+                            </Typography>
+                            <TextField
+                                size="small"
+                                value={weekInput}
+                                onChange={onWeekInputChange}
+                                type="number"
+                                inputProps={{
+                                    min: 1,
+                                    style: { textAlign: 'center', width: '60px' }
+                                }}
+                                disabled={disableWeekNavigation} // Disable input when navigation is disabled
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                        backdropFilter: 'blur(10px)',
+                                        height: '40px',
+                                        borderRadius: 2,
+                                        '& fieldset': {
+                                            border: '1px solid rgba(255, 255, 255, 0.3)'
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: 'rgba(255, 255, 255, 0.5)'
+                                        }
+                                    },
+                                    '& input[type=number]::-webkit-outer-spin-button': {
+                                        WebkitAppearance: 'none',
+                                        margin: 0
+                                    },
+                                    '& input[type=number]::-webkit-inner-spin-button': {
+                                        WebkitAppearance: 'none',
+                                        margin: 0
+                                    },
+                                    '& input[type=number]': {
+                                        MozAppearance: 'textfield'
+                                    }
+                                }}
+                            />
+                        </Box>
+                        
+                        <IconButton
+                            onClick={onNextWeek}
+                            disabled={disableWeekNavigation} // Disable button when navigation is disabled
+                            sx={{
+                                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                color: 'white',
+                                backdropFilter: 'blur(10px)',
+                                '&:hover': {
+                                    bgcolor: 'rgba(255, 255, 255, 0.3)',
+                                    transform: 'scale(1.05)'
+                                },
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <ChevronRight />
+                        </IconButton>
                     </Box>
                     
-                    <IconButton
-                        onClick={onNextWeek}
-                        sx={{
-                            bgcolor: 'rgba(255, 255, 255, 0.2)',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            backdropFilter: 'blur(10px)',
-                            '&:hover': {
-                                bgcolor: 'rgba(255, 255, 255, 0.3)',
-                                transform: 'scale(1.05)'
-                            },
-                            transition: 'all 0.2s ease'
-                        }}
-                    >
-                        <ChevronRight />
-                    </IconButton>
-                </Box>
-                
-                {/* Week info and actions */}
-                {currentWeekSchedule && (
-                    <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                            <Box>
-                                <Typography variant="h5" fontWeight="700" sx={{ color: 'white' }}>
-                                    Week {currentWeek}
-                                </Typography>
-                                {currentWeekSchedule.note && (
-                                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
-                                        {currentWeekSchedule.note}
+                    {/* Week info and actions */}
+                    {currentWeekSchedule && (
+                        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.3)' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                                <Box>
+                                    <Typography variant="h5" fontWeight="700" sx={{ color: 'white' }}>
+                                        Week {currentWeek}
                                     </Typography>
-                                )}
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Tooltip title="Edit Schedule">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => onEditSchedule(currentWeekSchedule)}
-                                        sx={{
-                                            bgcolor: '#4CAF50',
-                                            color: 'white',
-                                            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
-                                            '&:hover': {
-                                                bgcolor: '#45a049',
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: '0 6px 16px rgba(76, 175, 80, 0.5)'
-                                            },
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <Edit />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete Schedule">
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => onDeleteSchedule(currentWeekSchedule.id, currentWeekSchedule.weekNumber)}
-                                        sx={{
-                                            bgcolor: '#f44336',
-                                            color: 'white',
-                                            boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)',
-                                            '&:hover': {
-                                                bgcolor: '#d32f2f',
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: '0 6px 16px rgba(244, 67, 54, 0.5)'
-                                            },
-                                            transition: 'all 0.2s ease'
-                                        }}
-                                    >
-                                        <Delete />
-                                    </IconButton>
-                                </Tooltip>
+                                    {currentWeekSchedule.note && (
+                                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
+                                            {currentWeekSchedule.note}
+                                        </Typography>
+                                    )}
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Tooltip title="Edit Schedule">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onEditSchedule(currentWeekSchedule)}
+                                            sx={{
+                                                bgcolor: '#4CAF50',
+                                                color: 'white',
+                                                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
+                                                '&:hover': {
+                                                    bgcolor: '#45a049',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 6px 16px rgba(76, 175, 80, 0.5)'
+                                                },
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <Edit />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Delete Schedule">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => onDeleteSchedule(currentWeekSchedule.id, currentWeekSchedule.weekNumber)}
+                                            sx={{
+                                                bgcolor: '#f44336',
+                                                color: 'white',
+                                                boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)',
+                                                '&:hover': {
+                                                    bgcolor: '#d32f2f',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 6px 16px rgba(244, 67, 54, 0.5)'
+                                                },
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                        >
+                                            <Delete />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
                             </Box>
                         </Box>
-                    </Box>
-                )}
-            </Paper>
+                    )}
+                </Paper>
 
-            {/* Daily Activities Grid */}
-            {!currentWeekSchedule ? (
-                <Alert 
-                    severity="info" 
-                    sx={{ 
-                        textAlign: 'center',
-                        borderRadius: 2,
-                        bgcolor: '#E3F2FD',
-                        border: '1px solid #BBDEFB',
-                        '& .MuiAlert-icon': {
-                            color: '#1976d2'
-                        }
-                    }}
-                >
-                    No schedule found for this week. Click "Create Schedule" to add one.
-                </Alert>
-            ) : (
-                <Grid container spacing={2} sx={{ width: '100%' }}>
+                {/* Daily Activities Grid */}
+                {(!currentWeekSchedule && !isScheduleForm) || (isScheduleForm && formMode === 'edit' && !currentWeekSchedule) ? (
+                    <Alert
+                        severity="info"
+                        sx={{
+                            textAlign: 'center',
+                            borderRadius: 2,
+                            bgcolor: '#E3F2FD',
+                            border: '1px solid #BBDEFB',
+                            '& .MuiAlert-icon': {
+                                color: '#1976d2'
+                            }
+                        }}
+                    >
+                        No schedule found for this week. Click "Create Schedule" to add one.
+                    </Alert>
+                ) : (
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
                     {days.map((day) => (
                         <Grid xs={12} md key={day.key} sx={{ flex: 1 }}>
                             <Card
@@ -497,7 +509,7 @@ const WeeklyActivitiesView = ({
                                                                 justifyContent: 'center',
                                                                 minHeight: '60px'
                                                             }}
-                                                            onClick={() => handleCreateActivityInSlot(currentWeekSchedule.id, day.key, slot)}
+                                                            onClick={() => handleCreateActivityInSlot(currentWeekSchedule?.id, day.key, slot)}
                                                         >
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                 <IconButton

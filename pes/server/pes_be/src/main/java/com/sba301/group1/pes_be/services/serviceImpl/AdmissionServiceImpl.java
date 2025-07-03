@@ -114,8 +114,6 @@ public class AdmissionServiceImpl implements AdmissionService {
     public ResponseEntity<ResponseObject> viewAdmissionTerm() {
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
-        LocalDateTime today = LocalDateTime.now();
-
         for (AdmissionTerm term : terms) {
             String timeStatus = updateTermStatus(term);
 

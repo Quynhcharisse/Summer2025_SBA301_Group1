@@ -44,6 +44,7 @@ function ScheduleForm({
     const [selectedSchedule, setSelectedSchedule] = useState(null);
     const [slotContext, setSlotContext] = useState(null);
     const [currentActivitiesByDay, setCurrentActivitiesByDay] = useState({});
+    const [tempActivities, setTempActivities] = useState([]);
 
     // Initialize form data when dialog opens or initialData changes
     useEffect(() => {
@@ -57,6 +58,7 @@ function ScheduleForm({
                 setFormData(newFormData);
                 setSelectedSchedule(null);
                 setCurrentActivitiesByDay({});
+                setTempActivities([]); // Clear temporary activities on new form open
             } else if (mode === 'edit' && initialData) {
                 // Handle different possible data structures from backend
                 let classId = '';
@@ -77,6 +79,7 @@ function ScheduleForm({
                 setSelectedSchedule(initialData);
                 // Update activities by day when editing
                 setCurrentActivitiesByDay(activitiesByDay || {});
+                setTempActivities(Object.values(activitiesByDay || {}).flat()); // Populate temp activities from existing
             }
         }
     }, [open, mode, initialData, activitiesByDay]);
@@ -85,8 +88,20 @@ function ScheduleForm({
     useEffect(() => {
         if (mode === 'edit' && selectedSchedule) {
             setCurrentActivitiesByDay(activitiesByDay || {});
+            setTempActivities(Object.values(activitiesByDay || {}).flat());
+        } else if (mode === 'create') {
+            // In create mode, currentActivitiesByDay should reflect tempActivities
+            const newActivitiesByDay = tempActivities.reduce((acc, activity) => {
+                const day = activity.dayOfWeek;
+                if (!acc[day]) {
+                    acc[day] = [];
+                }
+                acc[day].push(activity);
+                return acc;
+            }, {});
+            setCurrentActivitiesByDay(newActivitiesByDay);
         }
-    }, [activitiesByDay, mode, selectedSchedule]);
+    }, [activitiesByDay, mode, selectedSchedule, tempActivities]);
 
     const handleCreateActivity = (scheduleId, slotContextData) => {
         setEditingActivity(null);
@@ -110,18 +125,20 @@ function ScheduleForm({
             if (editingActivity) {
                 await onEditActivity(editingActivity.id, activityData);
             } else {
-                // Add scheduleId to the activity data
-                await onCreateActivity({
-                    ...activityData,
-                    scheduleId: selectedSchedule?.id
-                });
+                if (mode === 'create') {
+                    // In create mode, add to temporary state
+                    setTempActivities(prev => [...prev, { ...activityData, id: Date.now() }]); // Assign a temporary ID
+                } else {
+                    // In edit mode, call the parent's onCreateActivity
+                    await onCreateActivity({
+                        ...activityData,
+                        scheduleId: selectedSchedule?.id
+                    });
+                }
             }
             setActivityFormOpen(false);
             setEditingActivity(null);
             setSlotContext(null);
-            
-            // Trigger a refresh of activities in the parent component
-            // The parent should update the activitiesByDay prop which will update our local state
         } catch (error) {
             console.error('Error saving activity:', error);
         }
@@ -129,8 +146,14 @@ function ScheduleForm({
 
     const handleSubmit = async () => {
         try {
-            // Call the onSubmit prop with form data
-            const result = await onSubmit(formData);
+            let result;
+            if (mode === 'create') {
+                // In create mode, send activities along with schedule data
+                result = await onSubmit({ ...formData, activities: tempActivities });
+            } else {
+                // In edit mode, just send schedule data
+                result = await onSubmit(formData);
+            }
             
             // If creating a new schedule, set it as selected so activities can be managed
             if (mode === 'create' && result?.data) {
@@ -202,54 +225,34 @@ function ScheduleForm({
                             helperText="You can add location, special instructions, or any other relevant information"
                         />
 
-                        {/* Activities Management Section - Only show if schedule exists (edit mode or after creation) */}
-                        {selectedSchedule && (
-                            <>
-                                <Divider sx={{ my: 3 }} />
-                                <Box>
-                                    <Typography variant="h6" color="primary" gutterBottom>
-                                        Manage Activities
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        Use the weekly activities view below to manage activities for this schedule.
-                                    </Typography>
-                                    
-                                    <WeeklyActivitiesView
-                                        currentWeek={selectedSchedule.weekNumber}
-                                        weekInput={selectedSchedule.weekNumber}
-                                        currentWeekSchedule={selectedSchedule}
-                                        activitiesByDay={currentActivitiesByDay}
-                                        onPreviousWeek={() => {}} // Disabled in schedule form
-                                        onNextWeek={() => {}} // Disabled in schedule form
-                                        onWeekInputChange={() => {}} // Disabled in schedule form
-                                        onEditSchedule={() => {}} // Disabled since we're already editing
-                                        onDeleteSchedule={() => {}} // Disabled in schedule form
-                                        onCreateActivity={handleCreateActivity}
-                                        onEditActivity={handleEditActivity}
-                                        onDeleteActivity={onDeleteActivity}
-                                    />
-                                </Box>
-                            </>
-                        )}
-
-                        {/* Show message for create mode before schedule is created */}
-                        {mode === 'create' && !selectedSchedule && (
-                            <>
-                                <Divider sx={{ my: 3 }} />
-                                <Box sx={{
-                                    p: 3,
-                                    bgcolor: 'background.paper',
-                                    borderRadius: 2,
-                                    border: '1px dashed',
-                                    borderColor: 'primary.main',
-                                    textAlign: 'center'
-                                }}>
-                                    <Typography variant="body1" color="text.secondary">
-                                        Create the schedule first, then you'll be able to manage activities using the weekly view.
-                                    </Typography>
-                                </Box>
-                            </>
-                        )}
+                        {/* Activities Management Section - Always show */}
+                        <>
+                            <Divider sx={{ my: 3 }} />
+                            <Box>
+                                <Typography variant="h6" color="primary" gutterBottom>
+                                    Manage Activities
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Use the weekly activities view below to manage activities for this schedule.
+                                </Typography>
+                                
+                                <WeeklyActivitiesView
+                                    isScheduleForm={true}
+                                    formMode={mode}
+                                    currentWeek={formData.weekNumber}
+                                    weekInput={formData.weekNumber}
+                                    currentWeekSchedule={selectedSchedule}
+                                    activitiesByDay={currentActivitiesByDay}
+                                    disableWeekNavigation={true} // Disable week navigation when embedded in ScheduleForm
+                                    onEditSchedule={() => {}} // Disabled since we're already editing
+                                    onDeleteSchedule={() => {}} // Disabled in schedule form
+                                    onCreateActivity={(slotContextData) => handleCreateActivity(selectedSchedule?.id, slotContextData)}
+                                    onEditActivity={handleEditActivity}
+                                    onDeleteActivity={onDeleteActivity}
+                                    onAddTempActivity={(slotContextData) => handleCreateActivity(null, slotContextData)} // Pass null for scheduleId in create mode
+                                />
+                            </Box>
+                        </>
                     </Stack>
                 </DialogContent>
                 <DialogActions>
@@ -275,8 +278,9 @@ function ScheduleForm({
                 initialData={editingActivity}
                 lessons={lessons}
                 loading={loading}
-                scheduleId={selectedSchedule?.id}
+                scheduleId={mode === 'create' ? null : selectedSchedule?.id}
                 slotContext={slotContext}
+                isCreateMode={mode === 'create'}
             />
         </>
     );

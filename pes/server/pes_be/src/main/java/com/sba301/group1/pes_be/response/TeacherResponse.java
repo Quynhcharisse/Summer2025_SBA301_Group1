@@ -59,11 +59,24 @@ public class TeacherResponse {
                 .gender(account.getGender())
                 .identityNumber(account.getIdentityNumber());
 
-        // Add class information if available and check if teacher is occupied
-        boolean isOccupied = false;
-        if (account.getClasses() != null) {
-            Classes classEntity = account.getClasses();
-            isOccupied = "active".equalsIgnoreCase(classEntity.getStatus());
+        // Determine if the teacher is occupied based on future class end dates
+        boolean isOccupied = account.getClassesList() != null && account.getClassesList().stream()
+                .anyMatch(classEntity -> {
+                    try {
+                        LocalDate endDate = LocalDate.parse(classEntity.getEndDate());
+                        return endDate.isAfter(LocalDate.now());
+                    } catch (Exception e) {
+                        // Handle parsing errors or invalid date formats
+                        return false;
+                    }
+                });
+
+        // Add class information if available
+        if (account.getClassesList() != null && !account.getClassesList().isEmpty()) {
+            // Assuming a teacher is associated with one primary class for this response,
+            // or you might want to aggregate information from all classes.
+            // For now, taking the first class for ClassInfo.
+            Classes classEntity = account.getClassesList().get(0);
             
             ClassInfo classInfo = ClassInfo.builder()
                     .id(classEntity.getId())

@@ -102,3 +102,21 @@ export const updateParentProfile = async (data) => {
     const response = await axiosClient.put("/parent/profile", data);
     return response ? response.data : null;
 };
+
+export const viewStudentClasses = async (studentId) => {
+    const response = await axiosClient.get(`/parent/student-classes/${studentId}`);
+    console.log("Response from viewStudentClasses:", response);
+    return response ? response.data : null;
+}
+
+export const viewSyllabusByClass = async (classId) => {
+    const response = await axiosClient.get(`/parent/syllabus/${classId}`);
+    console.log("Response from viewSyllabusByClass:", response);
+    return response ? response.data : null;
+}
+
+export const viewActivitiesByClass = async (classId) => {
+    const response = await axiosClient.get(`/parent/activities/${classId}`);
+    console.log("Response from viewActivitiesByClass:", response);
+    return response ? response.data : null;
+}

@@ -450,3 +450,17 @@ export const getStudentClassAssignments = async () => {
         }
     }
 }
+
+export const getRoomAvailability = async () => {
+    try {
+        const response = await axiosClient.get('/education/rooms/availability')
+        return response ? response.data : null
+    } catch (error) {
+        throw {
+            error: true,
+            message: 'Failed to fetch room availability',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
+}
