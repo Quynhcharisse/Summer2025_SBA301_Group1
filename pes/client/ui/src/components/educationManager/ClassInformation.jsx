@@ -19,9 +19,11 @@ import {
     School,
     Edit,
     Save,
-    Cancel
+    Cancel,
+    PersonAdd
 } from '@mui/icons-material';
 import { getRoomAvailability } from '../../services/EducationService.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const ClassInformation = ({
     classData,
@@ -33,7 +35,9 @@ const ClassInformation = ({
     onUpdateClass,
     isCreateMode // Add isCreateMode prop
 }) => {
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
+    const [showAllLessons, setShowAllLessons] = useState(false);
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
     const [roomAvailability, setRoomAvailability] = useState([]);
@@ -486,7 +490,24 @@ const ClassInformation = ({
                                     helperText="Must be greater than 0"
                                 />
                             ) : (
-                                <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography variant="body1">{classData?.numberOfStudents || 0} / {classData?.numberStudent || 'N/A'}</Typography>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<PersonAdd sx={{ color: 'white' }} />}
+                                        onClick={() => navigate('/education/assign-students', { state: { classId: classData.id } })}
+                                        sx={{
+                                            backgroundColor: '#4caf50',
+                                            color: 'white',
+                                            '&:hover': {
+                                                backgroundColor: '#388e3c',
+                                            },
+                                        }}
+                                    >
+                                        Assign
+                                    </Button>
+                                </Box>
                             )}
                         </Box>
                     </Stack>
@@ -568,20 +589,24 @@ const ClassInformation = ({
                                         Associated Lessons ({classLessons.length})
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        {classLessons.slice(0, 5).map((lesson) => (
+                                        {(showAllLessons ? classLessons : classLessons.slice(0, 5)).map((lesson) => (
                                             <Chip
                                                 key={lesson.id}
                                                 label={lesson.topic}
                                                 size="small"
                                                 variant="outlined"
                                                 color="secondary"
+                                                onClick={() => navigate(`/education/lessons/${lesson.id}`, { state: { from: `/education/classes/${classData.id}` } })}
+                                                sx={{ cursor: 'pointer' }}
                                             />
                                         ))}
-                                        {classLessons.length > 5 && (
+                                        {!showAllLessons && classLessons.length > 5 && (
                                             <Chip
                                                 label={`+${classLessons.length - 5} more`}
                                                 size="small"
                                                 variant="outlined"
+                                                onClick={() => setShowAllLessons(true)}
+                                                sx={{ cursor: 'pointer' }}
                                             />
                                         )}
                                     </Box>

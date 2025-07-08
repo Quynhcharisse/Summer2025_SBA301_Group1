@@ -28,7 +28,7 @@ import {
     Search
 } from '@mui/icons-material';
 import StudentCard from './StudentCard';
-import {useNavigate} from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {useSnackbar} from 'notistack';
 import {
     assignStudentsToClass,
@@ -42,6 +42,7 @@ import '../../styles/educationManager/AssignStudentToClass.css';
 
 function AssignStudentToClass() {
     const navigate = useNavigate();
+    const { state: routeState } = useLocation();
     const { enqueueSnackbar } = useSnackbar();    // State
     const [classes, setClasses] = useState([]);
     const [allStudents, setAllStudents] = useState([]);
@@ -105,7 +106,15 @@ function AssignStudentToClass() {
     // Effects
     useEffect(() => {
         fetchInitialData();
-    }, [fetchInitialData]); useEffect(() => {
+    }, [fetchInitialData]);
+
+    useEffect(() => {
+        if (routeState?.classId) {
+            setSelectedClass(routeState.classId);
+        }
+    }, [routeState]);
+
+    useEffect(() => {
         if (selectedClass) {
             fetchAssignedStudents();
         } else {
