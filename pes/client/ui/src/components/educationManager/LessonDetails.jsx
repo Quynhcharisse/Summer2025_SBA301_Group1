@@ -10,7 +10,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import { ArrowBack, Edit } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
 import {
     getLessonById,
@@ -24,6 +24,8 @@ import LessonForm from './LessonForm.jsx';
 function LessonDetails() {
     const { id: lessonId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from || '/education/lessons';
     const [lesson, setLesson] = useState(null);
     const [syllabi, setSyllabi] = useState([]);
     const [activities, setActivities] = useState([]);
@@ -76,7 +78,7 @@ function LessonDetails() {
     }, [lessonId, fetchLessonDetails]);
 
     const handleBackToLessons = () => {
-        navigate('/education/lessons');
+        navigate(from);
     };
 
     const handleEditLesson = () => {
@@ -163,7 +165,7 @@ function LessonDetails() {
                         }
                     }}
                 >
-                    Back to Lessons
+                    {from.includes('/classes/') ? 'Back to Class' : 'Back to Lessons'}
                 </Button>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', flex: 1 }}>
                     Lesson Details: {lesson.topic || 'Loading...'}

@@ -16,6 +16,11 @@ import {
     Alert
 } from '@mui/material';
 
+const topicColors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA', '#F0B7A4',
+    '#F9A825', '#A1887F', '#81C784', '#FF8A65', '#9575CD', '#BA68C8'
+];
+
 function ActivityForm({
     open,
     onClose,
@@ -200,6 +205,62 @@ function ActivityForm({
                         helperText="Enter the main topic or title for this activity"
                     />
 
+                    <Box>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                            Quick Topics
+                        </Typography>
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                            {[
+                                'Circle Time', 'Story Time', 'Arts & Crafts', 'Music & Movement',
+                                'Outdoor Play', 'Snack Time', 'Nap Time', 'Free Play',
+                                'Math/Counting', 'Science/Discovery', 'Language Arts', 'Quiet Time'
+                            ].map((topic, index) => (
+                                <Button
+                                    key={topic}
+                                    variant="contained"
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: topicColors[index % topicColors.length],
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: topicColors[index % topicColors.length],
+                                            opacity: 0.9,
+                                        },
+                                    }}
+                                    onClick={() => handleFieldChange('topic', topic)}
+                                >
+                                    {topic}
+                                </Button>
+                            ))}
+                        </Stack>
+                    </Box>
+
+                    <FormControl fullWidth>
+                        <InputLabel>Lesson (Optional)</InputLabel>
+                        <Select
+                            value={formData.lessonId || ""}
+                            onChange={(e) => handleLessonChange(e.target.value)}
+                            label="Lesson (Optional)"
+                        >
+                            <MenuItem value="">None</MenuItem>
+                            {lessons.map((lesson) => (
+                                <MenuItem key={lesson.id} value={lesson.id}>
+                                    {lesson.topic}
+                                    {lesson.duration && (
+                                        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                                            ({lesson.duration} min)
+                                        </Typography>
+                                    )}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {formData.lessonId && (
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                                End time will be calculated based on lesson duration
+                            </Typography>
+                        )}
+                    </FormControl>
+
                     <TextField
                         fullWidth
                         label="Description"
@@ -238,32 +299,6 @@ function ActivityForm({
                             </Stack>
                         </Box>
                     )}
-
-                    <FormControl fullWidth>
-                        <InputLabel>Lesson (Optional)</InputLabel>
-                        <Select
-                            value={formData.lessonId || ""}
-                            onChange={(e) => handleLessonChange(e.target.value)}
-                            label="Lesson (Optional)"
-                        >
-                            <MenuItem value="">None</MenuItem>
-                            {lessons.map((lesson) => (
-                                <MenuItem key={lesson.id} value={lesson.id}>
-                                    {lesson.topic}
-                                    {lesson.duration && (
-                                        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                                            ({lesson.duration} min)
-                                        </Typography>
-                                    )}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                        {formData.lessonId && (
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                                End time will be calculated based on lesson duration
-                            </Typography>
-                        )}
-                    </FormControl>
                 </Stack>
             </DialogContent>
             <DialogActions>
