@@ -175,7 +175,7 @@ function ScheduleForm({
             <Dialog
                 open={open}
                 onClose={handleClose}
-                maxWidth="md"
+                maxWidth="xl"
                 fullWidth
             >
                 <DialogTitle>
