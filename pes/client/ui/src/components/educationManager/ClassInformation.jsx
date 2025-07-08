@@ -19,9 +19,11 @@ import {
     School,
     Edit,
     Save,
-    Cancel
+    Cancel,
+    PersonAdd
 } from '@mui/icons-material';
 import { getRoomAvailability } from '../../services/EducationService.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const ClassInformation = ({
     classData,
@@ -33,6 +35,7 @@ const ClassInformation = ({
     onUpdateClass,
     isCreateMode // Add isCreateMode prop
 }) => {
+    const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
@@ -486,7 +489,24 @@ const ClassInformation = ({
                                     helperText="Must be greater than 0"
                                 />
                             ) : (
-                                <Typography variant="body1">{classData?.numberStudent || 0} students</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography variant="body1">{classData?.numberOfStudents || 0} / {classData?.numberStudent || 'N/A'}</Typography>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        startIcon={<PersonAdd sx={{ color: 'white' }} />}
+                                        onClick={() => navigate('/education/assign-students', { state: { classId: classData.id } })}
+                                        sx={{
+                                            backgroundColor: '#4caf50',
+                                            color: 'white',
+                                            '&:hover': {
+                                                backgroundColor: '#388e3c',
+                                            },
+                                        }}
+                                    >
+                                        Assign
+                                    </Button>
+                                </Box>
                             )}
                         </Box>
                     </Stack>
