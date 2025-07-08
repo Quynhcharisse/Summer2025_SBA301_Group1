@@ -1,6 +1,6 @@
 package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
-import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
 
 public class ExtraTermValidation {
     public static String createExtraTerm(CreateExtraTermRequest request) {

@@ -31,17 +31,17 @@ import {
     Grid,
     Alert
 } from "@mui/material";
-import {Add, Close, CloudUpload, Info} from '@mui/icons-material';
+import {Add, Close, CloudUpload, Info, Refresh} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import {DatePicker} from "@mui/x-date-pickers/DatePicker";
-import {cancelAdmission, getFormInformation, submittedForm} from "../../services/ParentService.jsx";
+import {cancelAdmission, getFormInformation, submittedForm, refillForm} from "../../services/ParentService.jsx";
 import dayjs from "dayjs";
 import {enqueueSnackbar} from "notistack";
 import axios from "axios";
 import '../../styles/Parent/Form.css'
 
 
-function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
+function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefillForm}) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -128,9 +128,24 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm}) {
                                     </TableCell>
                                     <TableCell align="center">{form.note || "N/A"}</TableCell>
                                     <TableCell align="center">
-                                        <IconButton color="primary" onClick={() => handleDetailClick(form)}>
-                                            <Info sx={{color: '#2c3e50'}}/>
-                                        </IconButton>
+                                        <Stack direction="row" spacing={1} justifyContent="center">
+                                            <IconButton color="primary" onClick={() => handleDetailClick(form)}>
+                                                <Info sx={{color: '#2c3e50'}}/>
+                                            </IconButton>
+                                            {(form.status === 'CANCELLED' || form.status === 'REJECTED') && (
+                                                <IconButton
+                                                    onClick={() => openRefillForm(form)}
+                                                    sx={{
+                                                        color: '#e67e22',
+                                                        '&:hover': {
+                                                            color: '#d35400'
+                                                        }
+                                                    }}
+                                                >
+                                                    <Refresh />
+                                                </IconButton>
+                                            )}
+                                        </Stack>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -322,7 +337,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
     )
 }
 
-function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) {
+function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, isRefill = false, formId}) {
     const [selectedStudentId, setSelectedStudentId] = useState(
         studentList?.[0]?.id || ''
     );
@@ -381,20 +396,40 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
             ]);
 
             if (characteristicsResponse.status === 200 && commitmentResponse.status === 200) {
-                const response = await submittedForm({
+                const requestData = {
                     studentId: selectedStudentId,
                     householdRegistrationAddress: input.address,
                     childCharacteristicsFormImg: characteristicsResponse.data.url,
                     commitmentImg: commitmentResponse.data.url,
                     note: input.note || ''
-                });
+                };
 
-                if (response && response.success) {
-                    enqueueSnackbar(response.message, {variant: 'success'});
-                    GetForm();
-                    handleClosePopUp();
+                if (isRefill) {
+                    requestData.formId = formId;
+                    const response = await refillForm(
+                        selectedStudentId,
+                        formId,
+                        input.address,
+                        characteristicsResponse.data.url,
+                        commitmentResponse.data.url,
+                        input.note || ''
+                    );
+                    if (response && response.success) {
+                        enqueueSnackbar("Form refilled successfully", {variant: 'success'});
+                        GetForm();
+                        handleClosePopUp();
+                    } else {
+                        enqueueSnackbar(response.message || "Failed to refill form", {variant: "error"});
+                    }
                 } else {
-                    enqueueSnackbar(response.message || "Submission failed", {variant: "error"});
+                    const response = await submittedForm(requestData);
+                    if (response && response.success) {
+                        enqueueSnackbar(response.message, {variant: 'success'});
+                        GetForm();
+                        handleClosePopUp();
+                    } else {
+                        enqueueSnackbar(response.message || "Submission failed", {variant: "error"});
+                    }
                 }
             }
         } catch (error) {
@@ -405,27 +440,27 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
     return (
         <Dialog
             fullScreen
-                    open={isPopUpOpen}
-                    onClose={handleClosePopUp}
-            >
+            open={isPopUpOpen}
+            onClose={handleClosePopUp}
+        >
             <AppBar sx={{ position: 'relative', bgcolor: '#2c3e50' }}>
-                    <Toolbar>
-                        <IconButton
-                            edge="start"
-                            color="inherit"
-                            onClick={handleClosePopUp}
-                            aria-label="close"
-                        >
+                <Toolbar>
+                    <IconButton
+                        edge="start"
+                        color="inherit"
+                        onClick={handleClosePopUp}
+                        aria-label="close"
+                    >
                         <Close />
-                        </IconButton>
+                    </IconButton>
                     <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
-                            Create Admission Form
-                        </Typography>
-                    </Toolbar>
-                </AppBar>
+                        {isRefill ? "Refill Admission Form" : "Create Admission Form"}
+                    </Typography>
+                </Toolbar>
+            </AppBar>
 
             <Box sx={{ p: 4, maxWidth: '1200px', mx: 'auto' }}>
-                    <Typography
+                <Typography
                     variant="h4" 
                     sx={{ 
                         mb: 5, 
@@ -886,7 +921,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm}) 
     );
 }
 
-function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList}) {
+function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList, openRefillForm}) {
     return (
         <div className="container">
             {/*1.tiêu đề */}
@@ -922,25 +957,24 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelect
                 forms={forms}
                 openDetailPopUpFunc={openDetailPopUpFunc}
                 HandleSelectedForm={HandleSelectedForm}//selected form moi dc
+                openRefillForm={openRefillForm}
             />
         </div>
     )
 }
 
 export default function AdmissionForm() {
-    //lưu những biến sài cục bộ
     const [popUp, setPopUp] = useState({
         isOpen: false,
         type: ''
     })
 
-    //tạo useState data của BE để sài (dành cho form)
     const [data, setData] = useState({
         admissionFormList: [],
         studentList: null
     })
 
-    const [selectedForm, setSelectedForm] = useState(null) // tuong trung cho 1 cai selected
+    const [selectedForm, setSelectedForm] = useState(null)
 
     function HandleSelectedForm(form) {
         setSelectedForm(form)
@@ -955,7 +989,11 @@ export default function AdmissionForm() {
         GetForm()
     }
 
-    //gọi API form list //save trực tiếp data
+    const handleRefillForm = (form) => {
+        setSelectedForm(form);
+        handleOpenPopUp('refill');
+    }
+
     async function GetForm() {
         const response = await getFormInformation()
         if (response && response.success) {
@@ -967,9 +1005,7 @@ export default function AdmissionForm() {
         }
     }
 
-    //useEffcet sẽ chạy lần đầu tiên, or sẽ chạy khi có thay đổi
     useEffect(() => {
-        //lấy data lên và lưu data vào getForm
         GetForm()
     }, []);
 
@@ -979,24 +1015,36 @@ export default function AdmissionForm() {
                 forms={data.admissionFormList}
                 openFormPopUpFunc={() => handleOpenPopUp('form')}
                 openDetailPopUpFunc={() => handleOpenPopUp('detail')}
-                HandleSelectedForm={HandleSelectedForm} // la 1 ham, truyen ham vao, để cập nhật form đã chọn
+                HandleSelectedForm={HandleSelectedForm}
                 studentList={data.studentList}
+                openRefillForm={handleRefillForm}
             />
             {
                 popUp.isOpen && popUp.type === 'form' &&
                 <RenderFormPopUp
-                    isPopUpOpen={popUp.isOpen && data.studentList && data.studentList.filter(student => !student.hadForm).length !== 0} // mở được form thì hasForm khác 0
+                    isPopUpOpen={popUp.isOpen && data.studentList && data.studentList.filter(student => !student.hadForm).length !== 0}
                     handleClosePopUp={handleClosePopUp}
                     studentList={data.studentList}
                     GetForm={GetForm}
                 />
-            },
+            }
             {
                 popUp.isOpen && popUp.type === 'detail' &&
                 <RenderDetailPopUp
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
                     selectedForm={selectedForm}
+                />
+            }
+            {
+                popUp.isOpen && popUp.type === 'refill' &&
+                <RenderFormPopUp
+                    isPopUpOpen={popUp.isOpen}
+                    handleClosePopUp={handleClosePopUp}
+                    studentList={[selectedForm]}
+                    GetForm={GetForm}
+                    isRefill={true}
+                    formId={selectedForm.id}
                 />
             }
         </>

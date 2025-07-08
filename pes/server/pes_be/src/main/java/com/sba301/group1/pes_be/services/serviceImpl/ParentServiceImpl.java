@@ -5,22 +5,21 @@ import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.*;
 import com.sba301.group1.pes_be.repositories.*;
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.requests.RefillFormRequest;
-import com.sba301.group1.pes_be.requests.SubmitAdmissionFormRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
-import com.sba301.group1.pes_be.requests.UpdateParentRequest;
-import com.sba301.group1.pes_be.response.ActivityResponse;
-import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.response.ScheduleResponse;
-import com.sba301.group1.pes_be.response.SyllabusResponse;
+import com.sba301.group1.pes_be.dto.requests.AddChildRequest;
+import com.sba301.group1.pes_be.dto.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.dto.requests.RefillFormRequest;
+import com.sba301.group1.pes_be.dto.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateParentRequest;
+import com.sba301.group1.pes_be.dto.response.ActivityResponse;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.response.ScheduleResponse;
+import com.sba301.group1.pes_be.dto.response.SyllabusResponse;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
 import com.sba301.group1.pes_be.validations.ParentValidation.ChildValidation;
 import com.sba301.group1.pes_be.validations.ParentValidation.FormByParentValidation;
-import com.sba301.group1.pes_be.validations.ParentValidation.RefillFormValidation;
 import com.sba301.group1.pes_be.validations.ParentValidation.UpdateProfileValidation;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +28,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -254,7 +250,7 @@ public class ParentServiceImpl implements ParentService {
                 .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
                         .note(request.getNote())
                         .submittedDate(LocalDate.now())
-                        .status(Status.PENDING_APPROVAL.getValue())
+                        .status(Status.PENDING_APPROVAL)
                 .build();
 
         admissionFormRepo.save(form);
@@ -334,7 +330,7 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        form.setStatus(Status.CANCELLED.getValue());
+        form.setStatus(Status.CANCELLED);
         admissionFormRepo.save(form);
 
         return ResponseEntity.ok().body(
@@ -782,150 +778,30 @@ public class ParentServiceImpl implements ParentService {
 
     @Override
     public ResponseEntity<ResponseObject> refillForm(RefillFormRequest request, HttpServletRequest httpRequest) {
-        //Xác thực người dùng
-        Account account = jwtService.extractAccountFromCookie(httpRequest);
-        if (account == null || !account.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    ResponseObject.builder()
-                            .message("Forbidden: Only parents can access this resource")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+        AdmissionForm form = admissionFormRepo.findById(request.getFormId()).orElse(null);
 
-        //Validate input
-        String error = RefillFormValidation.validate(request, studentRepo, admissionFormRepo);
-        if (!error.isEmpty()) {
+        if (form == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
-                            .message(error)
+                            .message("Form not found")
                             .success(false)
                             .data(null)
                             .build()
             );
         }
 
-        // 3. Lấy thông tin student
-        Student student = studentRepo.findById(request.getStudentId()).orElse(null);
-        if (student == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                            .message(error)
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+        form.setStatus(Status.REFILLED);
+        admissionFormRepo.save(form);
 
-        //Tìm form REJECTED hoặc CANCELLED để cập nhật
-        List<Status> rejectedOrCancelledStatuses = Arrays.asList(Status.REJECTED, Status.CANCELLED);
-        Optional<AdmissionForm> rejectedOrCancelledFormOpt = admissionFormRepo
-                .findAllByStudentNotNullAndParent_IdAndStatusIn(student.getId(), rejectedOrCancelledStatuses)
-                .stream()
-                .findFirst(); //lấy cái đầu tiên đảm bảo chỉ có 1
-
-        // Đây là một kiểm tra an toàn, trên lý thuyết không bao giờ xảy ra nếu validation đúng
-        if (rejectedOrCancelledFormOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body( // Internal Server Error vì validation đã lỗi
-                    ResponseObject.builder()
-                            .message("Failed to find a suitable rejected or cancelled form to refill. Please contact support.")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        //Nếu có form bị cancel hoặc reject thì cập nhật form đó, nếu không thì tạo mới
-        AdmissionForm formToUpdate = rejectedOrCancelledFormOpt.get();
-        formToUpdate.setHouseholdRegistrationAddress(request.getHouseholdRegistrationAddress());
-        formToUpdate.setCommitmentImg(request.getCommitmentImg());
-        formToUpdate.setChildCharacteristicsFormImg(request.getChildCharacteristicsFormImg());
-        formToUpdate.setNote(request.getNote());
-        formToUpdate.setSubmittedDate(LocalDate.now());
-        formToUpdate.setStatus(Status.PENDING_APPROVAL.getValue());
-
-        admissionFormRepo.save(formToUpdate);
-
-        //Gửi email notification
-        String subject = "[PES] Admission Form Resubmitted";
-        String heading = "Admission Form Resubmitted";
-        String bodyHtml = Format.getAdmissionRefilledBody(
-                account.getName(),
-                LocalDate.now().toString()
-        );
-
-        // 8. Gửi email xác nhận
-        try {
-            mailService.sendMail(
-                    account.getEmail(),
-                    subject,
-                    heading,
-                    bodyHtml
-            );
-        } catch (Exception e) {
-            System.err.println("Failed to send email notification: " + e.getMessage());
-        }
-
-        // 9. Trả về kết quả thành công
-        return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                        .message("Successfully resubmitted")
-                        .success(true)
-                        .data(null)
-                        .build()
-        );
+        SubmitAdmissionFormRequest submitRequest = SubmitAdmissionFormRequest.builder()
+                .studentId(request.getStudentId())
+                .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
+                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                .commitmentImg(request.getCommitmentImg())
+                .note(request.getNote())
+                .build();
+        return submitAdmissionForm(submitRequest, httpRequest);
     }
 
-    @Override
-    public ResponseEntity<ResponseObject> viewRefillFormList(HttpServletRequest request) {
-        //xac thuc nguoi dung
-        Account account = jwtService.extractAccountFromCookie(request);
-        if (account == null || !account.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    ResponseObject.builder()
-                            .message("Forbidden: Only parents can access this resource")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        List<Status> statusesIncluded = Arrays.asList(Status.REJECTED, Status.CANCELLED);
-        List<Map<String, Object>> admissionFormList = admissionFormRepo.findAllByStudentNotNullAndParent_IdAndStatusIn(account.getParent().getId(), statusesIncluded).stream()
-                .sorted(Comparator.comparing(AdmissionForm::getSubmittedDate).reversed())// sort form theo ngày chỉnh sửa mới nhất
-                .map(this::getFormDetail)
-                .toList();
-
-        List<Map<String, Object>> studentList = studentRepo.findAllByParent_Id(account.getParent().getId()).stream()
-                .map(student -> {
-                    Map<String, Object> studentDetail = new HashMap<>();
-                    studentDetail.put("id", student.getId());
-                    studentDetail.put("name", student.getName());
-                    studentDetail.put("gender", student.getGender());
-                    studentDetail.put("dateOfBirth", student.getDateOfBirth());
-                    studentDetail.put("placeOfBirth", student.getPlaceOfBirth());
-                    studentDetail.put("profileImage", student.getProfileImage());
-                    studentDetail.put("householdRegistrationImg", student.getHouseholdRegistrationImg());
-                    studentDetail.put("birthCertificateImg", student.getBirthCertificateImg());
-                    studentDetail.put("isStudent", student.isStudent());
-                    studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());//trong từng học sinh check đã tạo form chưa
-                    return studentDetail;
-                })
-                .toList();
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("admissionFormList", admissionFormList);
-        data.put("studentList", studentList);
-
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                ResponseObject.builder()
-                        .message("")
-                        .success(true)
-                        .data(data)
-                        .build()
-        );
-    }
 }
 

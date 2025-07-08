@@ -88,13 +88,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("admission@gmail.com")) {
                 Account admission = Account.builder()
                         .email("admission@gmail.com")
-                        .password("admission@123")
+                        .password("123")
                         .name("Ms. Admission")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("female")
                         .role(Role.ADMISSION)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(admission);
@@ -105,13 +105,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("education@gmail.com")) {
                 Account education = Account.builder()
                         .email("education@gmail.com")
-                        .password("education@123")
+                        .password("123")
                         .name("Mr. Education")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("male")
                         .role(Role.EDUCATION)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(education);
@@ -122,13 +122,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("hr@gmail.com")) {
                 Account hr = Account.builder()
                         .email("hr@gmail.com")
-                        .password("hr@123")
+                        .password("123")
                         .name("Ms. HR")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("female")
                         .role(Role.HR)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(hr);
@@ -179,7 +179,7 @@ public class PesBeApplication {
                             .phone(generateRandomPhone())
                             .identityNumber(generateRandomCCCD())
                             .gender(i % 3 == 0 ? "male" : "female")
-                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .status(Status.ACCOUNT_ACTIVE)
                             .createdAt(LocalDate.now())
                             .build();
                     teachers[i] = accountRepo.save(teachers[i]);
@@ -415,7 +415,7 @@ public class PesBeApplication {
                             .identityNumber(generateRandomCCCD())
                             .gender(i % 2 == 0 ? "male" : "female")
                             .role(Role.PARENT)
-                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .status(Status.ACCOUNT_ACTIVE)
                             .createdAt(LocalDate.now())
                             .build();
                     accountRepo.save(parentAccount);

@@ -54,7 +54,7 @@ public class JWTServiceImpl implements JWTService {
         String refreshToken = cookie.getValue();
         String email = extractEmailFromJWT(refreshToken);
 
-        return accountRepo.findByEmailAndStatus(email, Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
+        return accountRepo.findByEmailAndStatus(email, Status.ACCOUNT_ACTIVE).orElse(null);
 
     }
 

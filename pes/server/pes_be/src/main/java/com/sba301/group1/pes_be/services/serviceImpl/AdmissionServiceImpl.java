@@ -9,10 +9,10 @@ import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
-import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
-import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
-import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
+import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
@@ -93,7 +93,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .endDate(request.getEndDate())
                         .year(LocalDateTime.now().getYear())
                         .maxNumberRegistration(request.getMaxNumberRegistration())
-                        .status(Status.INACTIVE_TERM.getValue())
+                        .status(Status.INACTIVE_TERM)
                         .build()
         );
 
@@ -115,15 +115,15 @@ public class AdmissionServiceImpl implements AdmissionService {
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
         for (AdmissionTerm term : terms) {
-            String timeStatus = updateTermStatus(term);
+            Status timeStatus = updateTermStatus(term);
 
             //if đủ → cần "khóa" lại dù chưa hết hạn
             boolean isFull = countApprovedFormByTerm(term) >= term.getMaxNumberRegistration();
 
             //term đang ACTIVE nhưng đã đủ số lượng → chuyển sang LOCKED_TERM
             //trường hợp khác giữ nguyên status tính từ thời gian
-            String finalStatus = (timeStatus.equals(Status.ACTIVE_TERM.getValue()) && isFull)
-                    ? Status.LOCKED_TERM.getValue()
+            Status finalStatus = (timeStatus.equals(Status.ACTIVE_TERM) && isFull)
+                    ? Status.LOCKED_TERM
                     : timeStatus;
 
             if (!term.getStatus().equals(finalStatus)) {
@@ -143,7 +143,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("maxNumberRegistration", term.getMaxNumberRegistration());
                             data.put("approvedForm", countApprovedFormByTerm(term));
                             data.put("grade", term.getGrade());
-                            data.put("status", term.getStatus());
+                            data.put("status", term.getStatus().getValue());
 
                             //gọi lai extra term
                             if (!admissionTermRepo.findAllByParentTerm_Id(term.getId()).isEmpty()) {
@@ -163,14 +163,14 @@ public class AdmissionServiceImpl implements AdmissionService {
         );
     }
 
-    private String updateTermStatus(AdmissionTerm term) {
+    private Status updateTermStatus(AdmissionTerm term) {
         LocalDateTime today = LocalDateTime.now();
         if (today.isBefore(term.getStartDate())) {
-            return Status.INACTIVE_TERM.getValue();
+            return Status.INACTIVE_TERM;
         } else if (!today.isAfter(term.getEndDate())) {
-            return Status.ACTIVE_TERM.getValue();
+            return Status.ACTIVE_TERM;
         } else {
-            return Status.LOCKED_TERM.getValue();
+            return Status.LOCKED_TERM;
         }
     }
 
@@ -202,7 +202,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         // 3. Kiểm tra status và chỉ tiêu
-        if (!term.getStatus().equals(Status.LOCKED_TERM.getValue())) {
+        if (!term.getStatus().equals(Status.LOCKED_TERM)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message("Only locked terms can have extra requests")
@@ -231,7 +231,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                 .year(term.getYear())
                 .grade(term.getGrade())
                 .parentTerm(term)
-                .status(Status.INACTIVE_TERM.getValue())
+                .status(Status.INACTIVE_TERM)
                 .build());
 
         extraTerm.setStatus(updateTermStatus(extraTerm));
@@ -247,7 +247,7 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     private int countApprovedFormByTerm(AdmissionTerm term) {
-        return (int) term.getAdmissionFormList().stream().filter(form -> form.getStatus().equals(Status.APPROVED.getValue())).count();
+        return (int) term.getAdmissionFormList().stream().filter(form -> form.getStatus().equals(Status.APPROVED)).count();
     }
 
     private int countMissingFormAmountByTerm(AdmissionTerm term) {
@@ -256,7 +256,8 @@ public class AdmissionServiceImpl implements AdmissionService {
 
 
     private List<Map<String, Object>> viewExtraTerm(AdmissionTerm parentTerm) {
-        List<Map<String, Object>> extraTermList = admissionTermRepo.findAllByParentTerm_Id(parentTerm.getId()).stream()
+
+        return admissionTermRepo.findAllByParentTerm_Id(parentTerm.getId()).stream()
                 .map(extraTerm -> {
                     Map<String, Object> data = new HashMap<>();
                     data.put("id", extraTerm.getId());
@@ -265,12 +266,11 @@ public class AdmissionServiceImpl implements AdmissionService {
                     data.put("endDate", extraTerm.getEndDate());
                     data.put("maxNumberRegistration", extraTerm.getMaxNumberRegistration());
                     data.put("approvedForm", countApprovedFormByTerm(extraTerm));
-                    data.put("status", extraTerm.getStatus());
+                    data.put("status", extraTerm.getStatus().getValue());
                     return data;
                 })
                 .toList();
 
-        return extraTermList;
     }
 
 
@@ -295,7 +295,7 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("submittedDate", form.getSubmittedDate());
                             data.put("cancelReason", form.getCancelReason());
                             data.put("note", form.getNote());
-                            data.put("status", form.getStatus());
+                            data.put("status", form.getStatus().getValue());
                             return data;
                         }
                 )
@@ -350,7 +350,7 @@ public class AdmissionServiceImpl implements AdmissionService {
         //lấy email ph từ account
         String parentEmail = form.getParent().getAccount().getEmail();//account phải có email
         if (request.isApproved()) {
-            form.setStatus(Status.APPROVED.getValue());
+            form.setStatus(Status.APPROVED);
 
 
             student.setStudent(true);// Đánh dấu đã trở thành học sinh chính thức
@@ -362,7 +362,7 @@ public class AdmissionServiceImpl implements AdmissionService {
             mailService.sendMail(parentEmail, subject, heading, bodyHtml);
 
         } else {
-            form.setStatus(Status.REJECTED.getValue());
+            form.setStatus(Status.REJECTED);
             form.setCancelReason(request.getReason());
 
             String subject = "[PES] Admission Rejected";

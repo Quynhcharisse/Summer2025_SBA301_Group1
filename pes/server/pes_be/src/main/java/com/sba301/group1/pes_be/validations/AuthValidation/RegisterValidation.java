@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.validations.AuthValidation;
 
 import com.sba301.group1.pes_be.repositories.AccountRepo;
-import com.sba301.group1.pes_be.requests.RegisterRequest;
+import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
 
 import java.util.regex.Pattern;
 

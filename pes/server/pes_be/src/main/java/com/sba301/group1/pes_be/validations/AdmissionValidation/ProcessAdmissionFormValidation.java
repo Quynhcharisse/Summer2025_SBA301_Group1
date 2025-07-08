@@ -2,7 +2,7 @@ package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
 
 public class ProcessAdmissionFormValidation {
     public static String processFormByManagerValidate(ProcessAdmissionFormRequest request, AdmissionFormRepo admissionFormRepo) {

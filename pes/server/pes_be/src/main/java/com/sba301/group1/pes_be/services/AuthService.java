@@ -1,8 +1,8 @@
 package com.sba301.group1.pes_be.services;
 
-import com.sba301.group1.pes_be.requests.LoginRequest;
-import com.sba301.group1.pes_be.requests.RegisterRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.LoginRequest;
+import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;

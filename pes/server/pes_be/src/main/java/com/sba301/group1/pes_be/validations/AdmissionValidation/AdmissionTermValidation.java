@@ -1,6 +1,6 @@
 package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
-import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
 
 import java.time.LocalDateTime;
 

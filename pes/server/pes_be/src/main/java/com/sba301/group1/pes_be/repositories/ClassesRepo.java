@@ -30,19 +30,7 @@ public interface ClassesRepo extends JpaRepository<Classes, Integer> {
     boolean existsByTeacherIdAndStatus(Integer teacherId, String status);
     
     boolean existsByTeacherIdAndStatusAndIdNot(Integer teacherId, String status, Integer id);
-    
-    @Query("SELECT c FROM Classes c WHERE c.grade = :grade AND c.status = :status")
-    List<Classes> findByGradeAndStatus(@Param("grade") Grade grade, @Param("status") String status);
-    
-    @Query("SELECT c FROM Classes c WHERE c.syllabus.id = :syllabusId AND c.status = :status")
-    List<Classes> findBySyllabusIdAndStatus(@Param("syllabusId") Integer syllabusId, @Param("status") String status);
-    // Add query to fetch classes with teacher eagerly loaded
-    @Query("SELECT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus")
-    List<Classes> findAllWithTeacherAndSyllabus();
-    
-    @Query("SELECT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus WHERE c.id = :id")
-    Classes findByIdWithTeacherAndSyllabus(@Param("id") Integer id);
-    
+
     // Add query to fetch classes with all relationships including students
     @Query("SELECT DISTINCT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus LEFT JOIN FETCH c.studentClassList")
     List<Classes> findAllWithFullDetails();

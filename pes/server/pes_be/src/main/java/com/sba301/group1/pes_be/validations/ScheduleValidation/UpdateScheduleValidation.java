@@ -2,7 +2,7 @@ package com.sba301.group1.pes_be.validations.ScheduleValidation;
 
 import com.sba301.group1.pes_be.models.Schedule;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
-import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateScheduleRequest;
 
 public class UpdateScheduleValidation {
     

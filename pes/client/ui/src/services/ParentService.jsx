@@ -120,3 +120,32 @@ export const viewActivitiesByClass = async (classId) => {
     console.log("Response from viewActivitiesByClass:", response);
     return response ? response.data : null;
 }
+
+export const refillForm = async (
+    studentId,
+    formId,
+    householdRegistrationAddress,
+    childCharacteristicsFormImg,
+    commitmentImg,
+    note
+) => {
+    try {
+        const response = await axiosClient.post(
+            "/parent/form/refill",
+            {
+                studentId: studentId,
+                formId: formId,
+                householdRegistrationAddress: householdRegistrationAddress,
+                childCharacteristicsFormImg: childCharacteristicsFormImg,
+                commitmentImg: commitmentImg,
+                note: note || ""
+            });
+        if (!response || !response.data) {
+            throw new Error("Failed to resubmit form");
+        }
+        return response.data;
+    } catch (error) {
+        console.error("Error resubmitting form:", error);
+        throw error;
+    }
+};

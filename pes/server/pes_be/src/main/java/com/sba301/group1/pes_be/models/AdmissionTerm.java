@@ -2,6 +2,7 @@
 package com.sba301.group1.pes_be.models;
 
 import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,6 +41,7 @@ public class AdmissionTerm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 50)
     String name;
 
     @Column(name = "`start_date`")
@@ -54,11 +56,13 @@ public class AdmissionTerm {
     int maxNumberRegistration;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 10)
     Grade grade;
 
-    String status;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    Status status;
 
-    //join chính nó
     @ManyToOne
     @JoinColumn(name = "parent_term_id")
     @EqualsAndHashCode.Exclude

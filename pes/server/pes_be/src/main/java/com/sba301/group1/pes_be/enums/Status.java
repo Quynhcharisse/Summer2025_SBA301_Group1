@@ -15,10 +15,11 @@ public enum Status {
     CANCELLED("cancelled"),
     APPROVED("approved"),
     REJECTED("rejected"),
+    REFILLED("refilled"),
 
     ACTIVE_TERM("active"), // trong khoảng ngày cho phép
     INACTIVE_TERM("inactive"), // chưa đến ngày
-    LOCKED_TERM("locked"); // đã hết ngày cho phép đăng ký
+    LOCKED_TERM("locked");// đã hết ngày cho phép đăng ký
 
     private final String value;
 }

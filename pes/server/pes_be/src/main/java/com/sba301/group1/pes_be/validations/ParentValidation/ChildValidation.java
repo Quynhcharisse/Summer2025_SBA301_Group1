@@ -2,8 +2,8 @@
 package com.sba301.group1.pes_be.validations.ParentValidation;
 
 
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.dto.requests.AddChildRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateChildRequest;
 
 import java.time.LocalDate;
 import java.time.Period;

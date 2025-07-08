@@ -2,6 +2,7 @@ package com.sba301.group1.pes_be.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sba301.group1.pes_be.enums.Role;
+import com.sba301.group1.pes_be.enums.Status;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,25 +43,33 @@ public class Account implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 150)
     String email;
 
+    @Column(length = 20)
     String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 15)
     Role role;
 
-    String status;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    Status status;
 
     @Column(name = "`created_at`")
     LocalDate createdAt;
 
+    @Column(length = 50)
     String name;
 
+    @Column(length = 15)
     String phone;
 
+    @Column(length = 10)
     String gender;
 
-    @Column(name = "`identity_number`")
+    @Column(name = "`identity_number`", length = 20)
     String identityNumber;
 
     @OneToOne(mappedBy = "account", fetch = FetchType.EAGER, cascade = CascadeType.ALL)

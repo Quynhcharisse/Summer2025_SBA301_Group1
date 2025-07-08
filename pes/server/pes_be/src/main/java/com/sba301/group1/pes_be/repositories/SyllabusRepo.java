@@ -14,17 +14,8 @@ public interface SyllabusRepo extends JpaRepository<Syllabus, Integer> {
     @Query("SELECT s FROM Syllabus s WHERE s.title LIKE %:title%")
     List<Syllabus> findByTitleContaining(@Param("title") String title);
     
-    @Query("SELECT DISTINCT s FROM Syllabus s " +
-           "JOIN s.syllabusLessonList sl " +
-           "JOIN sl.lesson l " +
-           "WHERE l.id = :lessonId")
-    List<Syllabus> findByLessonId(@Param("lessonId") Integer lessonId);
-    
     @Query("SELECT s FROM Syllabus s " +
            "JOIN s.classesList c " +
            "WHERE c.id = :classId")
     Syllabus findByClassId(@Param("classId") Integer classId);
-    
-    @Query("SELECT COUNT(sl) FROM SyllabusLesson sl WHERE sl.syllabus.id = :syllabusId")
-    Long countLessonsBySyllabusId(@Param("syllabusId") Integer syllabusId);
 }
