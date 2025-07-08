@@ -8,8 +8,12 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    FormControl,
     InputAdornment,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
     TextField,
     Typography
 } from '@mui/material';
@@ -18,6 +22,7 @@ import {Add, Delete, Info, PersonAdd, Search} from '@mui/icons-material';
 import {useNavigate} from 'react-router-dom';
 import {
     getAllClasses,
+    getAllTeachers,
     getTeacherById,
     removeClass
 } from "../../services/EducationService.jsx";
@@ -28,23 +33,31 @@ function ClassList() {
     const navigate = useNavigate();
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState(null);
     const [teacherDetailOpen, setTeacherDetailOpen] = useState(false);
     const [selectedTeacher, setSelectedTeacher] = useState(null);
+    const [teachers, setTeachers] = useState([]);
+    const [filters, setFilters] = useState({
+        name: '',
+        grade: '',
+        status: '',
+        teacher: ''
+    });
 
     useEffect(() => {
-        fetchClasses();
+        fetchInitialData();
     }, []);
 
-    const fetchClasses = async () => {
+    const fetchInitialData = async () => {
         try {
             setLoading(true);
-            const classesResponse = await getAllClasses();
+            const [classesResponse, teachersResponse] = await Promise.all([
+                getAllClasses(),
+                getAllTeachers()
+            ]);
 
             if (classesResponse && classesResponse.success) {
-                // Ensure data is an array and filter out any invalid entries
                 const classData = Array.isArray(classesResponse.data) ? classesResponse.data : [];
                 const validClasses = classData.filter(cls => cls && typeof cls === 'object' && cls.id);
                 setClasses(validClasses);
@@ -52,10 +65,17 @@ function ClassList() {
                 enqueueSnackbar('Failed to fetch classes', {variant: 'error'});
                 setClasses([]);
             }
+
+            if (teachersResponse && teachersResponse.success) {
+                const teacherData = Array.isArray(teachersResponse.data) ? teachersResponse.data : [];
+                setTeachers(teacherData);
+            } else {
+                enqueueSnackbar('Failed to fetch teachers', {variant: 'error'});
+                setTeachers([]);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
             enqueueSnackbar('Error fetching data', {variant: 'error'});
-            setClasses([]);
         } finally {
             setLoading(false);
         }
@@ -82,7 +102,7 @@ function ClassList() {
             if (response && response.success) {
                 enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, {variant: 'success'});
                 // Refresh the class list
-                fetchClasses();
+                fetchInitialData();
             } else {
                 enqueueSnackbar('Failed to delete class', {variant: 'error'});
             }
@@ -310,51 +330,51 @@ function ClassList() {
         }
     ];
 
-    // Filter classes based on search term
-    const filteredClasses = classes.filter(classItem => {
-        if (!searchTerm) return true;
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
 
-        const searchLower = searchTerm.toLowerCase();
+    const filteredClasses = classes.filter(classItem => {
+        const { name, grade, status, teacher } = filters;
         return (
-            classItem.name?.toLowerCase().includes(searchLower) ||
-            classItem.grade?.toLowerCase().includes(searchLower) ||
-            classItem.status?.toLowerCase().includes(searchLower) ||
-            classItem.teacher?.name?.toLowerCase().includes(searchLower) ||
-            classItem.numberStudent?.toString().includes(searchLower)
+            (name === '' || classItem.name?.toLowerCase().includes(name.toLowerCase())) &&
+            (grade === '' || classItem.grade === grade) &&
+            (status === '' || classItem.status?.toLowerCase() === status.toLowerCase()) &&
+            (teacher === '' || classItem.teacher?.id === teacher)
         );
     });
 
     return (
-        <Box sx={{p: 3}}> <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
-            <Typography variant="h4" sx={{fontWeight: 'bold'}}>
-                Class Management
-            </Typography>
-            <Box sx={{display: 'flex', gap: 1}}>
-            <Button
-                variant="contained"
-                startIcon={<Add sx={{ color: 'white' }} />}
-                onClick={() => navigate('/education/classes/new')}
-                sx={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    '&:hover': {
-                        backgroundColor: '#1565c0',
-                    }
-                }}
-            >
-                Create Class
-            </Button>
+        <Box sx={{p: 3}}>
+            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+                <Typography variant="h4" sx={{fontWeight: 'bold'}}>
+                    Class Management
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<Add sx={{ color: 'white' }} />}
+                    onClick={() => navigate('/education/classes/new')}
+                    sx={{
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        '&:hover': {
+                            backgroundColor: '#1565c0',
+                        }
+                    }}
+                >
+                    Create Class
+                </Button>
             </Box>
-        </Box>
 
-            {/* Search Bar */}
-            <Box sx={{mb: 3}}>
+            {/* Filter Controls */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
                 <TextField
-                    fullWidth
                     variant="outlined"
-                    placeholder="Search classes by name, grade, status, teacher, or capacity..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by name..."
+                    name="name"
+                    value={filters.name}
+                    onChange={handleFilterChange}
                     InputProps={{
                         startAdornment: (
                             <InputAdornment position="start">
@@ -362,13 +382,50 @@ function ClassList() {
                             </InputAdornment>
                         ),
                     }}
-                    sx={{
-                        maxWidth: 600,
-                        '& .MuiOutlinedInput-root': {
-                            backgroundColor: 'white',
-                        }
-                    }}
+                    sx={{ width: '250px', backgroundColor: 'white' }}
                 />
+                <FormControl variant="outlined" sx={{ minWidth: 150, backgroundColor: 'white' }}>
+                    <InputLabel>Grade</InputLabel>
+                    <Select
+                        name="grade"
+                        value={filters.grade}
+                        onChange={handleFilterChange}
+                        label="Grade"
+                    >
+                        <MenuItem value=""><em>All Grades</em></MenuItem>
+                        <MenuItem value="SEED">Seed</MenuItem>
+                        <MenuItem value="BUD">Bud</MenuItem>
+                        <MenuItem value="LEAF">Leaf</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl variant="outlined" sx={{ minWidth: 150, backgroundColor: 'white' }}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                        name="status"
+                        value={filters.status}
+                        onChange={handleFilterChange}
+                        label="Status"
+                    >
+                        <MenuItem value=""><em>All Statuses</em></MenuItem>
+                        <MenuItem value="active">Active</MenuItem>
+                        <MenuItem value="pending approval">Pending Approval</MenuItem>
+                        <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl variant="outlined" sx={{ minWidth: 200, backgroundColor: 'white' }}>
+                    <InputLabel>Teacher</InputLabel>
+                    <Select
+                        name="teacher"
+                        value={filters.teacher}
+                        onChange={handleFilterChange}
+                        label="Teacher"
+                    >
+                        <MenuItem value=""><em>All Teachers</em></MenuItem>
+                        {teachers.map(teacher => (
+                            <MenuItem key={teacher.id} value={teacher.id}>{teacher.name}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </Box>
 
             <Paper sx={{height: 600, width: '100%'}}>
