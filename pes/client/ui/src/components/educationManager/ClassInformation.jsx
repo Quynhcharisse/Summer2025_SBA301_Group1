@@ -37,6 +37,7 @@ const ClassInformation = ({
 }) => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
+    const [showAllLessons, setShowAllLessons] = useState(false);
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
     const [roomAvailability, setRoomAvailability] = useState([]);
@@ -588,20 +589,24 @@ const ClassInformation = ({
                                         Associated Lessons ({classLessons.length})
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        {classLessons.slice(0, 5).map((lesson) => (
+                                        {(showAllLessons ? classLessons : classLessons.slice(0, 5)).map((lesson) => (
                                             <Chip
                                                 key={lesson.id}
                                                 label={lesson.topic}
                                                 size="small"
                                                 variant="outlined"
                                                 color="secondary"
+                                                onClick={() => navigate(`/education/lessons/${lesson.id}`, { state: { from: `/education/classes/${classData.id}` } })}
+                                                sx={{ cursor: 'pointer' }}
                                             />
                                         ))}
-                                        {classLessons.length > 5 && (
+                                        {!showAllLessons && classLessons.length > 5 && (
                                             <Chip
                                                 label={`+${classLessons.length - 5} more`}
                                                 size="small"
                                                 variant="outlined"
+                                                onClick={() => setShowAllLessons(true)}
+                                                sx={{ cursor: 'pointer' }}
                                             />
                                         )}
                                     </Box>
