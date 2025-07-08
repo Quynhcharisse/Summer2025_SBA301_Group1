@@ -70,6 +70,10 @@ function ClassList() {
         setDeleteDialogOpen(true);
     };
 
+    const handleAssignStudentClick = (classData) => {
+        navigate(`/education/assign-students`, { state: { classId: classData.id } });
+    };
+
     const handleDeleteConfirm = async () => {
         if (!classToDelete) return;
 
@@ -230,7 +234,7 @@ function ClassList() {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 200,
+            width: 280,
             headerAlign: 'center',
             align: 'center',
             sortable: false,
@@ -247,7 +251,7 @@ function ClassList() {
                     <Button
                         size="small"
                         variant="contained"
-                        startIcon={<Info/>}
+                        startIcon={<Info sx={{ color: 'white' }} />}
                         onClick={() => params?.row && handleViewInfo(params.row)}
                         disabled={!params?.row}
                         sx={{
@@ -266,7 +270,26 @@ function ClassList() {
                     <Button
                         size="small"
                         variant="contained"
-                        startIcon={<Delete/>}
+                        startIcon={<PersonAdd sx={{ color: 'white' }} />}
+                        onClick={() => params?.row && handleAssignStudentClick(params.row)}
+                        disabled={!params?.row}
+                        sx={{
+                            backgroundColor: '#4caf50', // A green color
+                            color: 'white',
+                            '&:hover': {
+                                backgroundColor: '#388e3c',
+                            },
+                            '&:disabled': {
+                                backgroundColor: '#ccc',
+                            }
+                        }}
+                    >
+                        Assign
+                    </Button>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        startIcon={<Delete sx={{ color: 'white' }} />}
                         onClick={() => params?.row && handleDeleteClick(params.row)}
                         disabled={!params?.row}
                         sx={{
@@ -307,24 +330,9 @@ function ClassList() {
                 Class Management
             </Typography>
             <Box sx={{display: 'flex', gap: 1}}>
-                <Button
-                variant="outlined"
-                startIcon={<PersonAdd color="#1976d2"/>}
-                onClick={() => navigate('/education/assign-students')}
-                sx={{
-                    borderColor: '#1976d2',
-                    color: '#1976d2',
-                    '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                        borderColor: '#1976d2',
-                    }
-                }}
-            >
-                Assign Students
-            </Button>
             <Button
                 variant="contained"
-                startIcon={<Add/>}
+                startIcon={<Add sx={{ color: 'white' }} />}
                 onClick={() => navigate('/education/classes/new')}
                 sx={{
                     backgroundColor: '#1976d2',
