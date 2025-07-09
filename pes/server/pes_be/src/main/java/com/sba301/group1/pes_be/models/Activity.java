@@ -30,12 +30,14 @@ public class Activity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 50)
     String topic;
 
+    @Column(length = 150)
     String description;
 
     @Column(name = "`day_of_week`")
-    String dayOfWeek; // dùng enum
+    String dayOfWeek;
 
     @Column(name = "`start_time`")
     String startTime;

@@ -7,6 +7,4 @@ import java.util.Optional;
 
 public interface ParentRepo extends JpaRepository<Parent, Integer> {
     Optional<Parent> findByAccount_Id(int id);
-
-    boolean existsByAccount_Email(String accountEmail);
 }

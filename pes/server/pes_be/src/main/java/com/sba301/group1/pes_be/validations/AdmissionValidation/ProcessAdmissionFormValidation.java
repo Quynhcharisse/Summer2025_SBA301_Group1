@@ -1,8 +1,8 @@
 package com.sba301.group1.pes_be.validations.AdmissionValidation;
 
+import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
 
 public class ProcessAdmissionFormValidation {
     public static String processFormByManagerValidate(ProcessAdmissionFormRequest request, AdmissionFormRepo admissionFormRepo) {
@@ -11,6 +11,11 @@ public class ProcessAdmissionFormValidation {
         if (form == null) {
             return "Form not found";
         }
+
+        if (form.getStudent() == null) {
+            return ("Form has no associated student.");
+        }
+
         //Khi approved == false → nghĩa là đơn bị từ chối
         //bắt buộc phải nhap reason
         if (!request.isApproved()) {

@@ -2,14 +2,32 @@
 package com.sba301.group1.pes_be.validations.ParentValidation;
 
 
-import com.sba301.group1.pes_be.requests.AddChildRequest;
-import com.sba301.group1.pes_be.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.dto.requests.AddChildRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Parent;
+import com.sba301.group1.pes_be.models.Student;
+import com.sba301.group1.pes_be.repositories.ParentRepo;
+import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.services.JWTService;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.time.Period;
 
 public class ChildValidation {
-    public static String updateChildValidate(UpdateChildRequest request) {
+    public static String updateChildValidate(UpdateChildRequest request, HttpServletRequest req, ParentRepo parentRepo, JWTService jwtService, StudentRepo studentRepo) {
+        Account account = jwtService.extractAccountFromCookie(req);
+        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+        if (parent == null) {
+            return ("Parent not found");
+        }
+
+        Student student = studentRepo.findById(request.getId()).orElse(null);
+        if (student == null || !student.getParent().getId().equals(parent.getId())) {
+            return ("Child not found or access denied");
+        }
+
         if (request.getId() <= 0) {
             return "Invalid child ID.";
         }
@@ -42,17 +60,14 @@ public class ChildValidation {
             return "Place of birth must be less than 100 characters.";
         }
 
-        // Không được để trống
         if (request.getProfileImage() == null || request.getProfileImage().isEmpty()) {
             return "Profile image is required.";
         }
 
-        // Không được để trống
         if (request.getHouseholdRegistrationImg() == null || request.getHouseholdRegistrationImg().isEmpty()) {
             return "Household registration image is required.";
         }
 
-        // Không được để trống
         if (request.getBirthCertificateImg() == null || request.getBirthCertificateImg().isEmpty()) {
             return "Birth certificate image is required.";
         }
@@ -71,7 +86,14 @@ public class ChildValidation {
         return "";
     }
 
-    public static String addChildValidate(AddChildRequest request) {
+    public static String addChildValidate(AddChildRequest request, HttpServletRequest httpRequest, ParentRepo parentRepo, JWTService jwtService) {
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+
+        Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
+        if (parent == null) {
+            return ("Parent not found");
+        }
+
         if (request.getName() == null || request.getName().trim().isEmpty()) {
             return "Name is required.";
         }

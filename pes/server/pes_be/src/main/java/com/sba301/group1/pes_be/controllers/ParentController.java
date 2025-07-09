@@ -1,7 +1,12 @@
 package com.sba301.group1.pes_be.controllers;
 
-import com.sba301.group1.pes_be.requests.*;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.AddChildRequest;
+import com.sba301.group1.pes_be.dto.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.dto.requests.RefillFormRequest;
+import com.sba301.group1.pes_be.dto.requests.SubmitAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateChildRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateParentRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.ParentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -34,21 +39,11 @@ public class ParentController {
         return parentService.refillForm(request, httpRequest);
     }
 
-    @GetMapping("/form/refill/list")
-    @PreAuthorize("hasRole('parent')")
-    public ResponseEntity<ResponseObject> viewRefillFormList(HttpServletRequest request) {
-        return parentService.viewRefillFormList(request);
-    }
-
     @PutMapping("/form/cancel")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> cancelAdmissionForm(@RequestBody CancelAdmissionForm request, HttpServletRequest httpRequest) {
         return parentService.cancelAdmissionForm(request, httpRequest);
     }
-
-                                    //------- Child Management ---------//
-    // gôp getChild + submit vô chung tránh gọi API quá nhiều lần
-
     @PostMapping("/child")
     @PreAuthorize("hasRole('parent')")
     public ResponseEntity<ResponseObject> addChild(@RequestBody AddChildRequest request, HttpServletRequest httpRequest) {

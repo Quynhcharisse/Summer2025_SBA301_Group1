@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.services;
 
-import com.sba301.group1.pes_be.requests.ParentRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.ParentRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 

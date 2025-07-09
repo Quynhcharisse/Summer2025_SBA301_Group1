@@ -88,13 +88,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("admission@gmail.com")) {
                 Account admission = Account.builder()
                         .email("admission@gmail.com")
-                        .password("admission@123")
+                        .password("123")
                         .name("Ms. Admission")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("female")
                         .role(Role.ADMISSION)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(admission);
@@ -105,13 +105,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("education@gmail.com")) {
                 Account education = Account.builder()
                         .email("education@gmail.com")
-                        .password("education@123")
+                        .password("123")
                         .name("Mr. Education")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("male")
                         .role(Role.EDUCATION)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(education);
@@ -122,13 +122,13 @@ public class PesBeApplication {
             if (!accountRepo.existsByEmail("hr@gmail.com")) {
                 Account hr = Account.builder()
                         .email("hr@gmail.com")
-                        .password("hr@123")
+                        .password("123")
                         .name("Ms. HR")
                         .phone(generateRandomPhone())
                         .identityNumber(generateRandomCCCD())
                         .gender("female")
                         .role(Role.HR)
-                        .status(Status.ACCOUNT_ACTIVE.getValue())
+                        .status(Status.ACCOUNT_ACTIVE)
                         .createdAt(LocalDate.now())
                         .build();
                 accountRepo.save(hr);
@@ -179,7 +179,7 @@ public class PesBeApplication {
                             .phone(generateRandomPhone())
                             .identityNumber(generateRandomCCCD())
                             .gender(i % 3 == 0 ? "male" : "female")
-                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .status(Status.ACCOUNT_ACTIVE)
                             .createdAt(LocalDate.now())
                             .build();
                     teachers[i] = accountRepo.save(teachers[i]);
@@ -279,11 +279,11 @@ public class PesBeApplication {
             }
 
             // LEAF curriculum (ages 5) - all activities including pre-academic
-            for (int i = 0; i < lessons.length; i++) {
-                if (!syllabusLessonRepo.existsBySyllabusIdAndLessonId(syllabi[2].getId(), lessons[i].getId())) {
+            for (Lesson lesson : lessons) {
+                if (!syllabusLessonRepo.existsBySyllabusIdAndLessonId(syllabi[2].getId(), lesson.getId())) {
                     SyllabusLesson syllabusLesson = SyllabusLesson.builder()
                             .syllabus(syllabi[2])
-                            .lesson(lessons[i])
+                            .lesson(lesson)
                             .note("Comprehensive program for school readiness")
                             .build();
                     syllabusLessonRepo.save(syllabusLesson);
@@ -305,7 +305,7 @@ public class PesBeApplication {
                             .roomNumber(roomNumbers[i])
                             .startDate("2025-09-01")
                             .endDate("2026-06-30")
-                            .status(Status.ACCOUNT_ACTIVE)
+                            .status("ACTIVE")
                             .grade(grades[i])
                             .syllabus(syllabi[i])
                             .teacher(teachers[i])
@@ -351,7 +351,7 @@ public class PesBeApplication {
                         String[] timeSlots = {"08:00", "09:30", "13:00", "14:30"};
                         String[] endTimes = {"09:30", "11:00", "14:30", "16:00"};
 
-                        for (int day = 0; day < daysOfWeek.length; day++) {
+                        for (String s : daysOfWeek) {
                             // Create 2-4 activities per day (some slots may be empty)
                             int activitiesPerDay = 2 + (int) (Math.random() * 3); // 2, 3, or 4 activities
 
@@ -360,12 +360,12 @@ public class PesBeApplication {
                                 Lesson selectedLesson = allLessons.get((int) (Math.random() * allLessons.size()));
 
                                 // Create activity topic based on lesson and day
-                                String activityTopic = selectedLesson.getTopic() + " - " + daysOfWeek[day];
+                                String activityTopic = selectedLesson.getTopic() + " - " + s;
 
                                 Activity activity = Activity.builder()
                                         .topic(activityTopic)
                                         .description("Engaging " + selectedLesson.getTopic().toLowerCase() + " session for " + classEntity.getGrade() + " students")
-                                        .dayOfWeek(daysOfWeek[day])
+                                        .dayOfWeek(s)
                                         .startTime(timeSlots[activityIndex])
                                         .endTime(endTimes[activityIndex])
                                         .schedule(schedule)
@@ -415,7 +415,7 @@ public class PesBeApplication {
                             .identityNumber(generateRandomCCCD())
                             .gender(i % 2 == 0 ? "male" : "female")
                             .role(Role.PARENT)
-                            .status(Status.ACCOUNT_ACTIVE.getValue())
+                            .status(Status.ACCOUNT_ACTIVE)
                             .createdAt(LocalDate.now())
                             .build();
                     accountRepo.save(parentAccount);

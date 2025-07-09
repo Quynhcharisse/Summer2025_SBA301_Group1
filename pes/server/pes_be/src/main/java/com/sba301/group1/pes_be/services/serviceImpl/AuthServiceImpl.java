@@ -6,9 +6,9 @@ import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
-import com.sba301.group1.pes_be.requests.LoginRequest;
-import com.sba301.group1.pes_be.requests.RegisterRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.LoginRequest;
+import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.utils.CookieUtil;
@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE.getValue()).orElse(null);
+        Account account = accountRepo.findByEmailAndStatus(request.getEmail(), Status.ACCOUNT_ACTIVE).orElse(null);
         System.out.println(account);
         if (account == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -135,10 +135,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseEntity<ResponseObject> register(RegisterRequest request) {
-
         String error = RegisterValidation.validate(request, accountRepo);
         if(!error.isEmpty()){
-
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
@@ -148,23 +146,11 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // Check if email already exists
-        if (accountRepo.existsByEmail(request.getEmail())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                            .message("Email is already in use")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        // Create Account
         Account account = Account.builder()
                 .email(request.getEmail())
-                .password(request.getPassword()) // Consider encrypting the password
+                .password(request.getPassword())
                 .role(Role.PARENT)
-                .status(Status.ACCOUNT_ACTIVE.getValue())
+                .status(Status.ACCOUNT_ACTIVE)
                 .createdAt(LocalDate.now())
                 .name(request.getName())
                 .phone(request.getPhone())
@@ -172,10 +158,8 @@ public class AuthServiceImpl implements AuthService {
                 .identityNumber(request.getIdentityNumber())
                 .build();
 
-        // Save Account
         accountRepo.save(account);
 
-        // Create Parent
         Parent parent = Parent.builder()
                 .account(account)
                 .address(request.getAddress())
@@ -184,7 +168,6 @@ public class AuthServiceImpl implements AuthService {
                 .dayOfBirth(request.getDayOfBirth())
                 .build();
 
-        // Save Parent
         parentRepo.save(parent);
 
         return ResponseEntity.status(HttpStatus.OK).body(

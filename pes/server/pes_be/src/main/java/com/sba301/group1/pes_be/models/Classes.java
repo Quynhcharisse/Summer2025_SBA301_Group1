@@ -40,6 +40,7 @@ public class Classes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 50)
     String name;
 
     @Column(name = "`number_student`")
@@ -54,10 +55,10 @@ public class Classes {
     @Column(name = "`end_date`")
     String endDate;
 
-    @Enumerated(EnumType.STRING)
-    Status status;
+    String status;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 10)
     Grade grade;
 
     @OneToMany(mappedBy = "classes", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

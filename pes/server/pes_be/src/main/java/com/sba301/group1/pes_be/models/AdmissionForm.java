@@ -1,8 +1,11 @@
 
 package com.sba301.group1.pes_be.models;
 
+import com.sba301.group1.pes_be.enums.Status;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,7 +35,7 @@ public class AdmissionForm {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @Column(name = "`household_registration_address`")
+    @Column(name = "`household_registration_address`", length = 100)
     String householdRegistrationAddress;
 
     @Column(name = "`birth_certificate_img`")
@@ -47,15 +50,18 @@ public class AdmissionForm {
     @Column(name = "`commitment_img`")
     String commitmentImg ;
 
-    @Column(name = "`cancel_reason`")
+    @Column(name = "`cancel_reason`", length = 50)
     String cancelReason;
 
     @Column(name = "`submitted_date`")
     LocalDate submittedDate;
 
+    @Column(length = 50)
     String note;
 
-    String status;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 50)
+    Status status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "`parent_id`")

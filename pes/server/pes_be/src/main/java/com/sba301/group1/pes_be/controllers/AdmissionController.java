@@ -1,9 +1,9 @@
 package com.sba301.group1.pes_be.controllers;
 
-import com.sba301.group1.pes_be.requests.CreateAdmissionTermRequest;
-import com.sba301.group1.pes_be.requests.CreateExtraTermRequest;
-import com.sba301.group1.pes_be.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
+import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

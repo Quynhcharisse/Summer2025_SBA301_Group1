@@ -1,6 +1,6 @@
 package com.sba301.group1.pes_be.validations.ParentValidation;
 
-import com.sba301.group1.pes_be.requests.UpdateParentRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateParentRequest;
 import java.time.LocalDate;
 
 public class UpdateProfileValidation {

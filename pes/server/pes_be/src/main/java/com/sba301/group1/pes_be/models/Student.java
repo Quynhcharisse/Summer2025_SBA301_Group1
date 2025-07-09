@@ -38,14 +38,16 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 50)
     String name;
 
+    @Column(length = 10)
     String gender;
 
     @Column(name = "`date_of_birth`")
     LocalDate dateOfBirth;
 
-    @Column(name = "`place_of_birth`")
+    @Column(name = "`place_of_birth`", length = 50)
     String placeOfBirth;
 
     @Column(name = "`modified_date`")
