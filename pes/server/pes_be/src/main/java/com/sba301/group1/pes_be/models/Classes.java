@@ -2,6 +2,7 @@ package com.sba301.group1.pes_be.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,7 +55,8 @@ public class Classes {
     @Column(name = "`end_date`")
     String endDate;
 
-    String status;
+    @Enumerated(EnumType.STRING)
+    Status status;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)

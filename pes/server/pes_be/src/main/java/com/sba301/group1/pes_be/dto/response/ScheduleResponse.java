@@ -54,7 +54,7 @@ public class ScheduleResponse {
                 .id(schedule.getClasses().getId())
                 .name(schedule.getClasses().getName())
                 .roomNumber(schedule.getClasses().getRoomNumber())
-                .status(schedule.getClasses().getStatus())
+                .status(schedule.getClasses().getStatus().toString())
                 .grade(schedule.getClasses().getGrade() != null ? 
                     schedule.getClasses().getGrade().toString() : null)
                 .build();

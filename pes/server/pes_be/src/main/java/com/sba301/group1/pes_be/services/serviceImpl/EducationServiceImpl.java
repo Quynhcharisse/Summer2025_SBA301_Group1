@@ -1,6 +1,7 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
 import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
 import com.sba301.group1.pes_be.models.Classes;
@@ -925,7 +926,7 @@ public class EducationServiceImpl implements EducationService {
                     .roomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null)
                     .startDate(request.getStartDate().toString())
                     .endDate(request.getEndDate().toString())
-                    .status(request.getStatus())
+                    .status(request.getStatus() != null ? Status.valueOf(request.getStatus().toUpperCase()) : Status.DRAFT)
                     .grade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null)
                     .build();
 
@@ -984,7 +985,7 @@ public class EducationServiceImpl implements EducationService {
             existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null);
             existingClass.setStartDate(request.getStartDate().toString());
             existingClass.setEndDate(request.getEndDate().toString());
-            existingClass.setStatus(request.getStatus());
+            existingClass.setStatus(request.getStatus() != null ? Status.valueOf(request.getStatus().toUpperCase()) : Status.DRAFT);
             existingClass.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
             classesRepo.save(existingClass);

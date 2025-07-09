@@ -1,5 +1,7 @@
 package com.sba301.group1.pes_be.dto.response;
 
+import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Syllabus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -63,7 +65,7 @@ public class SyllabusResponse {
                     .id(c.getId())
                     .name(c.getName())
                     .grade(c.getGrade() != null ? c.getGrade().toString() : null)
-                    .status(c.getStatus())
+                    .status(c.getStatus().toString())
                     .build())
                 .collect(Collectors.toList());
         }
