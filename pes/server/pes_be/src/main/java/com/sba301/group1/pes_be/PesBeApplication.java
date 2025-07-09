@@ -305,7 +305,7 @@ public class PesBeApplication {
                             .roomNumber(roomNumbers[i])
                             .startDate("2025-09-01")
                             .endDate("2026-06-30")
-                            .status("ACTIVE")
+                            .status(Status.ACCOUNT_ACTIVE)
                             .grade(grades[i])
                             .syllabus(syllabi[i])
                             .teacher(teachers[i])
