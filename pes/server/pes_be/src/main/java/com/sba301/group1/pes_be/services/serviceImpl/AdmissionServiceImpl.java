@@ -1,5 +1,9 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
+import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.email.Format;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
@@ -9,10 +13,6 @@ import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
-import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
-import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
-import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
-import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.validations.AdmissionValidation.AdmissionTermValidation;
@@ -41,8 +41,7 @@ public class AdmissionServiceImpl implements AdmissionService {
 
     @Override
     public ResponseEntity<ResponseObject> createAdmissionTerm(CreateAdmissionTermRequest request) {
-        // 1. Validate các field cơ bản (ngày, số lượng, grade rỗng...)
-        String error = AdmissionTermValidation.createTermValidate(request);
+        String error = AdmissionTermValidation.createTermValidate(request, admissionTermRepo);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
@@ -53,45 +52,13 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        // 2. Chuyển đổi grade và tính năm hiện tại
-        Grade grade = Grade.valueOf(request.getGrade().toUpperCase());
-        int currentYear = LocalDate.now().getYear();
-        String name = "Admission Term " + grade.getName() + " " + currentYear;
-
-        // 3. Mỗi năm, mỗi grade chỉ được phép có 1 đợt tuyển sinh
-        long termCountThisYear = admissionTermRepo.countByYearAndGrade(currentYear, grade);
-        if (termCountThisYear >= 1) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    ResponseObject.builder()
-                            .message("Admission term already exists for grade " + grade + " in year " + currentYear)
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        // 4. Kiểm tra trùng thời gian với cùng grade
-        List<AdmissionTerm> termsWithSameGrade = admissionTermRepo.findByGrade(grade);
-        for (AdmissionTerm t : termsWithSameGrade) {
-            if (datesOverlap(request.getStartDate(), request.getEndDate(), t.getStartDate(), t.getEndDate())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                        ResponseObject.builder()
-                                .message("Time period overlaps with another term of the same grade")
-                                .success(false)
-                                .data(null)
-                                .build()
-                );
-            }
-        }
-
-        // Nếu hợp lệ, tiếp tục tạo term
         admissionTermRepo.save(
                 AdmissionTerm.builder()
-                        .name(name)
+                        .name("Admission Term " + Grade.valueOf(request.getGrade().toUpperCase()).getName() + " " + LocalDate.now().getYear())
                         .grade(Grade.valueOf(request.getGrade().toUpperCase()))
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
-                        .year(LocalDateTime.now().getYear())
+                        .year(Integer.parseInt(LocalDate.now().getYear() + "-" + (LocalDate.now().getYear() + 1)))
                         .maxNumberRegistration(request.getMaxNumberRegistration())
                         .status(Status.INACTIVE_TERM)
                         .build()
@@ -104,10 +71,6 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .data(null)
                         .build()
         );
-    }
-
-    private boolean datesOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
-        return !(end1.isBefore(start2) || start1.isAfter(end2));
     }
 
     @Override
@@ -164,10 +127,9 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     private Status updateTermStatus(AdmissionTerm term) {
-        LocalDateTime today = LocalDateTime.now();
-        if (today.isBefore(term.getStartDate())) {
+        if (LocalDateTime.now().isBefore(term.getStartDate())) {
             return Status.INACTIVE_TERM;
-        } else if (!today.isAfter(term.getEndDate())) {
+        } else if (!LocalDateTime.now().isAfter(term.getEndDate())) {
             return Status.ACTIVE_TERM;
         } else {
             return Status.LOCKED_TERM;
@@ -176,9 +138,7 @@ public class AdmissionServiceImpl implements AdmissionService {
 
     @Override
     public ResponseEntity<ResponseObject> createExtraTerm(CreateExtraTermRequest request) {
-
-        // 1. Validate các field cơ bản (ngày, số lượng, grade rỗng...)
-        String error = ExtraTermValidation.createExtraTerm(request);
+        String error = ExtraTermValidation.createExtraTerm(request, admissionTermRepo);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
@@ -189,40 +149,9 @@ public class AdmissionServiceImpl implements AdmissionService {
             );
         }
 
-        // 2. Kiểm tra AdmissionTerm tồn tại
         AdmissionTerm term = admissionTermRepo.findById(request.getAdmissionTermId()).orElse(null);
-        if (term == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                            .message("Admission term not found")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+        assert term != null;
 
-        // 3. Kiểm tra status và chỉ tiêu
-        if (!term.getStatus().equals(Status.LOCKED_TERM)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                            .message("Only locked terms can have extra requests")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        if (countApprovedFormByTerm(term) >= term.getMaxNumberRegistration()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                            .message("Term has already reached maximum registration")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        // 4. Tạo extra RequestTerm
         AdmissionTerm extraTerm = admissionTermRepo.save(AdmissionTerm.builder()
                 .name("Extra Term - " + term.getGrade().getName() + " " + term.getYear())
                 .startDate(request.getStartDate())
@@ -253,7 +182,6 @@ public class AdmissionServiceImpl implements AdmissionService {
     private int countMissingFormAmountByTerm(AdmissionTerm term) {
         return term.getMaxNumberRegistration() - countApprovedFormByTerm(term);
     }
-
 
     private List<Map<String, Object>> viewExtraTerm(AdmissionTerm parentTerm) {
 
@@ -325,33 +253,15 @@ public class AdmissionServiceImpl implements AdmissionService {
         }
 
         AdmissionForm form = admissionFormRepo.findById(request.getId()).orElse(null);
-
-        if (form == null) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Form not found")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+        assert form != null;
 
         Student student = form.getStudent();
-        if (student == null) {
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Form has no associated student.")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
+        assert student != null;
 
         //lấy email ph từ account
         String parentEmail = form.getParent().getAccount().getEmail();//account phải có email
         if (request.isApproved()) {
             form.setStatus(Status.APPROVED);
-
 
             student.setStudent(true);// Đánh dấu đã trở thành học sinh chính thức
             studentRepo.save(student);
@@ -381,5 +291,4 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .build()
         );
     }
-
 }

@@ -55,8 +55,7 @@ public class Classes {
     @Column(name = "`end_date`")
     String endDate;
 
-    @Enumerated(EnumType.STRING)
-    Status status;
+    String status;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)

@@ -43,7 +43,7 @@ public class ActivityResponse {
         private Integer id;
         private String name;
         private String roomNumber;
-        private Status status;
+        private String status;
         private String grade;
     }
 
@@ -135,7 +135,7 @@ public class ActivityResponse {
         return schedule != null && schedule.getClasses() != null ? schedule.getClasses().getRoomNumber() : null;
     }
 
-    public Status getClassStatus() {
+    public String getClassStatus() {
         return schedule != null && schedule.getClasses() != null ? schedule.getClasses().getStatus() : null;
     }
 

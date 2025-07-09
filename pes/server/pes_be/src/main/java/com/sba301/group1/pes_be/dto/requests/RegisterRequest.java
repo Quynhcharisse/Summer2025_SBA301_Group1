@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class RegisterRequest {
     String email;
     String password;
+    String confirmPassword;
     String name;
     String phone;
     String gender;

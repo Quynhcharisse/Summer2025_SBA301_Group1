@@ -1,10 +1,5 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
-import com.sba301.group1.pes_be.email.Format;
-import com.sba301.group1.pes_be.enums.Role;
-import com.sba301.group1.pes_be.enums.Status;
-import com.sba301.group1.pes_be.models.*;
-import com.sba301.group1.pes_be.repositories.*;
 import com.sba301.group1.pes_be.dto.requests.AddChildRequest;
 import com.sba301.group1.pes_be.dto.requests.CancelAdmissionForm;
 import com.sba301.group1.pes_be.dto.requests.RefillFormRequest;
@@ -15,6 +10,25 @@ import com.sba301.group1.pes_be.dto.response.ActivityResponse;
 import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.dto.response.ScheduleResponse;
 import com.sba301.group1.pes_be.dto.response.SyllabusResponse;
+import com.sba301.group1.pes_be.email.Format;
+import com.sba301.group1.pes_be.enums.Role;
+import com.sba301.group1.pes_be.enums.Status;
+import com.sba301.group1.pes_be.models.Account;
+import com.sba301.group1.pes_be.models.Activity;
+import com.sba301.group1.pes_be.models.AdmissionForm;
+import com.sba301.group1.pes_be.models.AdmissionTerm;
+import com.sba301.group1.pes_be.models.Parent;
+import com.sba301.group1.pes_be.models.Schedule;
+import com.sba301.group1.pes_be.models.Student;
+import com.sba301.group1.pes_be.models.Syllabus;
+import com.sba301.group1.pes_be.repositories.AccountRepo;
+import com.sba301.group1.pes_be.repositories.ActivityRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
+import com.sba301.group1.pes_be.repositories.ClassesRepo;
+import com.sba301.group1.pes_be.repositories.ParentRepo;
+import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
@@ -47,7 +61,7 @@ public class ParentServiceImpl implements ParentService {
     private final ParentRepo parentRepo;
 
     private final StudentRepo studentRepo;
-    
+
     private final AccountRepo accountRepo;
 
     private final MailService mailService;
@@ -183,7 +197,7 @@ public class ParentServiceImpl implements ParentService {
 
         // 4. Tìm kỳ tuyển sinh đang ACTIVE
         AdmissionTerm activeTerm = admissionTermRepo.findAll().stream()
-                .filter(t -> t.getStatus().equals(Status.ACTIVE_TERM.getValue()))
+                .filter(t -> t.getStatus().equals(Status.ACTIVE_TERM))
                 .findFirst()
                 .orElse(null);
 
@@ -215,7 +229,7 @@ public class ParentServiceImpl implements ParentService {
                 .toList();
 
         boolean hasSubmittedForm = existingForms.stream()
-                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED.getValue()) && !form.getStatus().equals(Status.CANCELLED.getValue()));
+                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED) && !form.getStatus().equals(Status.CANCELLED));
 
         if (hasSubmittedForm) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -228,7 +242,7 @@ public class ParentServiceImpl implements ParentService {
         }
 
         boolean hasPendingForm = existingForms.stream()
-                .anyMatch(form -> form.getStatus().equals(Status.PENDING_APPROVAL.getValue()));
+                .anyMatch(form -> form.getStatus().equals(Status.PENDING_APPROVAL));
 
         if (hasPendingForm) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
@@ -245,12 +259,12 @@ public class ParentServiceImpl implements ParentService {
                 .parent(account.getParent())
                 .student(student)
                 .admissionTerm(activeTerm)
-                        .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                        .commitmentImg(request.getCommitmentImg())
+                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+                .commitmentImg(request.getCommitmentImg())
                 .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
-                        .note(request.getNote())
-                        .submittedDate(LocalDate.now())
-                        .status(Status.PENDING_APPROVAL)
+                .note(request.getNote())
+                .submittedDate(LocalDate.now())
+                .status(Status.PENDING_APPROVAL)
                 .build();
 
         admissionFormRepo.save(form);
@@ -344,7 +358,6 @@ public class ParentServiceImpl implements ParentService {
 
     @Override
     public ResponseEntity<ResponseObject> viewChild(HttpServletRequest httpRequest) {
-        //xac thuc nguoi dung
         Account account = jwtService.extractAccountFromCookie(httpRequest);
         if (account == null || !account.getRole().equals(Role.PARENT)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -356,7 +369,6 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        // Tìm parent dựa vào account ID
         Parent parent = parentRepo.findByAccount_Id(account.getId()).orElse(null);
         if (parent == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -368,7 +380,6 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        // Lấy danh sách student của parent đó
         List<Map<String, Object>> studentList = parent.getStudentList().stream()
                 .sorted(Comparator.comparing(Student::getModifiedDate, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(student -> {
@@ -410,7 +421,7 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        String error = ChildValidation.addChildValidate(request);
+        String error = ChildValidation.addChildValidate(request, httpRequest, parentRepo, jwtService);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
@@ -421,14 +432,7 @@ public class ParentServiceImpl implements ParentService {
         }
 
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
-        if (parent == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                            .message("Parent not found")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
+        assert parent != null;
 
         studentRepo.save(
                 Student.builder()
@@ -467,7 +471,7 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        String error = ChildValidation.updateChildValidate(request);
+        String error = ChildValidation.updateChildValidate(request, httpRequest, parentRepo, jwtService, studentRepo);
         if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
@@ -479,25 +483,11 @@ public class ParentServiceImpl implements ParentService {
 
         // Tìm parent từ account
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
-        if (parent == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                            .message("Parent not found")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
+        assert parent != null;
 
         // KHÔNG cho update nếu đã là học sinh chính thức
         Student student = studentRepo.findById(request.getId()).orElse(null);
-        if (student == null || !student.getParent().getId().equals(parent.getId())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                            .message("Child not found or access denied")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
+        assert student != null;
 
         // tránh bị null
         int count = student.getUpdateCount() == null ? 0 : student.getUpdateCount();
@@ -514,7 +504,7 @@ public class ParentServiceImpl implements ParentService {
         boolean hasSubmittedForm = student.getAdmissionFormList()
                 .stream()
                 .anyMatch(
-                        form -> !form.getStatus().equals(Status.DRAFT.getValue())
+                        form -> !form.getStatus().equals(Status.DRAFT)
                 );
 
         if (student.isStudent() || hasSubmittedForm) {
@@ -694,8 +684,8 @@ public class ParentServiceImpl implements ParentService {
                     classData.put("startDate", studentClass.getClasses().getStartDate());
                     classData.put("endDate", studentClass.getClasses().getEndDate());
                     classData.put("room", studentClass.getClasses().getRoomNumber());
-                    classData.put("syllabus", getSyllabusByClassId(studentClass.getId(), request).getBody().getData());
-                    classData.put("activities", getActivitiesByClassId(studentClass.getId(), request).getBody().getData());
+                    classData.put("syllabus", Objects.requireNonNull(getSyllabusByClassId(studentClass.getId(), request).getBody()).getData()); //
+                    classData.put("activities", Objects.requireNonNull(getActivitiesByClassId(studentClass.getId(), request).getBody()).getData()); //
                     return classData;
                 })
                 .toList();
