@@ -85,7 +85,7 @@ public class TeacherResponse {
                     .roomNumber(classEntity.getRoomNumber())
                     .startDate(classEntity.getStartDate())
                     .endDate(classEntity.getEndDate())
-                    .status(classEntity.getStatus())
+                    .status(classEntity.getStatus().toString())
                     .grade(classEntity.getGrade() != null ? classEntity.getGrade().name() : null)
                     .build();
             builder.classes(classInfo);
