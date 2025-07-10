@@ -99,24 +99,6 @@ export const updateParentProfile = async (data) => {
     return response ? response.data : null;
 };
 
-export const viewStudentClasses = async (studentId) => {
-    const response = await axiosClient.get(`/parent/student-classes/${studentId}`);
-    console.log("Response from viewStudentClasses:", response);
-    return response ? response.data : null;
-}
-
-export const viewSyllabusByClass = async (classId) => {
-    const response = await axiosClient.get(`/parent/syllabus/${classId}`);
-    console.log("Response from viewSyllabusByClass:", response);
-    return response ? response.data : null;
-}
-
-export const viewActivitiesByClass = async (classId) => {
-    const response = await axiosClient.get(`/parent/activities/${classId}`);
-    console.log("Response from viewActivitiesByClass:", response);
-    return response ? response.data : null;
-}
-
 export const refillForm = async (
     studentId,
     formId,
@@ -142,6 +124,16 @@ export const refillForm = async (
         return response.data;
     } catch (error) {
         console.error("Error resubmitting form:", error);
+        throw error;
+    }
+};
+
+export const getStudentClassDetailsGroupedByWeek = async (studentId) => {
+    try {
+        const response = await axiosClient.get(`/parent/student-class-weeks/${studentId}`);
+        return response?.data || null;
+    } catch (error) {
+        console.error("Error in getStudentClassDetailsGroupedByWeek:", error);
         throw error;
     }
 };

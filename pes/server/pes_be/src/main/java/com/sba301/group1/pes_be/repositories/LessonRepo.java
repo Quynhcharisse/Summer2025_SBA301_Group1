@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LessonRepo extends JpaRepository<Lesson, Integer> {
@@ -27,4 +28,5 @@ public interface LessonRepo extends JpaRepository<Lesson, Integer> {
            "WHERE c.id = :classId " +
            "ORDER BY sl.id")
     List<Lesson> findByClassId(@Param("classId") Integer classId);
+
 }
