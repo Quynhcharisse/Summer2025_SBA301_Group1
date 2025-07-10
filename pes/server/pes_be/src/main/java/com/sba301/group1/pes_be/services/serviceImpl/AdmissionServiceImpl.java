@@ -3,6 +3,7 @@ package com.sba301.group1.pes_be.services.serviceImpl;
 import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
 import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateAdmissionTermRequest;
 import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.email.Format;
 import com.sba301.group1.pes_be.enums.Grade;
@@ -74,6 +75,60 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     @Override
+    public ResponseEntity<ResponseObject> updateTermStatus(UpdateAdmissionTermRequest request) {
+        String error = updateTermValidate(request);
+        if (!error.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResponseObject.builder()
+                            .message(error)
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        AdmissionTerm term = admissionTermRepo.findById(request.getTermId()).orElse(null);
+        if (term == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                            .message("Term not found")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        if (!term.getStatus().equals(Status.ACTIVE_TERM)) {
+            return ResponseEntity.badRequest().body(
+                    ResponseObject.builder()
+                            .message("Only active terms can be locked")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+        term.setStatus(Status.LOCKED_TERM);
+        admissionTermRepo.save(term);
+
+        return ResponseEntity.ok(
+                ResponseObject.builder()
+                        .message("Term locked successfully")
+                        .success(true)
+                        .data(null)
+                        .build()
+        );
+    }
+
+    public static String updateTermValidate(UpdateAdmissionTermRequest request) {
+
+        System.out.println("Term ID: " + request.getTermId());
+        if (request.getTermId() <= 0) {
+            return "Term ID must be a positive number";
+        }
+        return "";
+    }
+
+    @Override
     public ResponseEntity<ResponseObject> viewAdmissionTerm() {
         List<AdmissionTerm> terms = admissionTermRepo.findAll();
 
@@ -127,13 +182,17 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     private Status updateTermStatus(AdmissionTerm term) {
-        if (LocalDateTime.now().isBefore(term.getStartDate())) {
-            return Status.INACTIVE_TERM;
-        } else if (!LocalDateTime.now().isAfter(term.getEndDate())) {
-            return Status.ACTIVE_TERM;
-        } else {
-            return Status.LOCKED_TERM;
+        if (!term.getStatus().equals(Status.LOCKED_TERM)) {
+            if (LocalDateTime.now().isBefore(term.getStartDate())) {
+                return Status.INACTIVE_TERM;
+            } else if (!LocalDateTime.now().isAfter(term.getEndDate())) {
+                return Status.ACTIVE_TERM;
+            } else {
+                return Status.LOCKED_TERM;
+            }
+
         }
+        return Status.LOCKED_TERM;
     }
 
     @Override

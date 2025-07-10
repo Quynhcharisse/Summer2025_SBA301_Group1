@@ -3,6 +3,7 @@ package com.sba301.group1.pes_be.controllers;
 import com.sba301.group1.pes_be.dto.requests.CreateAdmissionTermRequest;
 import com.sba301.group1.pes_be.dto.requests.CreateExtraTermRequest;
 import com.sba301.group1.pes_be.dto.requests.ProcessAdmissionFormRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateAdmissionTermRequest;
 import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AdmissionService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,12 @@ public class AdmissionController {
     @PreAuthorize("hasRole('admission')")
     public ResponseEntity<ResponseObject> createExtraTerm(@RequestBody CreateExtraTermRequest request) {
         return admissionService.createExtraTerm(request);
+    }
+
+    @PutMapping("/term")
+    @PreAuthorize("hasRole('admission')")
+    public ResponseEntity<ResponseObject> updateTermStatus(@RequestBody UpdateAdmissionTermRequest request) {
+        return admissionService.updateTermStatus(request);
     }
 
     @GetMapping("/form/list")
