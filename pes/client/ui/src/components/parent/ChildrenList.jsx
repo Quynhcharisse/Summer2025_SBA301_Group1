@@ -1460,12 +1460,13 @@ const ChildrenList = () => {
                     </IconButton>
                 </DialogTitle>
                 <DialogContent>
-                    {selectedClass && (
-                        <Box sx={{mb: 3}}>
-                            <Typography variant="h4" fontWeight={700} sx={{mb: 2, color: 'primary.main'}}>
+                    {selectedClass ? (
+                        <Box>
+                            {/* Thông tin cơ bản */}
+                            <Typography variant="h4" fontWeight={700} sx={{ mb: 2, color: 'primary.main' }}>
                                 {selectedClass.className}
                             </Typography>
-                            <Stack direction="row" spacing={3} sx={{mb: 2}}>
+                            <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
                                 <Typography variant="subtitle1" color="text.secondary">
                                     <b>Grade:</b> {selectedClass.grade}
                                 </Typography>
@@ -1473,93 +1474,85 @@ const ChildrenList = () => {
                                     <b>Room:</b> {selectedClass.room}
                                 </Typography>
                             </Stack>
-                        </Box>
-                    )}
-                    {/* Syllabus */}
-                    {selectedClass && (
-                        <Paper sx={{p: 2, mb: 3, bgcolor: '#f5faff', borderLeft: '6px solid #1976d2'}}>
-                            <Typography variant="subtitle1" fontWeight={700} sx={{mb: 1}}>
-                                Syllabus: {selectedClass.syllabus.title}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{whiteSpace: 'pre-line'}}>
-                                Description: {selectedClass.syllabus.description}
-                            </Typography>
-                        </Paper>
-                    )}
-                    {/* Weekly Schedules */}
-                    <Typography variant="h6" sx={{mt: 2, mb: 1}}>Weekly Schedules</Typography>
-                    {selectedClass.schedules && selectedClass.schedules.length > 0 ? (
-                        selectedClass.schedules.map((week, idx) => {
-                            const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
-                            const allTimes = Array.from(
-                                new Set(
-                                    week.activities.map(a => `${a.startTime} - ${a.endTime}`)
-                                )
-                            );
-                            return (
-                                <Box key={idx} sx={{mb: 3}}>
-                                    <Typography variant="subtitle1" fontWeight={600} sx={{mb: 1, color: '#1976d2'}}>
-                                        Week {week.weekNumber} ({week.startDate} - {week.endDate})
+                            {selectedClass.syllabus && (
+                                <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5faff', borderLeft: '6px solid #1976d2' }}>
+                                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                                        Syllabus: {selectedClass.syllabus.title}
                                     </Typography>
-                                    <TableContainer component={Paper}
-                                                    sx={{mb: 1, bgcolor: '#fffde7', borderRadius: 2, boxShadow: 2}}>
-                                        <Table size="small">
-                                            <TableHead>
-                                                <TableRow sx={{bgcolor: '#ffe082'}}>
-                                                    <TableCell sx={{fontWeight: 700}}>Time</TableCell>
-                                                    {daysOfWeek.map(day => (
-                                                        <TableCell key={day} align="center"
-                                                                   sx={{fontWeight: 700}}>{day}</TableCell>
-                                                    ))}
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {allTimes.map(time => (
-                                                    <TableRow key={time}>
-                                                        <TableCell sx={{
-                                                            fontWeight: 600,
-                                                            bgcolor: '#fffde7'
-                                                        }}>{time}</TableCell>
-                                                        {daysOfWeek.map(day => (
-                                                            <TableCell key={day} align="center"
-                                                                       sx={{p: 0.5, bgcolor: '#e3f2fd'}}>
-                                                                {week.activities
-                                                                    .filter(a => `${a.startTime} - ${a.endTime}` === time && a.dayOfWeek === day)
-                                                                    .map((a, i) => (
-                                                                        <Paper key={i} sx={{
-                                                                            p: 1,
-                                                                            mb: 0.5,
-                                                                            bgcolor: '#b2dfdb',
-                                                                            borderRadius: 2,
-                                                                            boxShadow: 1,
-                                                                            borderLeft: '6px solid #1976d2'
-                                                                        }}>
-                                                                            <Typography variant="body2" fontWeight={600}
-                                                                                        color="#00695c">{a.topic}</Typography>
-                                                                            <Typography variant="caption"
-                                                                                        color="text.secondary">{a.description}</Typography>
-                                                                        </Paper>
-                                                                    ))}
-                                                            </TableCell>
+                                    <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                                        {selectedClass.syllabus.description}
+                                    </Typography>
+                                </Paper>
+                            )}
+                            {/* Weekly Schedules */}
+                            <Typography variant="h6" sx={{mt: 2, mb: 1}}>Weekly Schedules</Typography>
+                            {selectedClass.schedules && selectedClass.schedules.length > 0 ? (
+                                selectedClass.schedules.map((week, idx) => {
+                                    const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+                                    const allTimes = Array.from(
+                                        new Set(
+                                            week.activities.map(a => `${a.startTime} - ${a.endTime}`)
+                                        )
+                                    );
+                                    return (
+                                        <Box key={idx} sx={{mb: 3}}>
+                                            <Typography variant="subtitle1" fontWeight={600} sx={{mb: 1, color: '#1976d2'}}>
+                                                Week {week.weekNumber} ({week.startDate} - {week.endDate})
+                                            </Typography>
+                                            <TableContainer component={Paper} sx={{mb: 1, bgcolor: '#fffde7', borderRadius: 2, boxShadow: 2}}>
+                                                <Table size="small">
+                                                    <TableHead>
+                                                        <TableRow sx={{bgcolor: '#ffe082'}}>
+                                                            <TableCell sx={{fontWeight: 700}}>Time</TableCell>
+                                                            {daysOfWeek.map(day => (
+                                                                <TableCell key={day} align="center" sx={{fontWeight: 700}}>{day}</TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {allTimes.map(time => (
+                                                            <TableRow key={time}>
+                                                                <TableCell sx={{fontWeight: 600, bgcolor: '#fffde7'}}>{time}</TableCell>
+                                                                {daysOfWeek.map(day => (
+                                                                    <TableCell key={day} align="center" sx={{p: 0.5, bgcolor: '#e3f2fd'}}>
+                                                                        {week.activities
+                                                                            .filter(a => `${a.startTime} - ${a.endTime}` === time && a.dayOfWeek === day)
+                                                                            .map((a, i) => (
+                                                                                <Paper key={i} sx={{
+                                                                                    p: 1,
+                                                                                    mb: 0.5,
+                                                                                    bgcolor: '#b2dfdb',
+                                                                                    borderRadius: 2,
+                                                                                    boxShadow: 1,
+                                                                                    borderLeft: '6px solid #1976d2'
+                                                                                }}>
+                                                                                    <Typography variant="body2" fontWeight={600} color="#00695c">{a.topic}</Typography>
+                                                                                    <Typography variant="caption" color="text.secondary">{a.description}</Typography>
+                                                                                </Paper>
+                                                                            ))}
+                                                                    </TableCell>
+                                                                ))}
+                                                            </TableRow>
                                                         ))}
-                                                    </TableRow>
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+                                            {/* Danh sách lesson của tuần */}
+                                            <Typography variant="subtitle2" sx={{mt: 1}}>Lessons this week:</Typography>
+                                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                                {week.lessons && week.lessons.map((lesson, i) => (
+                                                    <Chip key={i} label={lesson.topic} variant="outlined" sx={{mb: 1, bgcolor: '#fffde7', fontWeight: 600}}/>
                                                 ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                    {/* Danh sách lesson của tuần */}
-                                    <Typography variant="subtitle2" sx={{mt: 1}}>Lessons this week:</Typography>
-                                    <Stack direction="row" spacing={1} flexWrap="wrap">
-                                        {week.lessons && week.lessons.map((lesson, i) => (
-                                            <Chip key={i} label={lesson.topic} variant="outlined"
-                                                  sx={{mb: 1, bgcolor: '#fffde7', fontWeight: 600}}/>
-                                        ))}
-                                    </Stack>
-                                </Box>
-                            );
-                        })
+                                            </Stack>
+                                        </Box>
+                                    );
+                                })
+                            ) : (
+                                <Typography color="text.secondary">No weekly schedules available.</Typography>
+                            )}
+                        </Box>
                     ) : (
-                        <Typography color="text.secondary">No weekly schedules available.</Typography>
+                        <Typography color="text.secondary">No class selected.</Typography>
                     )}
                 </DialogContent>
             </Dialog>
