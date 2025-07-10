@@ -953,7 +953,7 @@ public class EducationServiceImpl implements EducationService {
 
     @Override
     public ResponseEntity<ResponseObject> updateClass(Integer classId, ClassRequest request) {
-        //try {
+        try {
             Optional<Classes> classOpt = classesRepo.findById(classId);
             if (classOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -998,7 +998,7 @@ public class EducationServiceImpl implements EducationService {
                             .data(existingClass)
                             .build()
             );
-        /*} catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ResponseObject.builder()
                             .message("Error updating class: " + e.getMessage())
@@ -1006,7 +1006,7 @@ public class EducationServiceImpl implements EducationService {
                             .data(null)
                             .build()
             );
-        }*/
+        }
     }
 
     @Override
