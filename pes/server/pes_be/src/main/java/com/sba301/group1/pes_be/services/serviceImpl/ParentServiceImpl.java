@@ -17,18 +17,26 @@ import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.models.AdmissionTerm;
+import com.sba301.group1.pes_be.models.Classes;
+import com.sba301.group1.pes_be.models.Lesson;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.models.Schedule;
 import com.sba301.group1.pes_be.models.Student;
+import com.sba301.group1.pes_be.models.StudentClass;
 import com.sba301.group1.pes_be.models.Syllabus;
+import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ActivityRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
+import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
+import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
+import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
+import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
@@ -42,11 +50,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +80,10 @@ public class ParentServiceImpl implements ParentService {
     private final ActivityRepo activityRepo;
 
     private final SyllabusRepo syllabusRepo;
+
+    private final ScheduleRepo scheduleRepo;
+
+    private final SyllabusLessonRepo syllabusLessonRepo;
 
     private final ClassesRepo classesRepo;
 
@@ -641,122 +656,6 @@ public class ParentServiceImpl implements ParentService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> getStudentClasses(int studentId, HttpServletRequest request) {
-        Account account = jwtService.extractAccountFromCookie(request);
-        if (account == null || !account.getRole().equals(Role.PARENT)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    ResponseObject.builder()
-                            .message("Forbidden: Only parents can access this resource")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
-
-        // Tìm học sinh theo ID
-        Student student = studentRepo.findById(studentId).orElse(null);
-        if (student == null || !Objects.equals(student.getParent().getId(), account.getParent().getId())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                            .message("Student not found or access denied")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
-
-        // Lấy danh sách lớp học của học sinh
-        List<Map<String, Object>> classes = student.getStudentClassList().stream()
-                .map(studentClass -> {
-                    Map<String, Object> classData = new HashMap<>();
-                    classData.put("id", studentClass.getId());
-                    classData.put("class", studentClass.getClasses().getName());
-                    classData.put("student", studentClass.getStudent().getName());
-                    classData.put("grade", studentClass.getClasses().getGrade());
-                    classData.put("startDate", studentClass.getClasses().getStartDate());
-                    classData.put("endDate", studentClass.getClasses().getEndDate());
-                    classData.put("room", studentClass.getClasses().getRoomNumber());
-                    classData.put("syllabus", Objects.requireNonNull(getSyllabusByClassId(studentClass.getId(), request).getBody()).getData()); //
-                    classData.put("activities", Objects.requireNonNull(getActivitiesByClassId(studentClass.getId(), request).getBody()).getData()); //
-                    return classData;
-                })
-                .toList();
-
-        return ResponseEntity.status(HttpStatus.OK).body(
-                ResponseObject.builder()
-                        .message("Student classes retrieved successfully")
-                        .success(true)
-                        .data(classes)
-                        .build()
-        );
-    }
-
-    @Override
-    public ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request) {
-        try {
-            List<Activity> activities = activityRepo.findByClassId(classId);
-            List<ActivityResponse> activityResponses = convertToResponse(activities);
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Activities retrieved successfully")
-                            .success(true)
-                            .data(activityResponses)
-                            .build()
-            );
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ResponseObject.builder()
-                            .message("Error retrieving activities: " + e.getMessage())
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-    }
-
-    @Override
-    public ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request) {
-        try {
-            if (!classesRepo.existsById(classId)) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ResponseObject.builder()
-                                .message("Class not found")
-                                .success(false)
-                                .data(null)
-                                .build()
-                );
-            }
-
-            Syllabus syllabus = syllabusRepo.findByClassId(classId);
-            if (syllabus == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ResponseObject.builder()
-                                .message("No syllabus found for this class")
-                                .success(false)
-                                .data(null)
-                                .build()
-                );
-            }
-
-            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
-            return ResponseEntity.ok().body(
-                    ResponseObject.builder()
-                            .message("Syllabus retrieved successfully")
-                            .success(true)
-                            .data(syllabusResponse)
-                            .build()
-            );
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    ResponseObject.builder()
-                            .message("Error retrieving syllabus: " + e.getMessage())
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-    }
-
-    @Override
     public ResponseEntity<ResponseObject> refillForm(RefillFormRequest request, HttpServletRequest httpRequest) {
         AdmissionForm form = admissionFormRepo.findById(request.getFormId()).orElse(null);
 
@@ -805,6 +704,225 @@ public class ParentServiceImpl implements ParentService {
                         .data(null)
                         .build()
         );
+    }
+//
+//    @Override
+//    public ResponseEntity<ResponseObject> getStudentClasses(int studentId, HttpServletRequest request) {
+//        Account account = jwtService.extractAccountFromCookie(request);
+//        if (account == null || !account.getRole().equals(Role.PARENT)) {
+//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+//                    ResponseObject.builder()
+//                            .message("Forbidden: Only parents can access this resource")
+//                            .success(false)
+//                            .data(null)
+//                            .build());
+//        }
+//
+//        // Tìm học sinh theo ID
+//        Student student = studentRepo.findById(studentId).orElse(null);
+//        if (student == null || !Objects.equals(student.getParent().getId(), account.getParent().getId())) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+//                    ResponseObject.builder()
+//                            .message("Student not found or access denied")
+//                            .success(false)
+//                            .data(null)
+//                            .build());
+//        }
+//
+//        // Lấy danh sách lớp học của học sinh
+//        List<Map<String, Object>> classes = student.getStudentClassList().stream()
+//                .map(studentClass -> {
+//                    Map<String, Object> classData = new HashMap<>();
+//                    classData.put("id", studentClass.getId());
+//                    classData.put("class", studentClass.getClasses().getName());
+//                    classData.put("student", studentClass.getStudent().getName());
+//                    classData.put("grade", studentClass.getClasses().getGrade());
+//                    classData.put("startDate", studentClass.getClasses().getStartDate());
+//                    classData.put("endDate", studentClass.getClasses().getEndDate());
+//                    classData.put("room", studentClass.getClasses().getRoomNumber());
+//                    classData.put("syllabus", Objects.requireNonNull(getSyllabusByClassId(studentClass.getClasses().getId(), request).getBody()).getData()); //
+//                    classData.put("activities", Objects.requireNonNull(getActivitiesByClassId(studentClass.getClasses().getId(), request).getBody()).getData()); //
+//                    return classData;
+//                })
+//                .toList();
+//
+//        return ResponseEntity.status(HttpStatus.OK).body(
+//                ResponseObject.builder()
+//                        .message("Student classes retrieved successfully")
+//                        .success(true)
+//                        .data(classes)
+//                        .build()
+//        );
+//    }
+//
+//    @Override
+//    public ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request) {
+//        try {
+//            List<Activity> activities = activityRepo.findByClassId(classId);
+//            List<ActivityResponse> activityResponses = convertToResponse(activities);
+//            return ResponseEntity.ok().body(
+//                    ResponseObject.builder()
+//                            .message("Activities retrieved successfully")
+//                            .success(true)
+//                            .data(activityResponses)
+//                            .build()
+//            );
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+//                    ResponseObject.builder()
+//                            .message("Error retrieving activities: " + e.getMessage())
+//                            .success(false)
+//                            .data(null)
+//                            .build()
+//            );
+//        }
+//    }
+//
+//    @Override
+//    public ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request) {
+//        try {
+//            if (!classesRepo.existsById(classId)) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+//                        ResponseObject.builder()
+//                                .message("Class not found")
+//                                .success(false)
+//                                .data(null)
+//                                .build()
+//                );
+//            }
+//
+//            Syllabus syllabus = syllabusRepo.findByClassId(classId);
+//            if (syllabus == null) {
+//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+//                        ResponseObject.builder()
+//                                .message("No syllabus found for this class")
+//                                .success(false)
+//                                .data(null)
+//                                .build()
+//                );
+//            }
+//
+//            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
+//            return ResponseEntity.ok().body(
+//                    ResponseObject.builder()
+//                            .message("Syllabus retrieved successfully")
+//                            .success(true)
+//                            .data(syllabusResponse)
+//                            .build()
+//            );
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+//                    ResponseObject.builder()
+//                            .message("Error retrieving syllabus: " + e.getMessage())
+//                            .success(false)
+//                            .data(null)
+//                            .build()
+//            );
+//        }
+//    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getStudentClassDetailsGroupedByWeek(int studentId, HttpServletRequest request) {
+        Account account = jwtService.extractAccountFromCookie(request);
+        if (account == null || !account.getRole().equals(Role.PARENT)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    ResponseObject.builder()
+                            .message("Forbidden: Only parents can access this resource")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        Student student = studentRepo.findById(studentId).orElse(null);
+        if (student == null || !Objects.equals(student.getParent().getId(), account.getParent().getId())) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ResponseObject.builder()
+                            .message("Student not found or access denied")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        List<Map<String, Object>> classDetails = new ArrayList<>();
+
+        for (StudentClass sc : student.getStudentClassList()) {
+            Classes cls = sc.getClasses();
+            Integer classId = cls.getId();
+
+            Map<String, Object> detail = new HashMap<>();
+            detail.put("classId", classId);
+            detail.put("className", cls.getName());
+            detail.put("grade", cls.getGrade());
+            detail.put("room", cls.getRoomNumber());
+
+            Syllabus syllabus = syllabusRepo.findById(cls.getSyllabus().getId()).orElse(null);
+            detail.put("syllabus", syllabus);
+
+            assert syllabus != null;
+            List<SyllabusLesson> syllabusLessons = syllabusLessonRepo.findBySyllabusId(syllabus.getId());
+            List<Map<String, Object>> lessonList = syllabusLessons.stream()
+                    .map(sl -> {
+                        Lesson lesson = sl.getLesson();
+                        Map<String, Object> l = new HashMap<>();
+                        l.put("lessonId", lesson.getId());
+                        l.put("topic", lesson.getTopic());
+                        l.put("description", lesson.getDescription());
+                        return l;
+                    }).collect(Collectors.toList());
+
+            List<Schedule> schedules = scheduleRepo.findByClassesIdOrderByWeekNumber(classId);
+            List<Map<String, Object>> scheduleData = new ArrayList<>();
+
+            LocalDate classStart = LocalDate.parse(cls.getStartDate());
+
+            for (Schedule schedule : schedules) {
+                Map<String, Object> weekInfo = new HashMap<>();
+                int weekNumber = schedule.getWeekNumber();
+                LocalDate weekStart = classStart.plusWeeks(weekNumber - 1);
+                LocalDate weekEnd = weekStart.plusDays(4);
+
+                weekInfo.put("weekNumber", weekNumber);
+                weekInfo.put("startDate", weekStart);
+                weekInfo.put("endDate", weekEnd);
+                weekInfo.put("lessons", lessonList);
+
+                List<Activity> activities = activityRepo.findByScheduleId(schedule.getId());
+                List<Map<String, Object>> activityData = new ArrayList<>();
+                for (Activity act : activities) {
+                    Map<String, Object> actMap = new HashMap<>();
+                    actMap.put("dayOfWeek", act.getDayOfWeek());
+                    actMap.put("startTime", act.getStartTime());
+                    actMap.put("endTime", act.getEndTime());
+
+                    if (act.getLesson() != null) {
+                        actMap.put("type", "lesson");
+                        actMap.put("lessonId", act.getLesson().getId());
+                        actMap.put("topic", act.getLesson().getTopic());
+                        actMap.put("description", act.getLesson().getDescription());
+                    } else {
+                        actMap.put("type", "extra");
+                        actMap.put("topic", act.getTopic());
+                        actMap.put("description", act.getDescription());
+                    }
+                    activityData.add(actMap);
+                }
+
+                weekInfo.put("activities", activityData);
+                scheduleData.add(weekInfo);
+            }
+
+            detail.put("schedules", scheduleData);
+            classDetails.add(detail);
+        }
+
+        return ResponseEntity.ok(ResponseObject.builder()
+                .message("Student class detail retrieved successfully")
+                .success(true)
+                .data(classDetails)
+                .build());
     }
 }
 

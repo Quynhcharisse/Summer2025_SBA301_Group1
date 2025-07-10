@@ -30,7 +30,6 @@ import SyllabusDetails from "./components/educationManager/SyllabusDetails.jsx";
 import Register from "./components/Register.jsx";
 
 
-
 const router = createBrowserRouter([
     {
         path: '/login',
@@ -109,7 +108,7 @@ const router = createBrowserRouter([
             {
                 path: 'classes',
                 element: <ClassList/>
-            },            {
+            }, {
                 path: 'classes/:id',
                 element: <ClassDetails/>
             },
