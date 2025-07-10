@@ -1,5 +1,6 @@
 package com.sba301.group1.pes_be;
 
+import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
@@ -305,7 +306,7 @@ public class PesBeApplication {
                             .roomNumber(roomNumbers[i])
                             .startDate("2025-09-01")
                             .endDate("2026-06-30")
-                            .status("ACTIVE")
+                            .status(ClassStatus.ACTIVE)
                             .grade(grades[i])
                             .syllabus(syllabi[i])
                             .teacher(teachers[i])
