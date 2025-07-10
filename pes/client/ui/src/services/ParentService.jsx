@@ -38,9 +38,6 @@ export const cancelAdmission = async (id) => {
 export const getChildrenList = async () => {
     try {
         const response = await axiosClient.get("/parent/child");
-        console.log("Raw API Response:", response);
-        console.log("API Response data:", response?.data);
-        console.log("API Response success:", response?.data?.success);
         if (response?.data?.data) {
             console.log("First child data:", response.data.data[0]);
             console.log("First child dateOfBirth:", response.data.data[0]?.dateOfBirth);
@@ -54,7 +51,6 @@ export const getChildrenList = async () => {
 
 export const addChild = async (childData) => {
     try {
-        // Convert gender to match backend format
         const formattedData = {
             ...childData,
             gender: childData.gender?.toLowerCase()

@@ -4,6 +4,7 @@ import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Parent;
+import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.dto.requests.ParentRequest;
@@ -117,13 +118,22 @@ public class HRServiceImpl implements HRService {
                             .build());
         }
 
+        // Kiểm tra nếu parent còn con đang học
+        if (parent.getStudentList() != null && parent.getStudentList().stream().anyMatch(Student::isStudent)) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("Cannot ban parent: There are still children enrolled in school.")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
         Account parentAccount = accountRepo.getReferenceById(parent.getAccount().getId());
-        System.out.println(parentAccount);
         parentAccount.setStatus(Status.ACCOUNT_BAN);
         accountRepo.save(parentAccount);
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Parent deleted successfully")
+                        .message("Parent banned successfully")
                         .success(true)
                         .data(null)
                         .build());

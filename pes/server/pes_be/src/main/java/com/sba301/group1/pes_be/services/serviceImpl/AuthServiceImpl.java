@@ -48,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
         String error = LoginValidation.validate(request, accountRepo);
 
         if (!error.isEmpty()) {
-            return ResponseEntity.ok().body(
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
                             .success(false)

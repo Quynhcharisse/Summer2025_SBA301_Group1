@@ -229,25 +229,15 @@ public class ParentServiceImpl implements ParentService {
                 .toList();
 
         boolean hasSubmittedForm = existingForms.stream()
-                .anyMatch(form -> !form.getStatus().equals(Status.REJECTED) && !form.getStatus().equals(Status.CANCELLED));
+                .anyMatch(form ->
+                        form.getStatus().equals(Status.PENDING_APPROVAL) ||
+                                form.getStatus().equals(Status.APPROVED)
+                );
 
         if (hasSubmittedForm) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     ResponseObject.builder()
-                            .message("This student has already been submit in the current admission term.")
-                            .success(false)
-                            .data(null)
-                            .build()
-            );
-        }
-
-        boolean hasPendingForm = existingForms.stream()
-                .anyMatch(form -> form.getStatus().equals(Status.PENDING_APPROVAL));
-
-        if (hasPendingForm) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    ResponseObject.builder()
-                            .message("You have already submitted a pending form for this student in the current term.")
+                            .message("You already have a submitted or approved form for this student in the current term.")
                             .success(false)
                             .data(null)
                             .build()
@@ -780,18 +770,41 @@ public class ParentServiceImpl implements ParentService {
             );
         }
 
-        form.setStatus(Status.REFILLED);
+        // Chỉ cho phép refill nếu form đang ở trạng thái REJECTED hoặc CANCELLED
+        if (!(form.getStatus().equals(Status.REJECTED) || form.getStatus().equals(Status.CANCELLED))) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    ResponseObject.builder()
+                            .message("Only rejected or cancelled forms can be refilled.")
+                            .success(false)
+                            .data(null)
+                            .build()
+            );
+        }
+
+        form.setStatus(Status.PENDING_APPROVAL);
+        form.setChildCharacteristicsFormImg(request.getChildCharacteristicsFormImg());
+        form.setHouseholdRegistrationAddress(request.getHouseholdRegistrationAddress());
+        form.setCommitmentImg(request.getCommitmentImg());
+        form.setNote(request.getNote());
+        form.setSubmittedDate(LocalDate.now());
         admissionFormRepo.save(form);
 
-        SubmitAdmissionFormRequest submitRequest = SubmitAdmissionFormRequest.builder()
-                .studentId(request.getStudentId())
-                .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
-                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-                .commitmentImg(request.getCommitmentImg())
-                .note(request.getNote())
-                .build();
-        return submitAdmissionForm(submitRequest, httpRequest);
-    }
+//        SubmitAdmissionFormRequest submitRequest = SubmitAdmissionFormRequest.builder()
+//                .studentId(request.getStudentId())
+//                .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
+//                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
+//                .commitmentImg(request.getCommitmentImg())
+//                .note(request.getNote())
+//                .build();
+//        return submitAdmissionForm(submitRequest, httpRequest);
 
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Form refilled successfully")
+                        .success(true)
+                        .data(null)
+                        .build()
+        );
+    }
 }
 

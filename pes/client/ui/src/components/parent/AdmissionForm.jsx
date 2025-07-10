@@ -1,4 +1,5 @@
 import {
+    Alert,
     AppBar,
     Box,
     Button,
@@ -10,6 +11,7 @@ import {
     FormControl,
     FormControlLabel,
     FormLabel,
+    Grid,
     IconButton,
     InputLabel,
     MenuItem,
@@ -28,13 +30,12 @@ import {
     TextField,
     Toolbar,
     Typography,
-    Grid,
-    Alert
+    CircularProgress
 } from "@mui/material";
 import {Add, Close, CloudUpload, Info, Refresh} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import {DatePicker} from "@mui/x-date-pickers/DatePicker";
-import {cancelAdmission, getFormInformation, submittedForm, refillForm} from "../../services/ParentService.jsx";
+import {cancelAdmission, getFormInformation, refillForm, submittedForm} from "../../services/ParentService.jsx";
 import dayjs from "dayjs";
 import {enqueueSnackbar} from "notistack";
 import axios from "axios";
@@ -142,7 +143,7 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefill
                                                         }
                                                     }}
                                                 >
-                                                    <Refresh />
+                                                    <Refresh/>
                                                 </IconButton>
                                             )}
                                         </Stack>
@@ -301,14 +302,14 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                         </Button>
 
                         {canCancel() && (
-                        <Button
-                            sx={{width: '10%', height: '5vh'}}
-                            variant="contained"
+                            <Button
+                                sx={{width: '10%', height: '5vh'}}
+                                variant="contained"
                                 color="error"
-                            onClick={handleOpenConfirm}
-                        >
+                                onClick={handleOpenConfirm}
+                            >
                                 Cancel Form
-                        </Button>
+                            </Button>
                         )}
 
                         <Dialog open={openConfirm} onClose={handleCloseConfirm}>
@@ -337,102 +338,140 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
     )
 }
 
-function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, isRefill = false, formId}) {
+function RenderFormPopUp({
+                             handleClosePopUp,
+                             isPopUpOpen,
+                             studentList,
+                             selectedForm,
+                             GetForm,
+                             isRefill = false,
+                             formId
+                         }) {
+    // Nếu là refill, lấy id học sinh từ selectedForm
     const [selectedStudentId, setSelectedStudentId] = useState(
-        studentList?.[0]?.id || ''
+        isRefill && selectedForm ? selectedForm.studentId : (studentList?.[0]?.id || '')
     );
-    
     const selectedStudent = studentList?.find(child => child.id === selectedStudentId);
 
+    // Thêm state để lưu thông tin refill cũ (nếu có)
     const [input, setInput] = useState({
         address: '',
         note: ''
     });
 
     const [uploadedFile, setUploadedFile] = useState({
-        childCharacteristics: null,
-        commitment: null
+        childCharacteristics: null, // file object mới
+        commitment: null, // file object mới
+        childCharacteristicsUrl: '', // url cũ
+        commitmentUrl: '' // url cũ
     });
 
     const [isSubmit, setIsSubmit] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Khi mở popup refill, tự động điền lại dữ liệu cũ
+    useEffect(() => {
+        if (isRefill && selectedForm && selectedStudent) {
+            setInput({
+                address: selectedForm.householdRegistrationAddress || '',
+                note: selectedForm.note || ''
+            });
+            setUploadedFile(prev => ({
+                ...prev,
+                childCharacteristicsUrl: selectedForm.childCharacteristicsFormImg || '',
+                commitmentUrl: selectedForm.commitmentImg || ''
+            }));
+        }
+        // eslint-disable-next-line
+    }, [isRefill, selectedStudentId, selectedForm]);
 
     async function HandleSubmit() {
         setIsSubmit(true);
+        setIsLoading(true);
 
         if (!input.address.trim()) {
             enqueueSnackbar("Please enter household registration address", {variant: "error"});
+            setIsLoading(false);
             return;
         }
 
-        if (!uploadedFile.childCharacteristics) {
+        // Validate file: nếu không có file mới và không có url cũ thì báo lỗi
+        if (!uploadedFile.childCharacteristics && !uploadedFile.childCharacteristicsUrl) {
             enqueueSnackbar("Please upload child characteristics form", {variant: "error"});
+            setIsLoading(false);
             return;
         }
-
-        if (!uploadedFile.commitment) {
+        if (!uploadedFile.commitment && !uploadedFile.commitmentUrl) {
             enqueueSnackbar("Please upload commitment form", {variant: "error"});
+            setIsLoading(false);
             return;
         }
 
-        // Upload files to Cloudinary
-        const formData = new FormData();
-        formData.append("file", uploadedFile.childCharacteristics);
-        formData.append("upload_preset", "pes_swd");
-        formData.append("api_key", "837117616828593");
-
-        const commitmentData = new FormData();
-        commitmentData.append("file", uploadedFile.commitment);
-        commitmentData.append("upload_preset", "pes_swd");
-        commitmentData.append("api_key", "837117616828593");
+        let childCharacteristicsUrl = uploadedFile.childCharacteristicsUrl;
+        let commitmentUrl = uploadedFile.commitmentUrl;
 
         try {
-            const [characteristicsResponse, commitmentResponse] = await Promise.all([
-                axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", formData, {
-                    headers: { "Content-Type": "multipart/form-data" }
-                }),
-                axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", commitmentData, {
-                    headers: { "Content-Type": "multipart/form-data" }
-                })
-            ]);
+            // Nếu có file mới thì upload lên Cloudinary
+            if (uploadedFile.childCharacteristics) {
+                const formData = new FormData();
+                formData.append("file", uploadedFile.childCharacteristics);
+                formData.append("upload_preset", "pes_swd");
+                formData.append("api_key", "837117616828593");
+                const res = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", formData, {
+                    headers: {"Content-Type": "multipart/form-data"}
+                });
+                if (res.status === 200) childCharacteristicsUrl = res.data.url;
+            }
+            if (uploadedFile.commitment) {
+                const formData = new FormData();
+                formData.append("file", uploadedFile.commitment);
+                formData.append("upload_preset", "pes_swd");
+                formData.append("api_key", "837117616828593");
+                const res = await axios.post("https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload", formData, {
+                    headers: {"Content-Type": "multipart/form-data"}
+                });
+                if (res.status === 200) commitmentUrl = res.data.url;
+            }
 
-            if (characteristicsResponse.status === 200 && commitmentResponse.status === 200) {
+            if (isRefill) {
+                // Gọi API refillForm với url file mới hoặc cũ
+                const response = await refillForm(
+                    selectedStudentId,
+                    formId,
+                    input.address,
+                    childCharacteristicsUrl,
+                    commitmentUrl,
+                    input.note || ''
+                );
+                setIsLoading(false);
+                if (response && response.success) {
+                    enqueueSnackbar("Form refilled successfully", {variant: 'success'});
+                    GetForm();
+                    handleClosePopUp();
+                } else {
+                    enqueueSnackbar(response.message || "Failed to refill form", {variant: "error"});
+                }
+            } else {
                 const requestData = {
                     studentId: selectedStudentId,
                     householdRegistrationAddress: input.address,
-                    childCharacteristicsFormImg: characteristicsResponse.data.url,
-                    commitmentImg: commitmentResponse.data.url,
+                    childCharacteristicsFormImg: childCharacteristicsUrl,
+                    commitmentImg: commitmentUrl,
                     note: input.note || ''
                 };
 
-                if (isRefill) {
-                    requestData.formId = formId;
-                    const response = await refillForm(
-                        selectedStudentId,
-                        formId,
-                        input.address,
-                        characteristicsResponse.data.url,
-                        commitmentResponse.data.url,
-                        input.note || ''
-                    );
-                    if (response && response.success) {
-                        enqueueSnackbar("Form refilled successfully", {variant: 'success'});
-                        GetForm();
-                        handleClosePopUp();
-                    } else {
-                        enqueueSnackbar(response.message || "Failed to refill form", {variant: "error"});
-                    }
+                const response = await submittedForm(requestData);
+                setIsLoading(false);
+                if (response && response.success) {
+                    enqueueSnackbar(response.message, {variant: 'success'});
+                    GetForm();
+                    handleClosePopUp();
                 } else {
-                    const response = await submittedForm(requestData);
-                    if (response && response.success) {
-                        enqueueSnackbar(response.message, {variant: 'success'});
-                        GetForm();
-                        handleClosePopUp();
-                    } else {
-                        enqueueSnackbar(response.message || "Submission failed", {variant: "error"});
-                    }
+                    enqueueSnackbar(response.message || "Submission failed", {variant: "error"});
                 }
             }
         } catch (error) {
+            setIsLoading(false);
             enqueueSnackbar("Error uploading files", {variant: "error"});
         }
     }
@@ -443,7 +482,7 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
             open={isPopUpOpen}
             onClose={handleClosePopUp}
         >
-            <AppBar sx={{ position: 'relative', bgcolor: '#2c3e50' }}>
+            <AppBar sx={{position: 'relative', bgcolor: '#2c3e50'}}>
                 <Toolbar>
                     <IconButton
                         edge="start"
@@ -451,20 +490,20 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                         onClick={handleClosePopUp}
                         aria-label="close"
                     >
-                        <Close />
+                        <Close/>
                     </IconButton>
-                    <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
+                    <Typography sx={{ml: 2, flex: 1}} variant="h6">
                         {isRefill ? "Refill Admission Form" : "Create Admission Form"}
                     </Typography>
                 </Toolbar>
             </AppBar>
 
-            <Box sx={{ p: 4, maxWidth: '1200px', mx: 'auto' }}>
+            <Box sx={{p: 4, maxWidth: '1200px', mx: 'auto'}}>
                 <Typography
-                    variant="h4" 
-                    sx={{ 
-                        mb: 5, 
-                        color: '#2c3e50', 
+                    variant="h4"
+                    sx={{
+                        mb: 5,
+                        color: '#2c3e50',
                         textAlign: 'center',
                         fontWeight: 600,
                         position: 'relative',
@@ -479,17 +518,17 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                             bgcolor: '#2c3e50'
                         }
                     }}
-                    >
-                        Form Information
-                    </Typography>
+                >
+                    Form Information
+                </Typography>
 
-                <Box sx={{ mb: 4 }}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Child Name</InputLabel>
-                                    <Select
-                                        value={selectedStudentId}
-                                        onChange={(e) => setSelectedStudentId(e.target.value)}
-                                        label="Child Name"
+                <Box sx={{mb: 4}}>
+                    <FormControl fullWidth>
+                        <InputLabel>Child Name</InputLabel>
+                        <Select
+                            value={selectedStudentId}
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                            label="Child Name"
                             sx={{
                                 bgcolor: '#fff',
                                 '& .MuiOutlinedInput-notchedOutline': {
@@ -499,15 +538,15 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                         >
                             {studentList?.filter(student => !student.hadForm).map((student) => (
                                 <MenuItem key={student.id} value={student.id}>{student.name}</MenuItem>
-                                            ))}
-                                    </Select>
-                                </FormControl>
+                            ))}
+                        </Select>
+                    </FormControl>
 
-                    <Typography 
-                        color="error" 
-                        variant="caption" 
-                        sx={{ 
-                            display: 'block', 
+                    <Typography
+                        color="error"
+                        variant="caption"
+                        sx={{
+                            display: 'block',
                             mt: 1,
                             fontStyle: 'italic'
                         }}
@@ -516,20 +555,20 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                     </Typography>
                 </Box>
 
-                <Paper 
-                    elevation={0} 
-                    sx={{ 
-                        p: 4, 
-                        mb: 4, 
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 4,
+                        mb: 4,
                         bgcolor: '#f8f9fa',
                         border: '1px solid rgba(0, 0, 0, 0.12)',
                         borderRadius: 2
                     }}
                 >
-                    <Typography 
-                        variant="h6" 
-                        sx={{ 
-                            mb: 3, 
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            mb: 3,
                             color: '#2c3e50',
                             fontWeight: 600,
                             display: 'flex',
@@ -545,8 +584,8 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 fullWidth
                                 label="Full Name"
                                 value={selectedStudent?.name || ''}
-                                            disabled
-                                sx={{ bgcolor: '#fff' }}
+                                disabled
+                                sx={{bgcolor: '#fff'}}
                             />
                         </Grid>
                         <Grid item xs={12} md={4}>
@@ -554,8 +593,8 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 fullWidth
                                 label="Gender"
                                 value={selectedStudent?.gender || ''}
-                                            disabled
-                                sx={{ bgcolor: '#fff' }}
+                                disabled
+                                sx={{bgcolor: '#fff'}}
                             />
                         </Grid>
                         <Grid item xs={12} md={4}>
@@ -563,35 +602,35 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 fullWidth
                                 label="Date of Birth"
                                 value={selectedStudent?.dateOfBirth || ''}
-                                    disabled
-                                sx={{ bgcolor: '#fff' }}
+                                disabled
+                                sx={{bgcolor: '#fff'}}
                             />
                         </Grid>
                         <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
+                            <TextField
+                                fullWidth
                                 label="Place of Birth"
                                 value={selectedStudent?.placeOfBirth || ''}
-                                    disabled
-                                sx={{ bgcolor: '#fff' }}
+                                disabled
+                                sx={{bgcolor: '#fff'}}
                             />
                         </Grid>
                     </Grid>
                 </Paper>
 
-                <Paper 
-                    elevation={0} 
-                    sx={{ 
-                        p: 4, 
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 4,
                         mb: 4,
                         border: '1px solid rgba(0, 0, 0, 0.12)',
                         borderRadius: 2
                     }}
                 >
-                    <Typography 
-                        variant="h6" 
-                        sx={{ 
-                            mb: 3, 
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            mb: 3,
                             color: '#2c3e50',
                             fontWeight: 600
                         }}
@@ -600,10 +639,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                     </Typography>
                     <Grid container spacing={4}>
                         <Grid item xs={12} md={4}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                            <Box sx={{textAlign: 'center'}}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         mb: 2,
                                         fontWeight: 500,
                                         color: '#2c3e50'
@@ -611,10 +650,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 >
                                     Profile Image
                                 </Typography>
-                                <Paper 
-                                    elevation={2} 
-                                    sx={{ 
-                                        p: 2, 
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        p: 2,
                                         height: 200,
                                         display: 'flex',
                                         alignItems: 'center',
@@ -628,12 +667,12 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                     }}
                                 >
                                     {selectedStudent?.profileImage ? (
-                                        <img 
-                                            src={selectedStudent.profileImage} 
-                                            alt="Profile" 
-                                            style={{ 
-                                                maxHeight: '100%', 
-                                                maxWidth: '100%', 
+                                        <img
+                                            src={selectedStudent.profileImage}
+                                            alt="Profile"
+                                            style={{
+                                                maxHeight: '100%',
+                                                maxWidth: '100%',
                                                 objectFit: 'contain',
                                                 borderRadius: 8
                                             }}
@@ -645,10 +684,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                             </Box>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                            <Box sx={{textAlign: 'center'}}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         mb: 2,
                                         fontWeight: 500,
                                         color: '#2c3e50'
@@ -656,10 +695,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 >
                                     Birth Certificate
                                 </Typography>
-                                <Paper 
-                                    elevation={2} 
-                                    sx={{ 
-                                        p: 2, 
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        p: 2,
                                         height: 200,
                                         display: 'flex',
                                         alignItems: 'center',
@@ -673,12 +712,12 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                     }}
                                 >
                                     {selectedStudent?.birthCertificateImg ? (
-                                        <img 
-                                            src={selectedStudent.birthCertificateImg} 
-                                            alt="Birth Certificate" 
-                                            style={{ 
-                                                maxHeight: '100%', 
-                                                maxWidth: '100%', 
+                                        <img
+                                            src={selectedStudent.birthCertificateImg}
+                                            alt="Birth Certificate"
+                                            style={{
+                                                maxHeight: '100%',
+                                                maxWidth: '100%',
                                                 objectFit: 'contain',
                                                 borderRadius: 8
                                             }}
@@ -690,10 +729,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                             </Box>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Box sx={{ textAlign: 'center' }}>
-                                <Typography 
-                                    variant="subtitle1" 
-                                    sx={{ 
+                            <Box sx={{textAlign: 'center'}}>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
                                         mb: 2,
                                         fontWeight: 500,
                                         color: '#2c3e50'
@@ -701,10 +740,10 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                 >
                                     Household Registration
                                 </Typography>
-                                <Paper 
-                                    elevation={2} 
-                                    sx={{ 
-                                        p: 2, 
+                                <Paper
+                                    elevation={2}
+                                    sx={{
+                                        p: 2,
                                         height: 200,
                                         display: 'flex',
                                         alignItems: 'center',
@@ -718,12 +757,12 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                     }}
                                 >
                                     {selectedStudent?.householdRegistrationImg ? (
-                                        <img 
-                                            src={selectedStudent.householdRegistrationImg} 
-                                            alt="Household Registration" 
-                                            style={{ 
-                                                maxHeight: '100%', 
-                                                maxWidth: '100%', 
+                                        <img
+                                            src={selectedStudent.householdRegistrationImg}
+                                            alt="Household Registration"
+                                            style={{
+                                                maxHeight: '100%',
+                                                maxWidth: '100%',
                                                 objectFit: 'contain',
                                                 borderRadius: 8
                                             }}
@@ -736,9 +775,9 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                         </Grid>
                     </Grid>
 
-                    <Alert 
-                        severity="info" 
-                        sx={{ 
+                    <Alert
+                        severity="info"
+                        sx={{
                             mt: 3,
                             bgcolor: 'rgba(30, 136, 229, 0.1)',
                             '& .MuiAlert-icon': {
@@ -746,7 +785,8 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                             }
                         }}
                     >
-                        Please verify that all student information is correct before submitting the form. If any information needs to be
+                        Please verify that all student information is correct before submitting the form. If any
+                        information needs to be
                         updated, please contact the school administrator.
                     </Alert>
                 </Paper>
@@ -755,52 +795,44 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                     fullWidth
                     required
                     label="Household Registration Address"
-                                           value={input.address}
-                    onChange={(e) => setInput({ ...input, address: e.target.value })}
-                                           error={isSubmit && !input.address.trim()}
-                                           helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
-                    sx={{ 
+                    value={input.address}
+                    onChange={(e) => setInput({...input, address: e.target.value})}
+                    error={isSubmit && !input.address.trim()}
+                    helperText={isSubmit && !input.address.trim() ? "This field is required" : ""}
+                    sx={{
                         mb: 3,
                         bgcolor: '#fff',
-                        '& .MuiOutlinedInput-root': {
-                            '&.Mui-focused fieldset': {
-                                borderColor: '#2c3e50'
-                            }
-                        }
+                        '& .MuiOutlinedInput-root': {'&.Mui-focused fieldset': {borderColor: '#2c3e50'}}
                     }}
                 />
 
                 <TextField
                     fullWidth
-                                           label="Note"
-                                           value={input.note}
-                    onChange={(e) => setInput({ ...input, note: e.target.value })}
+                    label="Note"
+                    value={input.note}
+                    onChange={(e) => setInput({...input, note: e.target.value})}
                     multiline
                     rows={4}
-                    sx={{ 
+                    sx={{
                         mb: 4,
                         bgcolor: '#fff',
-                        '& .MuiOutlinedInput-root': {
-                            '&.Mui-focused fieldset': {
-                                borderColor: '#2c3e50'
-                            }
-                        }
+                        '& .MuiOutlinedInput-root': {'&.Mui-focused fieldset': {borderColor: '#2c3e50'}}
                     }}
                 />
 
-                <Paper 
-                    elevation={0} 
-                    sx={{ 
-                        p: 4, 
+                <Paper
+                    elevation={0}
+                    sx={{
+                        p: 4,
                         mb: 4,
                         border: '1px solid rgba(0, 0, 0, 0.12)',
                         borderRadius: 2
                     }}
                 >
                     <Typography
-                        variant="h6" 
-                        sx={{ 
-                            mb: 3, 
+                        variant="h6"
+                        sx={{
+                            mb: 3,
                             color: '#2c3e50',
                             fontWeight: 600
                         }}
@@ -810,9 +842,9 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
 
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
-                            <Typography 
-                                variant="subtitle1" 
-                                sx={{ 
+                            <Typography
+                                variant="subtitle1"
+                                sx={{
                                     mb: 1,
                                     fontWeight: 500,
                                     color: '#2c3e50'
@@ -823,19 +855,16 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                             <Button
                                 component="label"
                                 variant="outlined"
-                                startIcon={<CloudUpload />}
+                                startIcon={<CloudUpload/>}
                                 fullWidth
-                                sx={{ 
+                                sx={{
                                     height: '56px',
                                     borderColor: '#2c3e50',
                                     color: '#2c3e50',
-                                    '&:hover': {
-                                        borderColor: '#2c3e50',
-                                        bgcolor: 'rgba(44, 62, 80, 0.04)'
-                                    }
+                                    '&:hover': {borderColor: '#2c3e50', bgcolor: 'rgba(44, 62, 80, 0.04)'}
                                 }}
                             >
-                                {uploadedFile.childCharacteristics ? uploadedFile.childCharacteristics.name : "UPLOAD NEW"}
+                                {uploadedFile.childCharacteristics ? uploadedFile.childCharacteristics.name : (uploadedFile.childCharacteristicsUrl ? 'Current file' : 'UPLOAD NEW')}
                                 <input
                                     type="file"
                                     hidden
@@ -845,34 +874,31 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                     })}
                                 />
                             </Button>
+                            {/* Hiển thị preview file cũ nếu có và chưa upload file mới */}
+                            {uploadedFile.childCharacteristicsUrl && !uploadedFile.childCharacteristics && (
+                                <Box sx={{mt: 1, textAlign: 'center'}}>
+                                    <img src={uploadedFile.childCharacteristicsUrl} alt="Current"
+                                         style={{maxWidth: 120, borderRadius: 6}}/>
+                                </Box>
+                            )}
                         </Grid>
                         <Grid item xs={12} md={6}>
-                            <Typography 
-                                variant="subtitle1" 
-                        sx={{
-                                    mb: 1,
-                                    fontWeight: 500,
-                                    color: '#2c3e50'
-                                }}
-                            >
+                            <Typography variant="subtitle1" sx={{mb: 1, fontWeight: 500, color: '#2c3e50'}}>
                                 Commitment
                             </Typography>
-                        <Button
+                            <Button
                                 component="label"
                                 variant="outlined"
-                                startIcon={<CloudUpload />}
+                                startIcon={<CloudUpload/>}
                                 fullWidth
-                                sx={{ 
+                                sx={{
                                     height: '56px',
                                     borderColor: '#2c3e50',
                                     color: '#2c3e50',
-                                    '&:hover': {
-                                        borderColor: '#2c3e50',
-                                        bgcolor: 'rgba(44, 62, 80, 0.04)'
-                                    }
+                                    '&:hover': {borderColor: '#2c3e50', bgcolor: 'rgba(44, 62, 80, 0.04)'}
                                 }}
                             >
-                                {uploadedFile.commitment ? uploadedFile.commitment.name : "UPLOAD NEW"}
+                                {uploadedFile.commitment ? uploadedFile.commitment.name : (uploadedFile.commitmentUrl ? 'Current file' : 'UPLOAD NEW')}
                                 <input
                                     type="file"
                                     hidden
@@ -881,43 +907,41 @@ function RenderFormPopUp({handleClosePopUp, isPopUpOpen, studentList, GetForm, i
                                         commitment: e.target.files[0]
                                     })}
                                 />
-                        </Button>
+                            </Button>
+                            {uploadedFile.commitmentUrl && !uploadedFile.commitment && (
+                                <Box sx={{mt: 1, textAlign: 'center'}}>
+                                    <img src={uploadedFile.commitmentUrl} alt="Current"
+                                         style={{maxWidth: 120, borderRadius: 6}}/>
+                                </Box>
+                            )}
                         </Grid>
                     </Grid>
                 </Paper>
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button
+                <Box sx={{display: 'flex', justifyContent: 'flex-end', gap: 2}}>
+                    <Button
                         variant="outlined"
                         onClick={handleClosePopUp}
-                        sx={{ 
+                        sx={{
                             px: 4,
                             borderColor: '#e67e22',
                             color: '#e67e22',
-                            '&:hover': {
-                                borderColor: '#d35400',
-                                bgcolor: 'rgba(230, 126, 34, 0.04)'
-                            }
+                            '&:hover': {borderColor: '#d35400', bgcolor: 'rgba(230, 126, 34, 0.04)'}
                         }}
                     >
                         CANCEL
                     </Button>
                     <Button
-                            variant="contained"
+                        variant="contained"
                         onClick={HandleSubmit}
-                        sx={{ 
-                            px: 4,
-                            bgcolor: '#2c3e50',
-                            '&:hover': {
-                                bgcolor: '#1a252f'
-                            }
-                        }}
+                        sx={{px: 4, bgcolor: '#2c3e50', '&:hover': {bgcolor: '#1a252f'}}}
+                        disabled={isLoading}
                     >
-                        SUBMIT
-                        </Button>
+                        {isLoading ? <CircularProgress size={24} color="inherit" /> : "SUBMIT"}
+                    </Button>
                 </Box>
-                </Box>
-            </Dialog>
+            </Box>
+        </Dialog>
     );
 }
 
@@ -991,7 +1015,7 @@ export default function AdmissionForm() {
 
     const handleRefillForm = (form) => {
         setSelectedForm(form);
-        handleOpenPopUp('refill');
+        handleOpenPopUp('pending approval');
     }
 
     async function GetForm() {
@@ -1037,11 +1061,12 @@ export default function AdmissionForm() {
                 />
             }
             {
-                popUp.isOpen && popUp.type === 'refill' &&
+                popUp.isOpen && popUp.type === 'pending approval' &&
                 <RenderFormPopUp
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
-                    studentList={[selectedForm]}
+                    studentList={data.studentList}
+                    selectedForm={selectedForm}
                     GetForm={GetForm}
                     isRefill={true}
                     formId={selectedForm.id}

@@ -1,11 +1,11 @@
 package com.sba301.group1.pes_be.validations.ParentValidation;
 
+import com.sba301.group1.pes_be.dto.requests.CancelAdmissionForm;
+import com.sba301.group1.pes_be.dto.requests.SubmitAdmissionFormRequest;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.AdmissionForm;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
-import com.sba301.group1.pes_be.dto.requests.CancelAdmissionForm;
-import com.sba301.group1.pes_be.dto.requests.SubmitAdmissionFormRequest;
 
 public class FormByParentValidation {
     public static String submittedForm(SubmitAdmissionFormRequest request) {
@@ -23,7 +23,7 @@ public class FormByParentValidation {
         }
 
         if (!isValidImage(request.getCommitmentImg())) {
-            return "Commitment image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp)";
+            return "Commitment image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp, .webp)";
         }
 
         if (request.getChildCharacteristicsFormImg() == null || request.getChildCharacteristicsFormImg().trim().isEmpty()) {
@@ -31,7 +31,7 @@ public class FormByParentValidation {
         }
 
         if (!isValidImage(request.getChildCharacteristicsFormImg())) {
-            return "Child characteristics form image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp)";
+            return "Child characteristics form image must be a valid image (.jpg, .jpeg, .png, .gif, .bmp, .webp)";
         }
 
         if (request.getNote() != null && request.getNote().length() > 300) {
@@ -59,7 +59,7 @@ public class FormByParentValidation {
     }
 
     private static boolean isValidImage(String fileName) {
-        return fileName.matches("(?i)^.+\\.(jpg|jpeg|png|gif|bmp)$");
+        return fileName.matches("(?i)^.+\\.(jpg|jpeg|png|gif|bmp|webp)$");
     }
 }
 

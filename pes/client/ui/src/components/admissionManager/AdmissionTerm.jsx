@@ -1,20 +1,17 @@
 import {
-    AppBar,
+    Alert,
     Box,
     Button,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControl,
     FormControlLabel,
     Grid,
     IconButton,
-    InputLabel,
-    MenuItem,
     Paper,
     RadioGroup,
-    Select,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -23,16 +20,13 @@ import {
     TablePagination,
     TableRow,
     TextField,
-    Toolbar,
     Tooltip,
-    Typography,
-    Alert,
-    Stack
+    Typography
 } from "@mui/material";
-import {Add, Close, Visibility, Delete} from '@mui/icons-material';
+import {Add, Close, Delete, Visibility} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import Radio from '@mui/material/Radio';
-import {createTerm, getTermList} from "../../services/AdmissionService.jsx";
+import {createTerm, getTermList, updateAdmissionTerm} from "../../services/AdmissionService.jsx";
 import {useSnackbar} from "notistack";
 import '../../styles/admissionManager/AdmissionTerm.css'
 import {ValidateTermFormData} from "../validation/ValidateTermFormData.jsx";
@@ -189,7 +183,7 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
     )
 }
 
-function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
+function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm, setSelectedTerm}) {
     const [formData, setFormData] = useState({
         name: '',
         startDate: null,
@@ -201,6 +195,9 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
     });
 
     const [showExtraTermForm, setShowExtraTermForm] = useState(false);
+    // Thêm state loading nếu muốn
+    const [lockLoading, setLockLoading] = useState(false);
+    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (selectedTerm) {
@@ -231,6 +228,34 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
 
     const canAddExtraTerm = selectedTerm?.status === 'locked' && 
                            selectedTerm?.approvedForm < selectedTerm?.maxNumberRegistration;
+
+    const handleLockTerm = async () => {
+        setLockLoading(true);
+        try {
+            console.log("Selected term:", selectedTerm);
+            console.log("Term ID to lock:", selectedTerm.id);
+            await updateAdmissionTerm(selectedTerm.id);
+            // Reload lại danh sách term
+            if (typeof GetTerm === 'function') {
+                await GetTerm();
+            }
+            // Cập nhật selectedTerm ngay trên popup (nếu có setSelectedTerm)
+            if (typeof setSelectedTerm === 'function') {
+                setSelectedTerm({...selectedTerm, status: 'locked'});
+            }
+            enqueueSnackbar("Term locked successfully!", { variant: "success" });
+            handleClosePopUp();
+        } catch (e) {
+            console.error("Lock term error details:", e);
+            console.error("Response data:", e?.response?.data);
+            enqueueSnackbar(
+                e?.response?.data?.message || "Failed to lock term. Please try again!",
+                { variant: "error" }
+            );
+        } finally {
+            setLockLoading(false);
+        }
+    };
 
     return (
         <Dialog
@@ -735,6 +760,27 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                     getStatusColor={getStatusColor}
                 />
             )}
+            <DialogActions sx={{ p: 2, gap: 1 }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleClosePopUp}
+                    sx={{ color: '#e67e22', borderColor: '#e67e22', '&:hover': { borderColor: '#d35400', bgcolor: '#fff3e0' } }}
+                >
+                    Close
+                </Button>
+                {/* Nút Locked chỉ hiện khi status active */}
+                {selectedTerm?.status === 'active' && (
+                    <Button
+                        variant="contained"
+                        color="error"
+                        disabled={lockLoading}
+                        onClick={handleLockTerm}
+                        sx={{ ml: 2 }}
+                    >
+                        Locked
+                    </Button>
+                )}
+            </DialogActions>
         </Dialog>
     );
 }
@@ -760,6 +806,12 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
         { value: 'bud', color: '#ed6c02', label: 'Bud' },
         { value: 'leaf', color: '#0288d1', label: 'Leaf' }
     ];
+
+    const gradeNameMap = {
+      seed: "Seed",
+      bud: "Bud",
+      leaf: "Leaf"
+    };
 
     const handleCreate = async () => {
         // Validate all terms
@@ -833,22 +885,26 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
     // Check if we can add more terms
     const canAddMoreTerms = termList.length < 3 && getSelectedGrades().length < 3;
 
+    const currentYear = new Date().getFullYear();
+    const yearDisplay = `${currentYear}-${currentYear + 1}`;
+
     return (
         <Dialog 
             open={isPopUpOpen}
             onClose={handleClosePopUp}
-            maxWidth="sm"
+            maxWidth="md"
             fullWidth
             PaperProps={{
                 sx: {
                     borderRadius: 2,
-                    bgcolor: '#fff'
+                    backgroundColor: '#fff',
+                    minWidth: 600
                 }
             }}
         >
             <DialogTitle 
                 sx={{
-                    bgcolor: '#07663a',
+                    backgroundColor: '#07663a',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
@@ -867,185 +923,192 @@ function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
 
             <DialogContent sx={{ p: 3 }}>
                 <Stack spacing={4}>
-                    {termList.map((term, index) => (
-                        <Box 
-                            key={term.id}
-                            sx={{
-                                p: 2,
-                                border: '1px solid #e0e0e0',
-                                borderRadius: 1,
-                                position: 'relative'
-                            }}
-                        >
-                            <Stack spacing={3}>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                    Term {index + 1}
-                                </Typography>
+                    {termList.map((term, index) => {
+                        return (
+                            <Box 
+                                key={term.id}
+                                sx={{
+                                    p: 2,
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 1,
+                                    position: 'relative'
+                                }}
+                            >
+                                <Stack spacing={3}>
+                                            <TextField
+                                                label="Name"
+                                                value={term.grade ? `Admission Term ${gradeNameMap[term.grade]} ${currentYear}` : ''}
+                                                disabled
+                                                fullWidth
+                                            />
+                                            <TextField
+                                                label="Year"
+                                                value={yearDisplay}
+                                                disabled
+                                                fullWidth
+                                            />
 
-                                {/* Grade Selection */}
-                                <Box>
-                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
-                                        Grade Level
-                                    </Typography>
-                                    <RadioGroup
-                                        row
-                                        value={term.grade}
-                                        onChange={(e) => handleTermChange(index, 'grade', e.target.value)}
-                                        sx={{ 
-                                            gap: 2,
-                                            justifyContent: 'flex-start'
-                                        }}
-                                    >
-                                        {gradeOptions
-                                            .filter(grade => !getSelectedGrades().includes(grade.value) || term.grade === grade.value)
-                                            .map((grade) => (
-                                                <FormControlLabel
-                                                    key={grade.value}
-                                                    value={grade.value}
-                                                    control={
-                                                        <Radio 
-                                                            sx={{
-                                                                display: 'none'
-                                                            }}
-                                                        />
-                                                    }
-                                                    label={
-                                                        <Box
-                                                            sx={{
-                                                                px: 4,
-                                                                py: 1,
-                                                                borderRadius: 1,
-                                                                border: `1px solid ${grade.color}`,
-                                                                bgcolor: term.grade === grade.value ? grade.color : 'transparent',
-                                                                transition: 'all 0.2s',
-                                                                cursor: 'pointer',
-                                                                minWidth: '100px',
-                                                                textAlign: 'center',
-                                                                '&:hover': {
-                                                                    bgcolor: term.grade === grade.value 
-                                                                        ? grade.color 
-                                                                        : `${grade.color}10`
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Typography
+                                    <Box>
+                                        <RadioGroup
+                                            row
+                                            value={term.grade}
+                                            onChange={(e) => handleTermChange(index, 'grade', e.target.value)}
+                                            sx={{ 
+                                                gap: 2,
+                                                justifyContent: 'flex-start'
+                                            }}
+                                        >
+                                            {gradeOptions
+                                                .filter(grade => !getSelectedGrades().includes(grade.value) || term.grade === grade.value)
+                                                .map((grade) => (
+                                                    <FormControlLabel
+                                                        key={grade.value}
+                                                        value={grade.value}
+                                                        control={
+                                                            <Radio 
                                                                 sx={{
-                                                                    color: term.grade === grade.value ? 'white' : grade.color,
-                                                                    fontWeight: 500
+                                                                    display: 'none'
+                                                                }}
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Box
+                                                                sx={{
+                                                                    px: 4,
+                                                                    py: 1,
+                                                                    borderRadius: 1,
+                                                                    border: `1px solid ${grade.color}`,
+                                                                    backgroundColor: term.grade === grade.value ? grade.color : 'transparent',
+                                                                    transition: 'all 0.2s',
+                                                                    cursor: 'pointer',
+                                                                    minWidth: '100px',
+                                                                    textAlign: 'center',
+                                                                    '&:hover': {
+                                                                        backgroundColor: term.grade === grade.value
+                                                                            ? grade.color 
+                                                                            : `${grade.color}10`
+                                                                    }
                                                                 }}
                                                             >
-                                                                {grade.label}
-                                                            </Typography>
-                                                        </Box>
-                                                    }
-                                                />
-                                            ))}
-                                    </RadioGroup>
-                                </Box>
+                                                                <Typography
+                                                                    sx={{
+                                                                        color: term.grade === grade.value ? 'white' : grade.color,
+                                                                        fontWeight: 500
+                                                                    }}
+                                                                >
+                                                                    {grade.label}
+                                                                </Typography>
+                                                            </Box>
+                                                        }
+                                                    />
+                                                ))}
+                                        </RadioGroup>
+                                    </Box>
 
-                                {/* Date Selection */}
-                                <DateTimePicker
-                                    label="Start Date"
-                                    value={term.startDate ? dayjs(term.startDate) : null}
-                                    onChange={(newValue) => {
-                                        handleTermChange(
-                                            index,
-                                            'startDate',
-                                            newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                        );
-                                    }}
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                            required: true,
-                                            size: "small",
-                                            sx: {
-                                                '& .MuiOutlinedInput-root': {
-                                                    '& fieldset': {
-                                                        borderColor: '#07663a',
-                                                    },
-                                                    '&:hover fieldset': {
-                                                        borderColor: '#07663a',
-                                                    },
-                                                    '&.Mui-focused fieldset': {
-                                                        borderColor: '#07663a',
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }}
-                                />
-
-                                <DateTimePicker
-                                    label="End Date"
-                                    value={term.endDate ? dayjs(term.endDate) : null}
-                                    onChange={(newValue) => {
-                                        handleTermChange(
-                                            index,
-                                            'endDate',
-                                            newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                        );
-                                    }}
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                            required: true,
-                                            size: "small",
-                                            sx: {
-                                                '& .MuiOutlinedInput-root': {
-                                                    '& fieldset': {
-                                                        borderColor: '#07663a',
-                                                    },
-                                                    '&:hover fieldset': {
-                                                        borderColor: '#07663a',
-                                                    },
-                                                    '&.Mui-focused fieldset': {
-                                                        borderColor: '#07663a',
+                                    {/* Date Selection */}
+                                    <DateTimePicker
+                                        label="Start Date"
+                                        value={term.startDate ? dayjs(term.startDate) : null}
+                                        onChange={(newValue) => {
+                                            handleTermChange(
+                                                index,
+                                                'startDate',
+                                                newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                            );
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                size: "small",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#07663a',
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
-                                    }}
-                                />
+                                        }}
+                                    />
 
-                                {/* Max Registration */}
-                                <TextField
-                                    label="Maximum Registration Number"
-                                    type="number"
-                                    required
-                                    fullWidth
-                                    size="small"
-                                    value={term.maxNumberRegistration}
-                                    onChange={(e) => handleTermChange(index, 'maxNumberRegistration', e.target.value)}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            '& fieldset': {
-                                                borderColor: '#07663a',
-                                            },
-                                            '&:hover fieldset': {
-                                                borderColor: '#07663a',
-                                            },
-                                            '&.Mui-focused fieldset': {
-                                                borderColor: '#07663a',
+                                    <DateTimePicker
+                                        label="End Date"
+                                        value={term.endDate ? dayjs(term.endDate) : null}
+                                        onChange={(newValue) => {
+                                            handleTermChange(
+                                                index,
+                                                'endDate',
+                                                newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                            );
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                size: "small",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#07663a',
+                                                        }
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }}
-                                />
+                                        }}
+                                    />
 
-                                {termList.length > 1 && (
-                                    <Button
-                                        variant="outlined"
-                                        color="error"
-                                        onClick={() => removeTerm(index)}
-                                        startIcon={<Delete />}
-                                        sx={{ alignSelf: 'flex-end' }}
-                                    >
-                                        Remove Term
-                                    </Button>
-                                )}
-                            </Stack>
-                        </Box>
-                    ))}
+                                    {/* Max Registration */}
+                                    <TextField
+                                        label="Maximum Registration Number"
+                                        type="number"
+                                        required
+                                        fullWidth
+                                        size="small"
+                                        value={term.maxNumberRegistration}
+                                        onChange={(e) => handleTermChange(index, 'maxNumberRegistration', e.target.value)}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                '& fieldset': {
+                                                    borderColor: '#07663a',
+                                                },
+                                                '&:hover fieldset': {
+                                                    borderColor: '#07663a',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#07663a',
+                                                }
+                                            }
+                                        }}
+                                    />
+
+                                    {termList.length > 1 && (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            onClick={() => removeTerm(index)}
+                                            startIcon={<Delete />}
+                                            sx={{ alignSelf: 'flex-end' }}
+                                        >
+                                            Remove Term
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Box>
+                        );
+                    })}
 
                     {/* Add New Term Button */}
                     {canAddMoreTerms && (
@@ -1412,6 +1475,8 @@ export default function TermAdmission() {
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
                     selectedTerm={selectedTerm}
+                    GetTerm={GetTerm}
+                    setSelectedTerm={setSelectedTerm}
                 />
             )}
         </>

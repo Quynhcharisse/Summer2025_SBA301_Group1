@@ -10,12 +10,11 @@ public enum Status {
     ACCOUNT_BAN("ban"),
     ACCOUNT_UNBAN("unban"),
 
-    PENDING_APPROVAL ("pending approval"),
-    DRAFT ("draft"),
+    PENDING_APPROVAL("pending approval"),
+    DRAFT("draft"),
     CANCELLED("cancelled"),
     APPROVED("approved"),
     REJECTED("rejected"),
-    REFILLED("refilled"),
 
     ACTIVE_TERM("active"), // trong khoảng ngày cho phép
     INACTIVE_TERM("inactive"), // chưa đến ngày

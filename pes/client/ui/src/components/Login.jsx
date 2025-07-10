@@ -105,7 +105,7 @@ function Login() {
                     });
                 }
             } else {
-                enqueueSnackbar(res.message, {variant: 'error'});
+                enqueueSnackbar(res && res.message ? res.message : "Login failed!", {variant: 'error'});
             }
         } catch (error) {
             enqueueSnackbar("Login failed!", {variant: 'error'});
