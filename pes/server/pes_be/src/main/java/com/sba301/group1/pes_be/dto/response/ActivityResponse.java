@@ -68,7 +68,7 @@ public class ActivityResponse {
                     .id(activity.getSchedule().getClasses().getId())
                     .name(activity.getSchedule().getClasses().getName())
                     .roomNumber(activity.getSchedule().getClasses().getRoomNumber())
-                    .status(activity.getSchedule().getClasses().getStatus())
+                    .status(activity.getSchedule().getClasses().getStatus().toString())
                     .grade(activity.getSchedule().getClasses().getGrade() != null ? 
                         activity.getSchedule().getClasses().getGrade().toString() : null)
                     .build();
