@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-PesBeApplication",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/pes/server/pes_be",
+      "mainClass": "com.sba301.group1.pes_be.PesBeApplication",
+      "projectName": "pes_be",
+      "args": "",
+      "envFile": "${workspaceFolder}/pes/server/pes_be/.env"
+    },
+    {
+      "name": "Launch Frontend",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/pes/client/ui"
+    }
+  ]
+}
