@@ -1,3 +1,4 @@
+SET QUOTED_IDENTIFIER ON;
 -- Insert data into the account table
 INSERT INTO account (id, email, password, role, status, created_at, name, phone, gender, identity_number) VALUES
 (1, 'admin@pes.com', '123', 'ADMIN', 'ACTIVE', '2025-07-13', 'Admin User', '1234567890', 'Male', 'ID123456'),
