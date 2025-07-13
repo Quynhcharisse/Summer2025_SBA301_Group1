@@ -1,20 +1,17 @@
 import {
-    AppBar,
+    Alert,
     Box,
     Button,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControl,
     FormControlLabel,
     Grid,
     IconButton,
-    InputLabel,
-    MenuItem,
     Paper,
     RadioGroup,
-    Select,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -23,14 +20,13 @@ import {
     TablePagination,
     TableRow,
     TextField,
-    Toolbar,
     Tooltip,
     Typography
 } from "@mui/material";
-import {Add, Close, Visibility} from '@mui/icons-material';
+import {Add, Close, Delete, Visibility} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import Radio from '@mui/material/Radio';
-import {createTerm, getTermList} from "../../services/AdmissionService.jsx";
+import {createTerm, getTermList, updateAdmissionTerm} from "../../services/AdmissionService.jsx";
 import {useSnackbar} from "notistack";
 import '../../styles/admissionManager/AdmissionTerm.css'
 import {ValidateTermFormData} from "../validation/ValidateTermFormData.jsx";
@@ -187,7 +183,7 @@ function RenderTable({openDetailPopUpFunc, terms, HandleSelectedTerm}) {
     )
 }
 
-function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
+function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm, GetTerm, setSelectedTerm}) {
     const [formData, setFormData] = useState({
         name: '',
         startDate: null,
@@ -199,6 +195,9 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
     });
 
     const [showExtraTermForm, setShowExtraTermForm] = useState(false);
+    // Thêm state loading nếu muốn
+    const [lockLoading, setLockLoading] = useState(false);
+    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (selectedTerm) {
@@ -229,6 +228,34 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
 
     const canAddExtraTerm = selectedTerm?.status === 'locked' && 
                            selectedTerm?.approvedForm < selectedTerm?.maxNumberRegistration;
+
+    const handleLockTerm = async () => {
+        setLockLoading(true);
+        try {
+            console.log("Selected term:", selectedTerm);
+            console.log("Term ID to lock:", selectedTerm.id);
+            await updateAdmissionTerm(selectedTerm.id);
+            // Reload lại danh sách term
+            if (typeof GetTerm === 'function') {
+                await GetTerm();
+            }
+            // Cập nhật selectedTerm ngay trên popup (nếu có setSelectedTerm)
+            if (typeof setSelectedTerm === 'function') {
+                setSelectedTerm({...selectedTerm, status: 'locked'});
+            }
+            enqueueSnackbar("Term locked successfully!", { variant: "success" });
+            handleClosePopUp();
+        } catch (e) {
+            console.error("Lock term error details:", e);
+            console.error("Response data:", e?.response?.data);
+            enqueueSnackbar(
+                e?.response?.data?.message || "Failed to lock term. Please try again!",
+                { variant: "error" }
+            );
+        } finally {
+            setLockLoading(false);
+        }
+    };
 
     return (
         <Dialog
@@ -523,7 +550,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                         <Paper 
                             elevation={0} 
                             sx={{ 
-                                bgcolor: 'white',
+                                backgroundColor: 'white',
                                 borderRadius: '12px',
                                 p: 3,
                                 mt: 2
@@ -544,9 +571,9 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                         startIcon={<Add />}
                                         onClick={() => setShowExtraTermForm(true)}
                                         sx={{
-                                            bgcolor: '#07663a',
+                                            backgroundColor: '#07663a',
                                             '&:hover': {
-                                                bgcolor: '#07663a',
+                                                backgroundColor: '#07663a',
                                                 opacity: 0.9
                                             }
                                         }}
@@ -566,14 +593,14 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                         height: '8px'
                                     },
                                     '&::-webkit-scrollbar-track': {
-                                        bgcolor: '#f1f1f1',
+                                        backgroundColor: '#f1f1f1',
                                         borderRadius: '4px'
                                     },
                                     '&::-webkit-scrollbar-thumb': {
-                                        bgcolor: '#888',
+                                        backgroundColor: '#888',
                                         borderRadius: '4px',
                                         '&:hover': {
-                                            bgcolor: '#555'
+                                            backgroundColor: '#555'
                                         }
                                     }
                                 }}>
@@ -583,7 +610,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                                 <TableCell 
                                                     sx={{ 
                                                         fontWeight: 600,
-                                                        bgcolor: '#f8faf8',
+                                                        backgroundColor: '#f8faf8',
                                                         color: '#07663a',
                                                         borderBottom: '2px solid #e0e0e0'
                                                     }}
@@ -593,7 +620,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                                 <TableCell 
                                                     sx={{ 
                                                         fontWeight: 600,
-                                                        bgcolor: '#f8faf8',
+                                                        backgroundColor: '#f8faf8',
                                                         color: '#07663a',
                                                         borderBottom: '2px solid #e0e0e0'
                                                     }}
@@ -603,7 +630,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                                 <TableCell 
                                                     sx={{ 
                                                         fontWeight: 600,
-                                                        bgcolor: '#f8faf8',
+                                                        backgroundColor: '#f8faf8',
                                                         color: '#07663a',
                                                         borderBottom: '2px solid #e0e0e0'
                                                     }}
@@ -613,7 +640,7 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                                 <TableCell 
                                                     sx={{ 
                                                         fontWeight: 600,
-                                                        bgcolor: '#f8faf8',
+                                                        backgroundColor: '#f8faf8',
                                                         color: '#07663a',
                                                         borderBottom: '2px solid #e0e0e0'
                                                     }}
@@ -630,8 +657,8 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                                                         '&:last-child td, &:last-child th': { 
                                                             border: 0 
                                                         },
-                                                        '&:hover': { 
-                                                            bgcolor: '#f5f5f5',
+                                                        '&:hover': {
+                                                            backgroundColor: '#f5f5f5',
                                                             transition: 'all 0.2s ease'
                                                         },
                                                         cursor: 'pointer'
@@ -733,281 +760,417 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedTerm}) {
                     getStatusColor={getStatusColor}
                 />
             )}
+            <DialogActions sx={{ p: 2, gap: 1 }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleClosePopUp}
+                    sx={{ color: '#e67e22', borderColor: '#e67e22', '&:hover': { borderColor: '#d35400', bgcolor: '#fff3e0' } }}
+                >
+                    Close
+                </Button>
+                {/* Nút Locked chỉ hiện khi status active */}
+                {selectedTerm?.status === 'active' && (
+                    <Button
+                        variant="contained"
+                        color="error"
+                        disabled={lockLoading}
+                        onClick={handleLockTerm}
+                        sx={{ ml: 2 }}
+                    >
+                        Locked
+                    </Button>
+                )}
+            </DialogActions>
         </Dialog>
     );
 }
 
 function RenderFormPopUp({isPopUpOpen, handleClosePopUp, GetTerm, terms}) {
-
     const {enqueueSnackbar} = useSnackbar();
 
-    const [formData, setFormData] = useState({
+    const [termList, setTermList] = useState([{
         startDate: null,
         endDate: null,
         grade: '',
-        maxNumberRegistration: 0
-    });
+        maxNumberRegistration: 0,
+        id: 0
+    }]);
 
     const [error, setError] = useState('');
 
-    const handleCreate = async (formData) => {
-        const validationError = ValidateTermFormData(formData, terms);
-        if (validationError) {
-            setError(validationError);
-            enqueueSnackbar(validationError, {variant: "warning"});
-            return;
+    // Track which grades have been selected
+    const getSelectedGrades = () => termList.map(term => term.grade).filter(Boolean);
+
+    const gradeOptions = [
+        { value: 'seed', color: '#2e7d32', label: 'Seed' },
+        { value: 'bud', color: '#ed6c02', label: 'Bud' },
+        { value: 'leaf', color: '#0288d1', label: 'Leaf' }
+    ];
+
+    const gradeNameMap = {
+      seed: "Seed",
+      bud: "Bud",
+      leaf: "Leaf"
+    };
+
+    const handleCreate = async () => {
+        // Validate all terms
+        for (const term of termList) {
+            const validationError = ValidateTermFormData(term, terms);
+            if (validationError) {
+                setError(validationError);
+                enqueueSnackbar(validationError, {variant: "warning"});
+                return;
+            }
         }
 
         try {
-        const response = await createTerm(
-            formData.startDate,
-            formData.endDate,
-                formData.grade,
-                formData.maxNumberRegistration
-        );
+            const responses = await Promise.all(
+                termList.map(term => 
+                    createTerm(
+                        term.startDate,
+                        term.endDate,
+                        term.grade,
+                        term.maxNumberRegistration
+                    )
+                )
+            );
 
-        if (response.success) {
-                enqueueSnackbar("Term created successfully", {variant: "success"});
-            handleClosePopUp();
+            const allSuccess = responses.every(response => response.success);
+            if (allSuccess) {
+                enqueueSnackbar("All terms created successfully", {variant: "success"});
+                handleClosePopUp();
                 GetTerm();
-        } else {
-            enqueueSnackbar(response.message || "Failed to create term", {variant: "error"});
+            } else {
+                const failedCount = responses.filter(r => !r.success).length;
+                enqueueSnackbar(`Failed to create ${failedCount} terms`, {variant: "error"});
             }
         } catch (error) {
-            console.error("Error creating term:", error);
-            enqueueSnackbar(error.message || "An error occurred while creating the term", {variant: "error"});
+            console.error("Error creating terms:", error);
+            enqueueSnackbar(error.message || "An error occurred while creating terms", {variant: "error"});
         }
     };
 
-    const HandleOnChange = async (e) => {
-        const { name, value } = e.target;
-        
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-
-        // Validate form data
-        const validationError = ValidateTermFormData(formData, terms);
-        if (validationError) {
-            setError(validationError);
-            return;
-        }
+    const handleTermChange = (index, field, value) => {
+        const newTermList = [...termList];
+        newTermList[index] = {
+            ...newTermList[index],
+            [field]: value
+        };
+        setTermList(newTermList);
         setError('');
     };
 
+    const addNewTerm = () => {
+        if (termList.length >= 3) {
+            enqueueSnackbar("Maximum 3 terms allowed", {variant: "warning"});
+            return;
+        }
+        setTermList([
+            ...termList,
+            {
+                startDate: null,
+                endDate: null,
+                grade: '',
+                maxNumberRegistration: 0,
+                id: termList.length
+            }
+        ]);
+    };
+
+    const removeTerm = (index) => {
+        setTermList(termList.filter((_, i) => i !== index));
+    };
+
+    // Check if we can add more terms
+    const canAddMoreTerms = termList.length < 3 && getSelectedGrades().length < 3;
+
+    const currentYear = new Date().getFullYear();
+    const yearDisplay = `${currentYear}-${currentYear + 1}`;
+
     return (
-        <Dialog open={isPopUpOpen}
-                onClose={handleClosePopUp}
-                fullScreen
+        <Dialog 
+            open={isPopUpOpen}
+            onClose={handleClosePopUp}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    borderRadius: 2,
+                    backgroundColor: '#fff',
+                    minWidth: 600
+                }
+            }}
         >
-            <AppBar sx={{
-                position: 'relative',
-                backgroundColor: '#07663a'
-            }}>
-                <Toolbar>
-                    <IconButton edge="start"
-                                color="inherit"
-                                onClick={handleClosePopUp}
-                                aria-label="close">
-                        <Close/>
-                    </IconButton>
-                    <Typography sx={{ml: 2, flex: 1}} variant="h6" component="div">
-                        Admission Form Detail
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-            <DialogTitle sx={{fontWeight: 'bold', fontSize: 26, color: '#2c684f'}}>
-                Create New Term
+            <DialogTitle 
+                sx={{
+                    backgroundColor: '#07663a',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    py: 2
+                }}
+            >
+                <Typography variant="h6">Create New Terms</Typography>
+                <IconButton 
+                    onClick={handleClosePopUp}
+                    sx={{ color: 'white' }}
+                >
+                    <Close />
+                </IconButton>
             </DialogTitle>
-            <DialogContent>
-                <Box sx={{mt: 2, display: 'flex', flexDirection: 'column', gap: 2}}>
-                    <Box sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>Grade</Typography>
-                        <RadioGroup
-                            row
-                            name="grade"
-                            value={formData.grade}
-                            onChange={(e) => HandleOnChange(e)}
+
+            <DialogContent sx={{ p: 3 }}>
+                <Stack spacing={4}>
+                    {termList.map((term, index) => {
+                        return (
+                            <Box 
+                                key={term.id}
+                                sx={{
+                                    p: 2,
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 1,
+                                    position: 'relative'
+                                }}
+                            >
+                                <Stack spacing={3}>
+                                            <TextField
+                                                label="Name"
+                                                value={term.grade ? `Admission Term ${gradeNameMap[term.grade]} ${currentYear}` : ''}
+                                                disabled
+                                                fullWidth
+                                            />
+                                            <TextField
+                                                label="Year"
+                                                value={yearDisplay}
+                                                disabled
+                                                fullWidth
+                                            />
+
+                                    <Box>
+                                        <RadioGroup
+                                            row
+                                            value={term.grade}
+                                            onChange={(e) => handleTermChange(index, 'grade', e.target.value)}
+                                            sx={{ 
+                                                gap: 2,
+                                                justifyContent: 'flex-start'
+                                            }}
+                                        >
+                                            {gradeOptions
+                                                .filter(grade => !getSelectedGrades().includes(grade.value) || term.grade === grade.value)
+                                                .map((grade) => (
+                                                    <FormControlLabel
+                                                        key={grade.value}
+                                                        value={grade.value}
+                                                        control={
+                                                            <Radio 
+                                                                sx={{
+                                                                    display: 'none'
+                                                                }}
+                                                            />
+                                                        }
+                                                        label={
+                                                            <Box
+                                                                sx={{
+                                                                    px: 4,
+                                                                    py: 1,
+                                                                    borderRadius: 1,
+                                                                    border: `1px solid ${grade.color}`,
+                                                                    backgroundColor: term.grade === grade.value ? grade.color : 'transparent',
+                                                                    transition: 'all 0.2s',
+                                                                    cursor: 'pointer',
+                                                                    minWidth: '100px',
+                                                                    textAlign: 'center',
+                                                                    '&:hover': {
+                                                                        backgroundColor: term.grade === grade.value
+                                                                            ? grade.color 
+                                                                            : `${grade.color}10`
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Typography
+                                                                    sx={{
+                                                                        color: term.grade === grade.value ? 'white' : grade.color,
+                                                                        fontWeight: 500
+                                                                    }}
+                                                                >
+                                                                    {grade.label}
+                                                                </Typography>
+                                                            </Box>
+                                                        }
+                                                    />
+                                                ))}
+                                        </RadioGroup>
+                                    </Box>
+
+                                    {/* Date Selection */}
+                                    <DateTimePicker
+                                        label="Start Date"
+                                        value={term.startDate ? dayjs(term.startDate) : null}
+                                        onChange={(newValue) => {
+                                            handleTermChange(
+                                                index,
+                                                'startDate',
+                                                newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                            );
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                size: "small",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#07663a',
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+
+                                    <DateTimePicker
+                                        label="End Date"
+                                        value={term.endDate ? dayjs(term.endDate) : null}
+                                        onChange={(newValue) => {
+                                            handleTermChange(
+                                                index,
+                                                'endDate',
+                                                newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
+                                            );
+                                        }}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                size: "small",
+                                                sx: {
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#07663a',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#07663a',
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    />
+
+                                    {/* Max Registration */}
+                                    <TextField
+                                        label="Maximum Registration Number"
+                                        type="number"
+                                        required
+                                        fullWidth
+                                        size="small"
+                                        value={term.maxNumberRegistration}
+                                        onChange={(e) => handleTermChange(index, 'maxNumberRegistration', e.target.value)}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                '& fieldset': {
+                                                    borderColor: '#07663a',
+                                                },
+                                                '&:hover fieldset': {
+                                                    borderColor: '#07663a',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#07663a',
+                                                }
+                                            }
+                                        }}
+                                    />
+
+                                    {termList.length > 1 && (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            onClick={() => removeTerm(index)}
+                                            startIcon={<Delete />}
+                                            sx={{ alignSelf: 'flex-end' }}
+                                        >
+                                            Remove Term
+                                        </Button>
+                                    )}
+                                </Stack>
+                            </Box>
+                        );
+                    })}
+
+                    {/* Add New Term Button */}
+                    {canAddMoreTerms && (
+                        <Button
+                            startIcon={<Add />}
+                            onClick={addNewTerm}
+                            sx={{
+                                color: '#07663a',
+                                borderColor: '#07663a',
+                                '&:hover': {
+                                    bgcolor: '#07663a10'
+                                }
+                            }}
                         >
-                            <FormControlLabel
-                                value="seed"
-                                control={
-                                    <Radio sx={{
-                                        color: '#2e7d32',
-                                '&.Mui-checked': {
-                                            color: '#2e7d32',
-                                        }
-                                    }}/>
-                                }
-                                label={
-                                    <Box sx={{
-                                        padding: '6px 16px',
-                                        borderRadius: '16px',
-                                        backgroundColor: formData.grade === 'seed' ? '#2e7d32' : 'transparent',
-                                        transition: 'all 0.2s',
-                                        '&:hover': {
-                                            backgroundColor: formData.grade === 'seed' ? '#2e7d32' : 'rgba(46, 125, 50, 0.08)',
-                                        },
-                                    }}>
-                                        <Typography sx={{
-                                            color: formData.grade === 'seed' ? '#ffffff' : '#2e7d32',
-                                            fontWeight: 600,
-                                            fontSize: '0.875rem'
-                                        }}>
-                                            Seed
-                                        </Typography>
-                                    </Box>
-                                }
-                            />
-                            <FormControlLabel
-                                value="bud"
-                                control={
-                                    <Radio sx={{
-                                        color: '#ed6c02',
-                                '&.Mui-checked': {
-                                            color: '#ed6c02',
-                                        }
-                                    }}/>
-                                }
-                                label={
-                                    <Box sx={{
-                                        padding: '6px 16px',
-                                        borderRadius: '16px',
-                                        backgroundColor: formData.grade === 'bud' ? '#ed6c02' : 'transparent',
-                                        transition: 'all 0.2s',
-                                        '&:hover': {
-                                            backgroundColor: formData.grade === 'bud' ? '#ed6c02' : 'rgba(237, 108, 2, 0.08)',
-                                        },
-                                    }}>
-                                        <Typography sx={{
-                                            color: formData.grade === 'bud' ? '#ffffff' : '#ed6c02',
-                                            fontWeight: 600,
-                                            fontSize: '0.875rem'
-                                        }}>
-                                            Bud
-                                        </Typography>
-                                    </Box>
-                                }
-                            />
-                            <FormControlLabel
-                                value="leaf"
-                                control={
-                                    <Radio sx={{
-                                        color: '#0288d1',
-                                '&.Mui-checked': {
-                                            color: '#0288d1',
-                                        }
-                                    }}/>
-                                }
-                                label={
-                                    <Box sx={{
-                                        padding: '6px 16px',
-                                        borderRadius: '16px',
-                                        backgroundColor: formData.grade === 'leaf' ? '#0288d1' : 'transparent',
-                                        transition: 'all 0.2s',
-                                        '&:hover': {
-                                            backgroundColor: formData.grade === 'leaf' ? '#0288d1' : 'rgba(2, 136, 209, 0.08)',
-                                        },
-                                    }}>
-                                        <Typography sx={{
-                                            color: formData.grade === 'leaf' ? '#ffffff' : '#0288d1',
-                                            fontWeight: 600,
-                                            fontSize: '0.875rem'
-                                        }}>
-                                            Leaf
-                                        </Typography>
-                                    </Box>
-                                }
-                            />
-                        </RadioGroup>
-                    </Box>
+                            Add Another Term
+                        </Button>
+                    )}
 
-                    <Box sx={{display: 'flex', gap: 2, width: '30%', mt: 3}}>
-                        <DateTimePicker
-                            label="Start Date"
-                            value={formData.startDate ? dayjs(formData.startDate) : null}
-                            onChange={(newValue) => {
-                                setFormData(prev => ({
-                                    ...prev,
-                                    startDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                }));
-                            }}
-                            renderInput={(params) => <TextField {...params} fullWidth required/>}
-                            format="DD/MM/YYYY HH:mm"
-                        />
-                        <DateTimePicker
-                            label="End Date"
-                            value={formData.endDate ? dayjs(formData.endDate) : null}
-                            onChange={(newValue) => {
-                                setFormData(prev => ({
-                                    ...prev,
-                                    endDate: newValue ? newValue.format("YYYY-MM-DDTHH:mm:ss") : null
-                                }));
-                            }}
-                            renderInput={(params) => <TextField {...params} fullWidth required/>}
-                            format="DD/MM/YYYY HH:mm"
-                        />
-                    </Box>
-
-                    <TextField
-                        label="Max Registration Number"
-                        type="number"
-                        required
-                        fullWidth
-                        name="maxNumberRegistration"
-                        value={formData.maxNumberRegistration}
-                        onChange={(e) => HandleOnChange(e)}
-                        sx={{
-                            mt: 3,
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '12px',
-                                '& fieldset': {
-                                    borderColor: '#2c684f',
-                                    borderWidth: 2,
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: '#2c684f',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#2c684f',
-                                    boxShadow: '0 0 0 2px #eaf3ed'
-                                },
-                            }
-                        }}
-                    />
-                </Box>
+                    {/* Error Message */}
+                    {error && (
+                        <Alert severity="error">
+                            {error}
+                        </Alert>
+                    )}
+                </Stack>
             </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
+
+            <DialogActions 
+                sx={{ 
+                    p: 2,
+                    gap: 1
+                }}
+            >
                 <Button
-                    variant="contained"
+                    variant="outlined"
                     onClick={handleClosePopUp}
                     sx={{
-                        bgcolor: '#e67e22',
+                        color: '#e67e22',
+                        borderColor: '#e67e22',
                         '&:hover': {
-                            bgcolor: '#d35400'
-                        },
-                        px: 4
+                            borderColor: '#d35400',
+                            bgcolor: '#fff3e0'
+                        }
                     }}
                 >
-                    CANCEL
+                    Cancel
                 </Button>
                 <Button
                     variant="contained"
-                    onClick={() => handleCreate(formData)}
+                    onClick={handleCreate}
                     sx={{
-                        bgcolor: '#2c3e50',
+                        bgcolor: '#07663a',
                         '&:hover': {
-                            bgcolor: '#1a252f'
-                        },
-                        px: 4
+                            bgcolor: '#07663a'
+                        }
                     }}
                 >
-                    SAVE CHANGE
+                    Create Terms
                 </Button>
             </DialogActions>
         </Dialog>
-    )
+    );
 }
 
 function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, terms, HandleSelectedTerm}) {
@@ -1312,6 +1475,8 @@ export default function TermAdmission() {
                     isPopUpOpen={popUp.isOpen}
                     handleClosePopUp={handleClosePopUp}
                     selectedTerm={selectedTerm}
+                    GetTerm={GetTerm}
+                    setSelectedTerm={setSelectedTerm}
                 />
             )}
         </>

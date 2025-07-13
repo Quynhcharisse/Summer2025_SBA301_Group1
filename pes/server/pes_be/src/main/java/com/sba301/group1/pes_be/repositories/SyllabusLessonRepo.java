@@ -20,6 +20,4 @@ public interface SyllabusLessonRepo extends JpaRepository<SyllabusLesson, Intege
     SyllabusLesson findBySyllabusIdAndLessonId(@Param("syllabusId") Integer syllabusId, @Param("lessonId") Integer lessonId);
 
     boolean existsBySyllabusIdAndLessonId(Integer syllabusId, Integer lessonId);
-
-    void deleteSyllabusLessonBySyllabus(Syllabus syllabus);
 }

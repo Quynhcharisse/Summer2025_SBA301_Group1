@@ -2,7 +2,7 @@ package com.sba301.group1.pes_be.validations.ScheduleValidation;
 
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
-import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateScheduleRequest;
 
 public class CreateScheduleValidation {
     

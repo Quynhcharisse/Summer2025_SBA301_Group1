@@ -10,15 +10,15 @@ public enum Status {
     ACCOUNT_BAN("ban"),
     ACCOUNT_UNBAN("unban"),
 
-    PENDING_APPROVAL ("pending approval"),
-    DRAFT ("draft"),
+    PENDING_APPROVAL("pending approval"),
+    DRAFT("draft"),
     CANCELLED("cancelled"),
     APPROVED("approved"),
     REJECTED("rejected"),
 
     ACTIVE_TERM("active"), // trong khoảng ngày cho phép
     INACTIVE_TERM("inactive"), // chưa đến ngày
-    LOCKED_TERM("locked"); // đã hết ngày cho phép đăng ký
+    LOCKED_TERM("locked");// đã hết ngày cho phép đăng ký
 
     private final String value;
 }

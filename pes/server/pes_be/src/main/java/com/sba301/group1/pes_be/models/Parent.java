@@ -37,8 +37,10 @@ public class Parent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
+    @Column(length = 100)
     String address;
 
+    @Column(length = 50)
     String job;
 
     @Column(name = "`relationship_to_child`")

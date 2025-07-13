@@ -1,5 +1,5 @@
 import {createBrowserRouter, Navigate, RouterProvider} from "react-router-dom";
-import LoginPage from "./page/LoginPage.jsx";
+import LoginPage from "./components/Login.jsx";
 import {HomePage} from "./page/HomePage.jsx";
 import {SnackbarProvider} from "notistack";
 import './styles/App.css'
@@ -27,7 +27,7 @@ import ParentList from "./components/hrManager/ParentList.jsx";
 
 import LessonDetails from "./components/educationManager/LessonDetails.jsx";
 import SyllabusDetails from "./components/educationManager/SyllabusDetails.jsx";
-
+import Register from "./components/Register.jsx";
 
 
 const router = createBrowserRouter([
@@ -35,10 +35,10 @@ const router = createBrowserRouter([
         path: '/login',
         element: <LoginPage/>
     },
-    // {
-    //     path: '/register',
-    //     element: <RegisterPage/>
-    // },
+    {
+        path: '/register',
+        element: <Register/>
+    },
     {
         path: "/home",
         element: <HomePage/>
@@ -108,7 +108,7 @@ const router = createBrowserRouter([
             {
                 path: 'classes',
                 element: <ClassList/>
-            },            {
+            }, {
                 path: 'classes/:id',
                 element: <ClassDetails/>
             },

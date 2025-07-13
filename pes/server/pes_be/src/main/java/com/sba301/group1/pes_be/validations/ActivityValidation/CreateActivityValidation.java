@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.validations.ActivityValidation;
 
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
-import com.sba301.group1.pes_be.requests.CreateActivityRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateActivityRequest;
 
 import java.util.Arrays;
 import java.util.List;

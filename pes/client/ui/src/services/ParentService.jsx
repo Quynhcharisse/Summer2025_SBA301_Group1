@@ -38,9 +38,6 @@ export const cancelAdmission = async (id) => {
 export const getChildrenList = async () => {
     try {
         const response = await axiosClient.get("/parent/child");
-        console.log("Raw API Response:", response);
-        console.log("API Response data:", response?.data);
-        console.log("API Response success:", response?.data?.success);
         if (response?.data?.data) {
             console.log("First child data:", response.data.data[0]);
             console.log("First child dateOfBirth:", response.data.data[0]?.dateOfBirth);
@@ -54,7 +51,6 @@ export const getChildrenList = async () => {
 
 export const addChild = async (childData) => {
     try {
-        // Convert gender to match backend format
         const formattedData = {
             ...childData,
             gender: childData.gender?.toLowerCase()
@@ -103,20 +99,41 @@ export const updateParentProfile = async (data) => {
     return response ? response.data : null;
 };
 
-export const viewStudentClasses = async (studentId) => {
-    const response = await axiosClient.get(`/parent/student-classes/${studentId}`);
-    console.log("Response from viewStudentClasses:", response);
-    return response ? response.data : null;
-}
+export const refillForm = async (
+    studentId,
+    formId,
+    householdRegistrationAddress,
+    childCharacteristicsFormImg,
+    commitmentImg,
+    note
+) => {
+    try {
+        const response = await axiosClient.post(
+            "/parent/form/refill",
+            {
+                studentId: studentId,
+                formId: formId,
+                householdRegistrationAddress: householdRegistrationAddress,
+                childCharacteristicsFormImg: childCharacteristicsFormImg,
+                commitmentImg: commitmentImg,
+                note: note || ""
+            });
+        if (!response || !response.data) {
+            throw new Error("Failed to resubmit form");
+        }
+        return response.data;
+    } catch (error) {
+        console.error("Error resubmitting form:", error);
+        throw error;
+    }
+};
 
-export const viewSyllabusByClass = async (classId) => {
-    const response = await axiosClient.get(`/parent/syllabus/${classId}`);
-    console.log("Response from viewSyllabusByClass:", response);
-    return response ? response.data : null;
-}
-
-export const viewActivitiesByClass = async (classId) => {
-    const response = await axiosClient.get(`/parent/activities/${classId}`);
-    console.log("Response from viewActivitiesByClass:", response);
-    return response ? response.data : null;
-}
+export const getStudentClassDetailsGroupedByWeek = async (studentId) => {
+    try {
+        const response = await axiosClient.get(`/parent/student-class-weeks/${studentId}`);
+        return response?.data || null;
+    } catch (error) {
+        console.error("Error in getStudentClassDetailsGroupedByWeek:", error);
+        throw error;
+    }
+};

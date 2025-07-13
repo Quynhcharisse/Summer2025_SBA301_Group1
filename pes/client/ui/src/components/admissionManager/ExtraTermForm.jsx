@@ -20,7 +20,7 @@ const formatToJavaDateTime = (date) => {
     return date.toISOString();
 };
 
-export default function ExtraTermForm({formData, onClose, getStatusColor}) {
+export default function ExtraTermForm({formData, onClose}) {
     const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
 

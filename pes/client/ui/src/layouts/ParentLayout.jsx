@@ -11,14 +11,14 @@ function ParentLayout() {
             icon: <AccountBoxIcon sx={{ color: '#2c3e50' }} />
         },
         {
-            segment: 'parent/form',
-            title: 'Admission Form',
-            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
-        },
-        {
             segment: 'parent/child',
             title: 'Children',
             icon: <ChildCareIcon sx={{ color: '#2c3e50' }}/>
+        },
+        {
+            segment: 'parent/form',
+            title: 'Admission Form',
+            icon: <InsertDriveFileIcon sx={{ color: '#2c3e50' }} />
         }
     ];
     return (

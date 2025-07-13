@@ -1,5 +1,25 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dto.requests.AssignActivityToClassRequest;
+import com.sba301.group1.pes_be.dto.requests.ClassRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateActivitiesFromLessonsRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateActivityRequest;
+import com.sba301.group1.pes_be.dto.requests.CreateScheduleRequest;
+import com.sba301.group1.pes_be.dto.requests.LessonRequest;
+import com.sba301.group1.pes_be.dto.requests.StudentClassRequest;
+import com.sba301.group1.pes_be.dto.requests.SyllabusRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateActivityRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateScheduleRequest;
+import com.sba301.group1.pes_be.dto.response.ActivityResponse;
+import com.sba301.group1.pes_be.dto.response.ClassesResponse;
+import com.sba301.group1.pes_be.dto.response.LessonResponse;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.response.RoomResponse;
+import com.sba301.group1.pes_be.dto.response.ScheduleResponse;
+import com.sba301.group1.pes_be.dto.response.SimpleStudentResponse;
+import com.sba301.group1.pes_be.dto.response.SyllabusResponse;
+import com.sba301.group1.pes_be.dto.response.TeacherResponse;
+import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
@@ -19,25 +39,6 @@ import com.sba301.group1.pes_be.repositories.StudentClassRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
-import com.sba301.group1.pes_be.requests.AssignActivityToClassRequest;
-import com.sba301.group1.pes_be.requests.ClassRequest;
-import com.sba301.group1.pes_be.requests.CreateActivitiesFromLessonsRequest;
-import com.sba301.group1.pes_be.requests.CreateActivityRequest;
-import com.sba301.group1.pes_be.requests.CreateScheduleRequest;
-import com.sba301.group1.pes_be.requests.LessonRequest;
-import com.sba301.group1.pes_be.requests.StudentClassRequest;
-import com.sba301.group1.pes_be.requests.SyllabusRequest;
-import com.sba301.group1.pes_be.requests.UpdateActivityRequest;
-import com.sba301.group1.pes_be.requests.UpdateScheduleRequest;
-import com.sba301.group1.pes_be.response.ActivityResponse;
-import com.sba301.group1.pes_be.response.ClassesResponse;
-import com.sba301.group1.pes_be.response.LessonResponse;
-import com.sba301.group1.pes_be.response.ResponseObject;
-import com.sba301.group1.pes_be.response.ScheduleResponse;
-import com.sba301.group1.pes_be.response.SimpleStudentResponse;
-import com.sba301.group1.pes_be.response.RoomResponse;
-import com.sba301.group1.pes_be.response.SyllabusResponse;
-import com.sba301.group1.pes_be.response.TeacherResponse;
 import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.validations.ActivityValidation.CreateActivityValidation;
 import com.sba301.group1.pes_be.validations.ClassValidation.CreateClassValidation;
@@ -97,11 +98,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = CreateActivityValidation.validate(request, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -109,13 +110,13 @@ public class EducationServiceImpl implements EducationService {
             Schedule schedule = scheduleRepo.findById(request.getScheduleId()).get();
 
             Activity activity = Activity.builder()
-                .topic(request.getTopic())
-                .description(request.getDescription())
-                .dayOfWeek(request.getDayOfWeek())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .schedule(schedule)
-                .build();
+                    .topic(request.getTopic())
+                    .description(request.getDescription())
+                    .dayOfWeek(request.getDayOfWeek())
+                    .startTime(request.getStartTime())
+                    .endTime(request.getEndTime())
+                    .schedule(schedule)
+                    .build();
 
             // Set lesson if provided
             if (request.getLessonId() != null) {
@@ -123,11 +124,11 @@ public class EducationServiceImpl implements EducationService {
                     activity.setLesson(Lesson.builder().id(request.getLessonId()).build());
                 } else {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ResponseObject.builder()
-                            .message("Lesson not found")
-                            .success(false)
-                            .data(null)
-                            .build()
+                            ResponseObject.builder()
+                                    .message("Lesson not found")
+                                    .success(false)
+                                    .data(null)
+                                    .build()
                     );
                 }
             }
@@ -135,20 +136,20 @@ public class EducationServiceImpl implements EducationService {
             Activity savedActivity = activityRepo.save(activity);
             ActivityResponse activityResponse = convertToResponse(savedActivity);
             return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Activity created successfully")
-                    .success(true)
-                    .data(activityResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activity created successfully")
+                            .success(true)
+                            .data(activityResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating activity: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error creating activity: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -159,11 +160,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
             if (activityOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Activity not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Activity not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -180,11 +181,11 @@ public class EducationServiceImpl implements EducationService {
                     activity.setLesson(Lesson.builder().id(request.getLessonId()).build());
                 } else {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ResponseObject.builder()
-                            .message("Lesson not found")
-                            .success(false)
-                            .data(null)
-                            .build()
+                            ResponseObject.builder()
+                                    .message("Lesson not found")
+                                    .success(false)
+                                    .data(null)
+                                    .build()
                     );
                 }
             } else {
@@ -195,20 +196,20 @@ public class EducationServiceImpl implements EducationService {
             Activity updatedActivity = activityRepo.save(activity);
             ActivityResponse activityResponse = convertToResponse(updatedActivity);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activity updated successfully")
-                    .success(true)
-                    .data(activityResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activity updated successfully")
+                            .success(true)
+                            .data(activityResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error updating activity: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error updating activity: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -219,30 +220,30 @@ public class EducationServiceImpl implements EducationService {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
             if (activityOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Activity not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Activity not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             ActivityResponse activityResponse = convertToResponse(activityOpt.get());
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activity retrieved successfully")
-                    .success(true)
-                    .data(activityResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activity retrieved successfully")
+                            .success(true)
+                            .data(activityResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving activity: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving activity: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -253,20 +254,20 @@ public class EducationServiceImpl implements EducationService {
             List<Activity> activities = activityRepo.findByScheduleIdOrderByDayAndTime(scheduleId);
             List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activities retrieved successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -277,20 +278,20 @@ public class EducationServiceImpl implements EducationService {
             List<Activity> activities = activityRepo.findByClassId(classId);
             List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activities retrieved successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -301,20 +302,20 @@ public class EducationServiceImpl implements EducationService {
             List<Activity> activities = activityRepo.findAll();
             List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All activities retrieved successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving all activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving all activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -326,11 +327,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
             if (activityOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Activity not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Activity not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -342,8 +343,8 @@ public class EducationServiceImpl implements EducationService {
             if (activity.getSchedule() != null) {
                 schedule = activity.getSchedule();
                 scheduleInfo = String.format(" (was part of Week %d schedule for class %s)",
-                    schedule.getWeekNumber(),
-                    schedule.getClasses() != null ? schedule.getClasses().getName() : "Unknown");
+                        schedule.getWeekNumber(),
+                        schedule.getClasses() != null ? schedule.getClasses().getName() : "Unknown");
             }
 
             // Proper bidirectional relationship cleanup for orphanRemoval
@@ -366,20 +367,20 @@ public class EducationServiceImpl implements EducationService {
 
             String successMessage = "Activity deleted successfully" + scheduleInfo;
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                ResponseObject.builder()
-                    .message(successMessage)
-                    .success(true)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message(successMessage)
+                            .success(true)
+                            .data(null)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error deleting activity: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error deleting activity: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -390,11 +391,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Activity> activityOpt = activityRepo.findById(activityId);
             if (activityOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Activity not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Activity not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -423,20 +424,20 @@ public class EducationServiceImpl implements EducationService {
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activity deletion impact analysis completed")
-                    .success(true)
-                    .data(impactInfo)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activity deletion impact analysis completed")
+                            .success(true)
+                            .data(impactInfo)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error analyzing activity deletion impact: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error analyzing activity deletion impact: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -448,11 +449,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Activity> activityOpt = activityRepo.findById(request.getActivityId());
             if (activityOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Activity not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Activity not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -460,25 +461,25 @@ public class EducationServiceImpl implements EducationService {
             Optional<Classes> classOpt = classesRepo.findById(request.getClassId());
             if (classOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Class not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             // Find or create schedule for the specified week
             Optional<Schedule> scheduleOpt = scheduleRepo.findByClassesIdAndWeekNumber(
-                request.getClassId(), request.getWeekNumber());
+                    request.getClassId(), request.getWeekNumber());
 
             Schedule schedule;
             if (scheduleOpt.isEmpty()) {
                 // Create new schedule if it doesn't exist
                 schedule = Schedule.builder()
-                    .weekNumber(request.getWeekNumber())
-                    .classes(classOpt.get())
-                    .build();
+                        .weekNumber(request.getWeekNumber())
+                        .classes(classOpt.get())
+                        .build();
                 schedule = scheduleRepo.save(schedule);
             } else {
                 schedule = scheduleOpt.get();
@@ -491,20 +492,20 @@ public class EducationServiceImpl implements EducationService {
             ActivityResponse activityResponse = convertToResponse(updatedActivity);
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activity assigned to class successfully")
-                    .success(true)
-                    .data(activityResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activity assigned to class successfully")
+                            .success(true)
+                            .data(activityResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error assigning activity to class: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error assigning activity to class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -515,20 +516,20 @@ public class EducationServiceImpl implements EducationService {
             List<Activity> activities = activityRepo.findByClassIdAndDayOfWeek(classId, dayOfWeek);
             List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activities retrieved successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -541,11 +542,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(request.getScheduleId());
             if (scheduleOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Schedule not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -556,24 +557,24 @@ public class EducationServiceImpl implements EducationService {
                 Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
                 if (lessonOpt.isEmpty()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                        ResponseObject.builder()
-                            .message("Lesson with ID " + lessonId + " not found")
-                            .success(false)
-                            .data(null)
-                            .build()
+                            ResponseObject.builder()
+                                    .message("Lesson with ID " + lessonId + " not found")
+                                    .success(false)
+                                    .data(null)
+                                    .build()
                     );
                 }
 
                 Lesson lesson = lessonOpt.get();
                 Activity activity = Activity.builder()
-                    .topic(lesson.getTopic())
-                    .description(lesson.getDescription())
-                    .dayOfWeek(request.getDayOfWeek())
-                    .startTime(request.getStartTime())
-                    .endTime(request.getEndTime())
-                    .schedule(schedule)
-                    .lesson(lesson)
-                    .build();
+                        .topic(lesson.getTopic())
+                        .description(lesson.getDescription())
+                        .dayOfWeek(request.getDayOfWeek())
+                        .startTime(request.getStartTime())
+                        .endTime(request.getEndTime())
+                        .schedule(schedule)
+                        .lesson(lesson)
+                        .build();
 
                 activities.add(activity);
             }
@@ -581,20 +582,20 @@ public class EducationServiceImpl implements EducationService {
             List<Activity> savedActivities = activityRepo.saveAll(activities);
             List<ActivityResponse> activityResponses = convertToResponse(savedActivities);
             return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Activities created from lessons successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activities created from lessons successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating activities from lessons: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error creating activities from lessons: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -604,31 +605,31 @@ public class EducationServiceImpl implements EducationService {
         try {
             if (!lessonRepo.existsById(lessonId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Lesson not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Lesson not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             List<Activity> activities = activityRepo.findByLessonId(lessonId);
             List<ActivityResponse> activityResponses = convertToResponse(activities);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Activities retrieved successfully")
-                    .success(true)
-                    .data(activityResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Activities retrieved successfully")
+                            .success(true)
+                            .data(activityResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -642,28 +643,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (classesResponses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No classes found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No classes found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All classes retrieved successfully")
-                    .success(true)
-                    .data(classesResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All classes retrieved successfully")
+                            .success(true)
+                            .data(classesResponses)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving classes: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving classes: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -674,29 +675,29 @@ public class EducationServiceImpl implements EducationService {
             Classes classEntity = classesRepo.findByIdWithFullDetails(classId);
             if (classEntity == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Class not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             ClassesResponse classResponse = ClassesResponse.fromEntity(classEntity);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Class retrieved successfully")
-                    .success(true)
-                    .data(classResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Class retrieved successfully")
+                            .success(true)
+                            .data(classResponse)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving class: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -706,40 +707,40 @@ public class EducationServiceImpl implements EducationService {
         try {
             if (!classesRepo.existsById(classId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Class not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             Syllabus syllabus = syllabusRepo.findByClassId(classId);
             if (syllabus == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No syllabus found for this class")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No syllabus found for this class")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Syllabus retrieved successfully")
-                    .success(true)
-                    .data(syllabusResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Syllabus retrieved successfully")
+                            .success(true)
+                            .data(syllabusResponse)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving syllabus: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabus: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -749,11 +750,11 @@ public class EducationServiceImpl implements EducationService {
         try {
             if (!classesRepo.existsById(classId)) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Class not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -762,28 +763,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (lessonResponses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No lessons found for this class")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No lessons found for this class")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Lessons retrieved successfully")
-                    .success(true)
-                    .data(lessonResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Lessons retrieved successfully")
+                            .success(true)
+                            .data(lessonResponses)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving lessons: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving lessons: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -795,28 +796,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (classes.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No classes found with status: " + status)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No classes found with status: " + status)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Classes retrieved successfully")
-                    .success(true)
-                    .data(classes)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Classes retrieved successfully")
+                            .success(true)
+                            .data(classes)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving classes: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving classes: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -828,28 +829,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (classes.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No classes found for teacher ID: " + teacherId)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No classes found for teacher ID: " + teacherId)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Classes retrieved successfully")
-                    .success(true)
-                    .data(classes)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Classes retrieved successfully")
+                            .success(true)
+                            .data(classes)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving classes: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving classes: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -862,11 +863,11 @@ public class EducationServiceImpl implements EducationService {
                 gradeEnum = Grade.valueOf(grade.toUpperCase());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message("Invalid grade value")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Invalid grade value")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -874,28 +875,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (classes.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No classes found for grade: " + grade)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No classes found for grade: " + grade)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Classes retrieved successfully")
-                    .success(true)
-                    .data(classes)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Classes retrieved successfully")
+                            .success(true)
+                            .data(classes)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving classes: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving classes: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -906,11 +907,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = CreateClassValidation.validate(request, classesRepo, accountRepo, syllabusRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -922,10 +923,12 @@ public class EducationServiceImpl implements EducationService {
                     .teacher(teacher)
                     .syllabus(syllabus)
                     .numberStudent(request.getNumberStudent())
-                    .roomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null)
+                    .roomNumber(request.getRoomNumber() != null ? request.getRoomNumber() : null)
                     .startDate(request.getStartDate().toString())
                     .endDate(request.getEndDate().toString())
-                    .status(request.getStatus())
+                    .status(request.getStatus() != null
+                            ? ClassStatus.valueOf(request.getStatus().toUpperCase())
+                            : ClassStatus.DRAFT)
                     .grade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null)
                     .build();
 
@@ -939,11 +942,11 @@ public class EducationServiceImpl implements EducationService {
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating class: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error creating class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -954,11 +957,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Classes> classOpt = classesRepo.findById(classId);
             if (classOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Class not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -966,11 +969,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = UpdateClassValidation.validate(request, existingClass, classesRepo, accountRepo, syllabusRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -981,10 +984,10 @@ public class EducationServiceImpl implements EducationService {
             existingClass.setTeacher(teacher);
             existingClass.setSyllabus(syllabus);
             existingClass.setNumberStudent(request.getNumberStudent());
-            existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber().toString() : null);
+            existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber() : null);
             existingClass.setStartDate(request.getStartDate().toString());
             existingClass.setEndDate(request.getEndDate().toString());
-            existingClass.setStatus(request.getStatus());
+            existingClass.setStatus(request.getStatus() != null ? ClassStatus.valueOf(request.getStatus().toUpperCase()) : ClassStatus.DRAFT);
             existingClass.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
             classesRepo.save(existingClass);
@@ -997,11 +1000,11 @@ public class EducationServiceImpl implements EducationService {
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error updating class: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error updating class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1012,6 +1015,16 @@ public class EducationServiceImpl implements EducationService {
             return classesRepo.findById(classId)
                     .map(classes -> {
                         try {
+                            if (classes.getStatus() != ClassStatus.DRAFT && classes.getStatus() != ClassStatus.INACTIVE) {
+                                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                                        ResponseObject.builder()
+                                                .message("Cannot delete class. Only classes with status DRAFT or INACTIVE can be deleted.")
+                                                .success(false)
+                                                .data(null)
+                                                .build()
+                                );
+                            }
+
                             classesRepo.delete(classes);
                             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                                     ResponseObject.builder()
@@ -1031,11 +1044,11 @@ public class EducationServiceImpl implements EducationService {
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error deleting class: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error deleting class: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1185,28 +1198,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (lessonResponses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No lessons found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No lessons found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All lessons retrieved successfully")
-                    .success(true)
-                    .data(lessonResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All lessons retrieved successfully")
+                            .success(true)
+                            .data(lessonResponses)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving lessons: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving lessons: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1217,29 +1230,29 @@ public class EducationServiceImpl implements EducationService {
             Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
             if (lessonOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Lesson not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Lesson not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             LessonResponse lessonResponse = LessonResponse.fromEntity(lessonOpt.get());
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Lesson retrieved successfully")
-                    .success(true)
-                    .data(lessonResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Lesson retrieved successfully")
+                            .success(true)
+                            .data(lessonResponse)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving lesson: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving lesson: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1251,28 +1264,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (lessons.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No lessons found for topic: " + topic)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No lessons found for topic: " + topic)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Lessons retrieved successfully")
-                    .success(true)
-                    .data(lessons)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Lessons retrieved successfully")
+                            .success(true)
+                            .data(lessons)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving lessons: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving lessons: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1284,28 +1297,28 @@ public class EducationServiceImpl implements EducationService {
 
             if (lessons.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                    ResponseObject.builder()
-                        .message("No lessons found for syllabus ID: " + syllabusId)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No lessons found for syllabus ID: " + syllabusId)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Lessons retrieved successfully")
-                    .success(true)
-                    .data(lessons)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Lessons retrieved successfully")
+                            .success(true)
+                            .data(lessons)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving lessons: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving lessons: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1368,11 +1381,11 @@ public class EducationServiceImpl implements EducationService {
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error updating lesson: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error updating lesson: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1383,30 +1396,30 @@ public class EducationServiceImpl implements EducationService {
             Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
             if (lessonOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Lesson not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Lesson not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             lessonRepo.deleteById(lessonId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                ResponseObject.builder()
-                    .message("Lesson deleted successfully")
-                    .success(true)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Lesson deleted successfully")
+                            .success(true)
+                            .data(null)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error deleting lesson: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error deleting lesson: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1417,44 +1430,44 @@ public class EducationServiceImpl implements EducationService {
             Optional<Lesson> lessonOpt = lessonRepo.findById(lessonId);
             if (lessonOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Lesson not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Lesson not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             List<SyllabusLesson> syllabusLessons = syllabusLessonRepo.findByLessonId(lessonId);
             List<SyllabusResponse> syllabusResponses = syllabusLessons.stream()
-                .map(syllabusLesson -> SyllabusResponse.fromEntity(syllabusLesson.getSyllabus()))
-                .collect(Collectors.toList());
+                    .map(syllabusLesson -> SyllabusResponse.fromEntity(syllabusLesson.getSyllabus()))
+                    .collect(Collectors.toList());
 
             if (syllabusResponses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                    ResponseObject.builder()
-                        .message("No syllabi found for this lesson")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No syllabi found for this lesson")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Syllabi retrieved successfully")
-                    .success(true)
-                    .data(syllabusResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Syllabi retrieved successfully")
+                            .success(true)
+                            .data(syllabusResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving syllabi: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabi: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1467,11 +1480,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = CreateScheduleValidation.validate(request, classesRepo, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -1479,28 +1492,28 @@ public class EducationServiceImpl implements EducationService {
             Classes classes = classesRepo.findById(request.getClassId()).get();
 
             Schedule schedule = Schedule.builder()
-                .weekNumber(request.getWeekNumber())
-                .note(request.getNote())
-                .classes(classes)
-                .build();
+                    .weekNumber(request.getWeekNumber())
+                    .note(request.getNote())
+                    .classes(classes)
+                    .build();
 
             Schedule savedSchedule = scheduleRepo.save(schedule);
             ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(savedSchedule);
             return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Schedule created successfully")
-                    .success(true)
-                    .data(scheduleResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedule created successfully")
+                            .success(true)
+                            .data(scheduleResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating schedule: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error creating schedule: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1513,11 +1526,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = CreateScheduleValidation.validate(request, classesRepo, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -1526,10 +1539,10 @@ public class EducationServiceImpl implements EducationService {
 
             // Create and save the schedule first
             Schedule schedule = Schedule.builder()
-                .weekNumber(request.getWeekNumber())
-                .note(request.getNote())
-                .classes(classes)
-                .build();
+                    .weekNumber(request.getWeekNumber())
+                    .note(request.getNote())
+                    .classes(classes)
+                    .build();
 
             Schedule savedSchedule = scheduleRepo.save(schedule);
 
@@ -1546,13 +1559,13 @@ public class EducationServiceImpl implements EducationService {
                     }
 
                     Activity activity = Activity.builder()
-                        .topic(activityRequest.getTopic())
-                        .description(activityRequest.getDescription())
-                        .dayOfWeek(activityRequest.getDayOfWeek())
-                        .startTime(activityRequest.getStartTime())
-                        .endTime(activityRequest.getEndTime())
-                        .schedule(savedSchedule) // Associate with the newly created schedule
-                        .build();
+                            .topic(activityRequest.getTopic())
+                            .description(activityRequest.getDescription())
+                            .dayOfWeek(activityRequest.getDayOfWeek())
+                            .startTime(activityRequest.getStartTime())
+                            .endTime(activityRequest.getEndTime())
+                            .schedule(savedSchedule) // Associate with the newly created schedule
+                            .build();
 
                     if (activityRequest.getLessonId() != null) {
                         if (lessonRepo.existsById(activityRequest.getLessonId())) {
@@ -1569,20 +1582,20 @@ public class EducationServiceImpl implements EducationService {
 
             ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(savedSchedule);
             return ResponseEntity.status(HttpStatus.CREATED).body(
-                ResponseObject.builder()
-                    .message("Schedule and activities created successfully")
-                    .success(true)
-                    .data(scheduleResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedule and activities created successfully")
+                            .success(true)
+                            .data(scheduleResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error creating schedule with activities: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error creating schedule with activities: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1593,11 +1606,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);
             if (scheduleOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Schedule not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -1607,11 +1620,11 @@ public class EducationServiceImpl implements EducationService {
             String validationError = UpdateScheduleValidation.validate(request, schedule, scheduleRepo);
             if (!validationError.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message(validationError)
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message(validationError)
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -1621,20 +1634,20 @@ public class EducationServiceImpl implements EducationService {
             Schedule updatedSchedule = scheduleRepo.save(schedule);
             ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(updatedSchedule);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Schedule updated successfully")
-                    .success(true)
-                    .data(scheduleResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedule updated successfully")
+                            .success(true)
+                            .data(scheduleResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error updating schedule: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error updating schedule: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1645,30 +1658,30 @@ public class EducationServiceImpl implements EducationService {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);
             if (scheduleOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Schedule not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Schedule retrieved successfully")
-                    .success(true)
-                    .data(scheduleResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedule retrieved successfully")
+                            .success(true)
+                            .data(scheduleResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving schedule: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving schedule: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1679,20 +1692,20 @@ public class EducationServiceImpl implements EducationService {
             List<Schedule> schedules = scheduleRepo.findByClassesIdOrderByWeekNumber(classId);
             List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Schedules retrieved successfully")
-                    .success(true)
-                    .data(scheduleResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedules retrieved successfully")
+                            .success(true)
+                            .data(scheduleResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving schedules: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving schedules: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1703,30 +1716,30 @@ public class EducationServiceImpl implements EducationService {
             Optional<Schedule> scheduleOpt = scheduleRepo.findByClassesIdAndWeekNumber(classId, weekNumber);
             if (scheduleOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No schedule found for week " + weekNumber + " in this class")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No schedule found for week " + weekNumber + " in this class")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             ScheduleResponse scheduleResponse = ScheduleResponse.fromEntity(scheduleOpt.get());
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Weekly schedule retrieved successfully")
-                    .success(true)
-                    .data(scheduleResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Weekly schedule retrieved successfully")
+                            .success(true)
+                            .data(scheduleResponse)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving weekly schedule: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving weekly schedule: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1738,30 +1751,30 @@ public class EducationServiceImpl implements EducationService {
             Optional<Schedule> scheduleOpt = scheduleRepo.findById(scheduleId);
             if (scheduleOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Schedule not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Schedule not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             scheduleRepo.deleteById(scheduleId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                ResponseObject.builder()
-                    .message("Schedule deleted successfully")
-                    .success(true)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Schedule deleted successfully")
+                            .success(true)
+                            .data(null)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error deleting schedule: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error deleting schedule: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1772,20 +1785,20 @@ public class EducationServiceImpl implements EducationService {
             List<Schedule> schedules = scheduleRepo.findAllWithActivitiesAndClasses();
             List<ScheduleResponse> scheduleResponses = convertScheduleToResponse(schedules);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All schedules retrieved successfully")
-                    .success(true)
-                    .data(scheduleResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All schedules retrieved successfully")
+                            .success(true)
+                            .data(scheduleResponses)
+                            .build()
             );
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving all schedules: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving all schedules: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1798,27 +1811,27 @@ public class EducationServiceImpl implements EducationService {
             List<SyllabusResponse> syllabusResponses = SyllabusResponse.fromEntityList(syllabi);
             if (syllabusResponses.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No syllabi exist")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No syllabi exist")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All syllabi retrieved successfully")
-                    .success(true)
-                    .data(syllabusResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All syllabi retrieved successfully")
+                            .success(true)
+                            .data(syllabusResponses)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving syllabi: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabi: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1829,29 +1842,29 @@ public class EducationServiceImpl implements EducationService {
             Optional<Syllabus> syllabusOpt = syllabusRepo.findById(syllabusId);
             if (syllabusOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Syllabus not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Syllabus not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabusOpt.get());
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Syllabus retrieved successfully")
-                    .success(true)
-                    .data(syllabusResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Syllabus retrieved successfully")
+                            .success(true)
+                            .data(syllabusResponse)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving syllabus: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabus: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1862,27 +1875,27 @@ public class EducationServiceImpl implements EducationService {
             List<Syllabus> syllabi = syllabusRepo.findByTitleContaining(title);
             if (syllabi.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No syllabi found with the given title")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No syllabi found with the given title")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Syllabi retrieved successfully")
-                    .success(true)
-                    .data(syllabi)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Syllabi retrieved successfully")
+                            .success(true)
+                            .data(syllabi)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving syllabi: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving syllabi: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -1924,24 +1937,24 @@ public class EducationServiceImpl implements EducationService {
                         syllabus.setTitle(request.getTitle());
                         syllabus.setDescription(request.getDescription());
                         try {
-                        Syllabus updatedSyllabus = updateSyllabusLessons(request, syllabus);
+                            Syllabus updatedSyllabus = updateSyllabusLessons(request, syllabus);
 
-                        if (updatedSyllabus.getSyllabusLessonList() == null || updatedSyllabus.getSyllabusLessonList().isEmpty()) {
-                            return ResponseEntity.badRequest().body(
+                            if (updatedSyllabus.getSyllabusLessonList() == null || updatedSyllabus.getSyllabusLessonList().isEmpty()) {
+                                return ResponseEntity.badRequest().body(
+                                        ResponseObject.builder()
+                                                .message("Syllabus must have at least one lesson")
+                                                .success(false)
+                                                .build()
+                                );
+                            }
+
+                            return ResponseEntity.ok().body(
                                     ResponseObject.builder()
-                                            .message("Syllabus must have at least one lesson")
-                                            .success(false)
+                                            .message("Update syllabus successfully")
+                                            .success(true)
+                                            .data(SyllabusResponse.fromEntity(syllabus))
                                             .build()
                             );
-                        }
-
-                        return ResponseEntity.ok().body(
-                                ResponseObject.builder()
-                                        .message("Update syllabus successfully")
-                                        .success(true)
-                                        .data(SyllabusResponse.fromEntity(syllabus))
-                                        .build()
-                        );
                         } catch (IllegalAccessException ex) {
                             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                                     ResponseObject.builder()
@@ -1955,11 +1968,11 @@ public class EducationServiceImpl implements EducationService {
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error updating syllabus: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error updating syllabus: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -2035,11 +2048,11 @@ public class EducationServiceImpl implements EducationService {
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error deleting syllabus: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error deleting syllabus: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -2173,29 +2186,29 @@ public class EducationServiceImpl implements EducationService {
 
             if (teachers.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("No teachers found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("No teachers found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             List<TeacherResponse> teacherResponses = TeacherResponse.fromEntityList(teachers);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("All teachers retrieved successfully")
-                    .success(true)
-                    .data(teacherResponses)
-                    .build()
+                    ResponseObject.builder()
+                            .message("All teachers retrieved successfully")
+                            .success(true)
+                            .data(teacherResponses)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving teachers: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving teachers: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }
@@ -2206,11 +2219,11 @@ public class EducationServiceImpl implements EducationService {
             Optional<Account> teacherOpt = accountRepo.findById(teacherId);
             if (teacherOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    ResponseObject.builder()
-                        .message("Teacher not found")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Teacher not found")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
@@ -2218,29 +2231,29 @@ public class EducationServiceImpl implements EducationService {
             // Check if the account is actually a teacher
             if (teacher.getRole() != com.sba301.group1.pes_be.enums.Role.TEACHER) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                    ResponseObject.builder()
-                        .message("Account found but user is not a teacher")
-                        .success(false)
-                        .data(null)
-                        .build()
+                        ResponseObject.builder()
+                                .message("Account found but user is not a teacher")
+                                .success(false)
+                                .data(null)
+                                .build()
                 );
             }
 
             TeacherResponse teacherResponse = TeacherResponse.fromEntity(teacher);
             return ResponseEntity.ok().body(
-                ResponseObject.builder()
-                    .message("Teacher retrieved successfully")
-                    .success(true)
-                    .data(teacherResponse)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Teacher retrieved successfully")
+                            .success(true)
+                            .data(teacherResponse)
+                            .build()
             );
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ResponseObject.builder()
-                    .message("Error retrieving teacher: " + e.getMessage())
-                    .success(false)
-                    .data(null)
-                    .build()
+                    ResponseObject.builder()
+                            .message("Error retrieving teacher: " + e.getMessage())
+                            .success(false)
+                            .data(null)
+                            .build()
             );
         }
     }

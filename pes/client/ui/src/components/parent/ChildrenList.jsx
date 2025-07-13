@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { addChild, getChildrenList, updateChild, viewStudentClasses, viewSyllabusByClass, viewActivitiesByClass } from "../../services/ParentService";
+import React, {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {
+    addChild,
+    getChildrenList,
+    getStudentClassDetailsGroupedByWeek,
+    updateChild
+} from "../../services/ParentService";
 import {
     Alert,
     AppBar,
@@ -7,6 +13,7 @@ import {
     Button,
     Card,
     CardMedia,
+    Chip,
     CircularProgress,
     Dialog,
     DialogContent,
@@ -14,8 +21,8 @@ import {
     Divider,
     FormControl,
     FormControlLabel,
-    FormLabel,
     FormHelperText,
+    FormLabel,
     Grid,
     IconButton,
     Paper,
@@ -32,9 +39,6 @@ import {
     TextField,
     Toolbar,
     Typography,
-    Tabs,
-    Tab,
-    Chip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -44,15 +48,20 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 import axios from "axios";
+import ModalImage from "react-modal-image";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import WcIcon from '@mui/icons-material/Wc';
+import CakeIcon from '@mui/icons-material/Cake';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import UpdateIcon from '@mui/icons-material/Update';
+import InsertPhotoIcon from '@mui/icons-material/InsertPhoto';
+import SchoolIcon from '@mui/icons-material/School';
 
 const ChildrenList = () => {
+    const navigate = useNavigate();
     const [children, setChildren] = useState([]);
-    const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // const [page, setPage] = useState(0);
-    // const [rowsPerPage, setRowsPerPage] = useState(5);
-    // const [remainingUpdates, setRemainingUpdates] = useState(5);
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -71,7 +80,7 @@ const ChildrenList = () => {
     const [editId, setEditId] = useState(null);
 
     // Snackbar state
-    const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+    const [snackbar, setSnackbar] = useState({open: false, message: "", severity: "success"});
 
     // Add state for file uploads
     const [uploadedFiles, setUploadedFiles] = useState({
@@ -87,14 +96,11 @@ const ChildrenList = () => {
         household: false
     });
 
-    const [loadingClasses, setLoadingClasses] = useState(false);
-
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedChild, setSelectedChild] = useState(null);
-    const [activeTab, setActiveTab] = useState(0);
     const [selectedImage, setSelectedImage] = useState(null);
     const [imageZoom, setImageZoom] = useState(1);
-    
+
     // State for class details dialog
     const [classDetailsDialogOpen, setClassDetailsDialogOpen] = useState(false);
     const [selectedClass, setSelectedClass] = useState(null);
@@ -103,6 +109,19 @@ const ChildrenList = () => {
     const [activities, setActivities] = useState([]);
     const [loadingSyllabus, setLoadingSyllabus] = useState(false);
     const [loadingActivities, setLoadingActivities] = useState(false);
+
+    // State cho weekly details
+    const [weeklyDetails, setWeeklyDetails] = useState([]);
+    const [weeklyDialogOpen, setWeeklyDialogOpen] = useState(false);
+    const [weeklyLoading, setWeeklyLoading] = useState(false);
+    const [weeklyError, setWeeklyError] = useState(null);
+
+    // State cho danh sách lớp và dialog chi tiết lớp
+    const [studentClasses, setStudentClasses] = useState([]);
+    const [classDetailDialogOpen, setClassDetailDialogOpen] = useState(false);
+    const [selectedClassDetail, setSelectedClassDetail] = useState(null);
+    const [loadingClasses, setLoadingClasses] = useState(false);
+    const [errorClasses, setErrorClasses] = useState(null);
 
     // Format date to YYYY-MM-DD for form input
     const formatDateForInput = (dateString) => {
@@ -132,12 +151,10 @@ const ChildrenList = () => {
             // First try parsing as ISO string
             const date = new Date(dateString);
             if (isNaN(date.getTime())) {
-                console.error("Invalid date:", dateString);
                 return "Invalid Date";
             }
             return date.toLocaleDateString('en-GB');
         } catch (error) {
-            console.error("Error formatting date:", error);
             return "Invalid Date";
         }
     };
@@ -215,8 +232,6 @@ const ChildrenList = () => {
     };
 
     const handleEditOpen = (child) => {
-        console.log("Opening edit dialog for child:", child);
-
         // Check if child object exists
         if (!child) {
             showSnackbar("Invalid child data", "error");
@@ -241,9 +256,6 @@ const ChildrenList = () => {
             ? child.gender.charAt(0).toUpperCase() + child.gender.slice(1).toLowerCase()
             : '';
 
-        console.log("Formatted date:", formattedDate);
-        console.log("Formatted gender:", formattedGender);
-
         setEditId(child.id);
         setForm({
             id: child.id,
@@ -263,7 +275,6 @@ const ChildrenList = () => {
             household: child.householdRegistrationImg || null,
         });
 
-        console.log("Setting form data:", form);
         setErrors({});
         setOpen(true);
     };
@@ -284,11 +295,11 @@ const ChildrenList = () => {
     };
 
     const handleSnackbarClose = () => {
-        setSnackbar({ ...snackbar, open: false });
+        setSnackbar({...snackbar, open: false});
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
 
         // Clear error for the field being changed
         setErrors(prev => ({
@@ -329,7 +340,7 @@ const ChildrenList = () => {
                 "https://api.cloudinary.com/v1_1/dbrfnkrbh/image/upload",
                 formData,
                 {
-                    headers: { "Content-Type": "multipart/form-data" }
+                    headers: {"Content-Type": "multipart/form-data"}
                 }
             );
 
@@ -363,7 +374,6 @@ const ChildrenList = () => {
                 });
             }
         } catch (error) {
-            console.error("Error uploading file:", error);
             setSnackbar({
                 open: true,
                 message: error.response?.data?.message || "Failed to upload file. Please try again.",
@@ -451,7 +461,7 @@ const ChildrenList = () => {
             setSnackbar({
                 open: true,
                 message: (
-                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                    <ul style={{margin: 0, paddingLeft: 20}}>
                         {errorMessages.map((error, index) => (
                             <li key={index}>{error}</li>
                         ))}
@@ -505,11 +515,8 @@ const ChildrenList = () => {
             }
 
             const childrenData = response.data || [];
-            console.log("Children data:", childrenData);
-            console.log("Date format example:", childrenData[0]?.dateOfBirth);
             setChildren(childrenData);
         } catch (err) {
-            console.error("Error fetching children:", err);
             setError(err.message || "Failed to fetch children data");
             setChildren([]);
         } finally {
@@ -521,90 +528,24 @@ const ChildrenList = () => {
         fetchChildren();
     }, []);
 
-    const fetchStudentClasses = async (studentId) => {
-        try {
-            setLoadingClasses(true);
-            setError(null);
-            const response = await viewStudentClasses(studentId);
-            if (!response || !response.success) {
-                throw new Error(response?.message || "Failed to fetch student classes");
-            }
-            const classesData = response.data || [];
-            console.log("Student classes data:", classesData);
-            setClasses(classesData);
-        }catch (err) {
-            console.error("Error fetching student classes:", err);
-            setError(err.message || "Failed to fetch student classes");
-            setClasses([]);
-        }finally {
-            setLoadingClasses(false);
-        }
-    }
-
-    const fetchSyllabus = async (classId) => {
-        try {
-            setLoadingSyllabus(true);
-            setError(null);
-            const response = await viewSyllabusByClass(classId);
-            if (!response || !response.success) {
-                throw new Error(response?.message || "Failed to fetch syllabus");
-            }
-            const syllabusData = response.data || [];
-            console.log("Syllabus data:", syllabusData);
-            setSyllabus(syllabusData);
-        } catch (err) {
-            console.error("Error fetching syllabus:", err);
-            setError(err.message || "Failed to fetch syllabus");
-            setSyllabus([]);
-        } finally {
-            setLoadingSyllabus(false);
-        }
-    }
-
-    const fetchActivities = async (classId) => {
-        try {
-            setLoadingActivities(true);
-            setError(null);
-            const response = await viewActivitiesByClass(classId);
-            if (!response || !response.success) {
-                throw new Error(response?.message || "Failed to fetch activities");
-            }
-            const activitiesData = response.data || [];
-            console.log("Activities data:", activitiesData);
-            setActivities(activitiesData);
-        } catch (err) {
-            console.error("Error fetching activities:", err);
-            setError(err.message || "Failed to fetch activities");
-            setActivities([]);
-        } finally {
-            setLoadingActivities(false);
-        }
-    }
-
-    // const handleChangePage = (event, newPage) => {
-    //     setPage(newPage);
-    // };
-    //
-    // const handleChangeRowsPerPage = (event) => {
-    //     setRowsPerPage(parseInt(event.target.value, 10));
-    //     setPage(0);
-    // };
-    //
-    // const safeChildren = Array.isArray(children) ? children : [];
-
-    const handleViewOpen = (child) => {
+    // Khi xem detail của bé, nếu là học sinh thì gọi API lấy danh sách lớp
+    const handleViewOpen = async (child) => {
         setSelectedChild(child);
+        if (child.isStudent) {
+            setLoadingClasses(true);
+            setErrorClasses(null);
+            try {
+                const res = await getStudentClassDetailsGroupedByWeek(child.id);
+                if (!res || !res.success) throw new Error(res?.message || "Failed to fetch class details");
+                setStudentClasses(res.data || []);
+            } catch (err) {
+                setErrorClasses(err.message || "Failed to fetch class details");
+                setStudentClasses([]);
+            } finally {
+                setLoadingClasses(false);
+            }
+        }
         setViewDialogOpen(true);
-        setActiveTab(0); // Reset to first tab
-        setClasses([]); // Clear previous classes data
-    };
-
-    const handleViewClose = () => {
-        setViewDialogOpen(false);
-        setSelectedChild(null);
-        setActiveTab(0);
-        setClasses([]);
-        setLoadingClasses(false);
     };
 
     const handleClassDetailsOpen = (classItem) => {
@@ -640,47 +581,49 @@ const ChildrenList = () => {
     };
 
     // Add UploadBox component
-    const UploadBox = ({ label, hasFile, onUpload, children }) => {
-        if (hasFile) {
-            return children;
-        }
-
+    const UploadBox = ({label, hasFile, onUpload, children}) => {
         return (
-            <Box
-                sx={{
-                    border: '2px dashed #ccc',
-                    borderRadius: 2,
-                    p: 2,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'rgba(25, 118, 210, 0.04)'
-                    },
-                    minHeight: '200px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                }}
-                component="label"
-            >
-                <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={(e) => onUpload(e.target.files[0])}
-                />
-                <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                <Typography variant="subtitle1" color="textSecondary">
-                    {label}
-                </Typography>
+            <Box>
+                {/* Always show upload input */}
+                <Box
+                    sx={{
+                        border: hasFile ? '2px solid #2196f3' : '2px dashed #ccc',
+                        borderRadius: 2,
+                        p: 2,
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            borderColor: 'primary.main',
+                            backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                        },
+                        minHeight: hasFile ? 'auto' : '200px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        mb: hasFile ? 1 : 0
+                    }}
+                    component="label"
+                >
+                    <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={(e) => onUpload(e.target.files[0])}
+                    />
+                    <CloudUploadIcon sx={{fontSize: hasFile ? 24 : 40, color: 'primary.main', mb: 1}}/>
+                    <Typography variant={hasFile ? "caption" : "subtitle1"} color="textSecondary">
+                        {hasFile ? "Click to change" : label}
+                    </Typography>
+                </Box>
+                {/* Show preview if file exists */}
+                {hasFile && children}
             </Box>
         );
     };
 
     // Add ImagePreview component
-    const ImagePreview = ({ url, label, onDelete, onView }) => {
+    const ImagePreview = ({url, label, onDelete, onView}) => {
         if (!url) return null;
 
         const handleViewClick = (e) => {
@@ -696,8 +639,9 @@ const ChildrenList = () => {
         };
 
         return (
-            <Box sx={{ mt: 1 }}>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{mt: 1}}>
+                <Typography variant="subtitle2" color="text.secondary"
+                            sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                     {label}
                     <Chip
                         label="Current File"
@@ -706,13 +650,13 @@ const ChildrenList = () => {
                         variant="outlined"
                     />
                 </Typography>
-                <Card sx={{ maxWidth: 200, mt: 1, position: 'relative' }}>
+                <Card sx={{maxWidth: 200, mt: 1, position: 'relative'}}>
                     <CardMedia
                         component="img"
                         height="140"
                         image={url}
                         alt={label}
-                        sx={{ objectFit: "contain" }}
+                        sx={{objectFit: "contain"}}
                     />
                     <Box sx={{
                         position: 'absolute',
@@ -728,20 +672,20 @@ const ChildrenList = () => {
                             onClick={handleViewClick}
                             sx={{
                                 backgroundColor: 'white',
-                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' }
+                                '&:hover': {backgroundColor: 'rgba(255, 255, 255, 0.9)'}
                             }}
                         >
-                            <VisibilityIcon fontSize="small" />
+                            <VisibilityIcon fontSize="small"/>
                         </IconButton>
                         <IconButton
                             size="small"
                             onClick={handleDeleteClick}
                             sx={{
                                 backgroundColor: 'white',
-                                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' }
+                                '&:hover': {backgroundColor: 'rgba(255, 255, 255, 0.9)'}
                             }}
                         >
-                            <DeleteIcon fontSize="small" />
+                            <DeleteIcon fontSize="small"/>
                         </IconButton>
                     </Box>
                 </Card>
@@ -749,29 +693,26 @@ const ChildrenList = () => {
         );
     };
 
-    // Add function to handle image deletion
-    const handleDeleteImage = (field) => {
-        setForm(prev => ({
-            ...prev,
-            [field]: ''
-        }));
-        setUploadedFiles(prev => ({
-            ...prev,
-            [field === 'profileImage' ? 'profile' :
-                field === 'birthCertificateImg' ? 'birth' : 'household']: null
-        }));
-    };
-
-    // Add function to handle full image view
-    const handleViewImage = (url) => {
-        setSelectedImage(url);
-        setViewDialogOpen(true);
+    // Hàm xử lý xem weekly details
+    const handleViewWeeklyDetails = async (studentId) => {
+        setWeeklyLoading(true);
+        setWeeklyError(null);
+        try {
+            const res = await getStudentClassDetailsGroupedByWeek(studentId);
+            if (!res || !res.success) throw new Error(res?.message || "Failed to fetch weekly details");
+            setWeeklyDetails(res.data || []);
+            setWeeklyDialogOpen(true);
+        } catch (err) {
+            setWeeklyError(err.message || "Failed to fetch weekly details");
+        } finally {
+            setWeeklyLoading(false);
+        }
     };
 
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                <CircularProgress />
+                <CircularProgress/>
             </Box>
         );
     }
@@ -784,15 +725,14 @@ const ChildrenList = () => {
         );
     }
 
-    console.log(form)
     return (
-        <Box sx={{ p: 3, maxWidth: '1400px', mx: 'auto' }}>
+        <Box sx={{p: 3, maxWidth: '1400px', mx: 'auto'}}>
             <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 mb: 4,
-                mt: 2
+                mt: 2,
             }}>
                 <Typography
                     variant="h4"
@@ -811,9 +751,9 @@ const ChildrenList = () => {
                     variant="contained"
                     onClick={handleOpen}
                     sx={{
-                        bgcolor: 'rgb(51, 62, 77)',
+                        backgroundColor: 'rgb(51, 62, 77)',
                         '&:hover': {
-                            bgcolor: 'rgb(41, 52, 67)'
+                            backgroundColor: 'rgb(41, 52, 67)'
                         },
                         position: 'absolute',
                         right: '24px'
@@ -837,7 +777,7 @@ const ChildrenList = () => {
                     <Table>
                         <TableHead>
                             <TableRow sx={{
-                                bgcolor: 'rgb(51, 62, 77)',
+                                backgroundColor: 'rgb(51, 62, 77)',
                                 '& th': {
                                     fontSize: '15px',
                                     fontWeight: '600',
@@ -845,23 +785,17 @@ const ChildrenList = () => {
                                     padding: '16px'
                                 }
                             }}>
-                                <TableCell sx={{ color: 'white' }}>Name</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Gender</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Date of Birth</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Place of Birth</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Update Count</TableCell>
-                                <TableCell sx={{ color: 'white' }}>Actions</TableCell>
+                                <TableCell sx={{color: 'white'}}>Name</TableCell>
+                                <TableCell sx={{color: 'white'}}>Gender</TableCell>
+                                <TableCell sx={{color: 'white'}}>Date of Birth</TableCell>
+                                <TableCell sx={{color: 'white'}}>Place of Birth</TableCell>
+                                <TableCell sx={{color: 'white'}}>Update Count</TableCell>
+                                <TableCell sx={{color: 'white'}}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {children.length > 0 ? (
                                 children.map((child) => {
-                                    console.log("Child data:", {
-                                        id: child.id,
-                                        name: child.name,
-                                        isStudent: child.isStudent,
-                                        updateCount: child.updateCount
-                                    });
                                     return (
                                         <TableRow
                                             key={child.id}
@@ -892,7 +826,7 @@ const ChildrenList = () => {
                                                     </Typography>
                                                     {child.isStudent && (
                                                         <Typography variant="caption"
-                                                            color="success.main">(Enrolled)</Typography>
+                                                                    color="success.main">(Enrolled)</Typography>
                                                     )}
                                                     {child.hadForm && (
                                                         <Typography variant="caption" color="warning.main">(Form
@@ -905,22 +839,16 @@ const ChildrenList = () => {
                                                     <IconButton
                                                         onClick={() => handleViewOpen(child)}
                                                         sx={{
-                                                            color: '#1976d2',
+                                                            color: '#353E4C',
                                                             '&:hover': {
                                                                 backgroundColor: 'rgba(25, 118, 210, 0.04)'
                                                             }
                                                         }}
                                                     >
-                                                        <VisibilityIcon color={"primary"} />
+                                                        <VisibilityIcon color={"primary"}/>
                                                     </IconButton>
                                                     <IconButton
                                                         onClick={() => {
-                                                            console.log("Edit button clicked for child:", {
-                                                                id: child.id,
-                                                                name: child.name,
-                                                                isStudent: child.isStudent,
-                                                                updateCount: child.updateCount
-                                                            });
                                                             handleEditOpen(child);
                                                         }}
                                                         disabled={child.isStudent || child.updateCount >= 5}
@@ -931,14 +859,14 @@ const ChildrenList = () => {
                                                         }
                                                         sx={{
                                                             color: (child.isStudent || child.updateCount >= 5) ?
-                                                                'grey.400' : '#1976d2',
+                                                                'grey.400' : '#353E4C',
                                                             '&:hover': {
                                                                 backgroundColor: 'rgba(25, 118, 210, 0.04)'
                                                             },
                                                             transition: 'all 0.2s ease'
                                                         }}
                                                     >
-                                                        <EditIcon color={"primary"} />
+                                                        <EditIcon color={"primary"}/>
                                                     </IconButton>
                                                 </Stack>
                                             </TableCell>
@@ -954,7 +882,7 @@ const ChildrenList = () => {
                                             py: 8,
                                             fontSize: '15px',
                                             color: 'text.secondary',
-                                            bgcolor: 'rgba(0, 0, 0, 0.02)'
+                                            backgroundColor: 'rgba(0, 0, 0, 0.02)'
                                         }}
                                     >
                                         <Typography variant="body1">
@@ -973,7 +901,7 @@ const ChildrenList = () => {
                 open={open}
                 onClose={handleClose}
             >
-                <AppBar sx={{ position: 'relative' }}>
+                <AppBar sx={{position: 'relative'}}>
                     <Toolbar>
                         <IconButton
                             edge="start"
@@ -981,9 +909,9 @@ const ChildrenList = () => {
                             onClick={handleClose}
                             aria-label="close"
                         >
-                            <CloseIcon />
+                            <CloseIcon/>
                         </IconButton>
-                        <Typography sx={{ ml: 2, flex: 1 }} variant="h6">
+                        <Typography sx={{ml: 2, flex: 1}} variant="h6">
                             {editId ? "Edit Child Information" : "Add New Child"}
                         </Typography>
                     </Toolbar>
@@ -992,9 +920,7 @@ const ChildrenList = () => {
                 <form onSubmit={handleSubmit}>
                     <DialogContent sx={{
                         p: 4,
-                        maxWidth: '1200px',
-                        mx: 'auto',
-                        height: 'calc(100% - 140px)',
+                        width: '100vw',
                         overflow: 'auto'
                     }}>
                         {/* Basic Information Section */}
@@ -1004,13 +930,12 @@ const ChildrenList = () => {
                             borderBottom: '2px solid',
                             borderColor: 'primary.main',
                             fontWeight: 'bold',
-                            textAlign: 'center',
                             fontSize: '28px',
                             color: 'rgb(51, 62, 77)'
                         }}>
                             Basic Information
                         </Typography>
-                        <Stack spacing={3} sx={{ mb: 6 }}>
+                        <Stack spacing={3} sx={{mb: 6}}>
                             <TextField
                                 label="Name"
                                 name="name"
@@ -1033,12 +958,12 @@ const ChildrenList = () => {
                                 >
                                     <FormControlLabel
                                         value="male"
-                                        control={<Radio color="primary" />}
+                                        control={<Radio color="primary"/>}
                                         label="Male"
                                     />
                                     <FormControlLabel
                                         value="female"
-                                        control={<Radio color="primary" />}
+                                        control={<Radio color="primary"/>}
                                         label="Female"
                                     />
                                 </RadioGroup>
@@ -1050,7 +975,7 @@ const ChildrenList = () => {
                                 type="date"
                                 value={form.dateOfBirth}
                                 onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
+                                InputLabelProps={{shrink: true}}
                                 required
                                 fullWidth
                                 size="medium"
@@ -1070,7 +995,7 @@ const ChildrenList = () => {
                             />
                         </Stack>
 
-                        <Divider sx={{ my: 4 }} />
+                        <Divider sx={{my: 4}}/>
 
                         {/* Documents Section */}
                         <Typography variant="h5" sx={{
@@ -1079,7 +1004,6 @@ const ChildrenList = () => {
                             borderBottom: '2px solid',
                             borderColor: 'primary.main',
                             fontWeight: 'bold',
-                            textAlign: 'center',
                             fontSize: '28px',
                             color: 'rgb(51, 62, 77)'
                         }}>
@@ -1089,57 +1013,120 @@ const ChildrenList = () => {
                         {/* File Upload Section */}
                         <Stack spacing={3}>
                             <Grid container spacing={3}>
-                                <Grid item xs={12} sm={4}>
-                                    <UploadBox
-                                        label="Upload Profile Image"
-                                        hasFile={Boolean(uploadedFiles.profile)}
-                                        onUpload={(file) => handleFileUpload(file, 'profile')}
-                                    >
-                                        <ImagePreview
-                                            url={uploadedFiles.profile}
-                                            label="Profile Image"
-                                            onDelete={() => handleDeleteImage('profileImage')}
-                                            onView={() => handleViewImage(uploadedFiles.profile)}
-                                        />
-                                    </UploadBox>
-                                    {errors.profileImage && (
-                                        <FormHelperText error>{errors.profileImage}</FormHelperText>
-                                    )}
-                                </Grid>
-                                <Grid item xs={12} sm={4}>
-                                    <UploadBox
-                                        label="Upload Birth Certificate"
-                                        hasFile={Boolean(uploadedFiles.birth)}
-                                        onUpload={(file) => handleFileUpload(file, 'birth')}
-                                    >
-                                        <ImagePreview
-                                            url={uploadedFiles.birth}
-                                            label="Birth Certificate"
-                                            onDelete={() => handleDeleteImage('birthCertificateImg')}
-                                            onView={() => handleViewImage(uploadedFiles.birth)}
-                                        />
-                                    </UploadBox>
-                                    {errors.birthCertificate && (
-                                        <FormHelperText error>{errors.birthCertificate}</FormHelperText>
-                                    )}
-                                </Grid>
-                                <Grid item xs={12} sm={4}>
-                                    <UploadBox
-                                        label="Upload Household Registration"
-                                        hasFile={Boolean(uploadedFiles.household)}
-                                        onUpload={(file) => handleFileUpload(file, 'household')}
-                                    >
-                                        <ImagePreview
-                                            url={uploadedFiles.household}
-                                            label="Household Registration"
-                                            onDelete={() => handleDeleteImage('householdRegistrationImg')}
-                                            onView={() => handleViewImage(uploadedFiles.household)}
-                                        />
-                                    </UploadBox>
-                                    {errors.householdRegistration && (
-                                        <FormHelperText error>{errors.householdRegistration}</FormHelperText>
-                                    )}
-                                </Grid>
+                                {[
+                                    {
+                                        field: 'profile',
+                                        label: 'Profile',
+                                        value: form.profileImage,
+                                        formKey: 'profileImage'
+                                    },
+                                    {
+                                        field: 'birth',
+                                        label: 'Birth Certificate',
+                                        value: form.birthCertificateImg,
+                                        formKey: 'birthCertificateImg'
+                                    },
+                                    {
+                                        field: 'household',
+                                        label: 'Household Registration',
+                                        value: form.householdRegistrationImg,
+                                        formKey: 'householdRegistrationImg'
+                                    }
+                                ].map(({field, label, value, formKey}) => (
+                                    <Grid item xs={12} sm={4} key={field}>
+                                        <Box
+                                            sx={{
+                                                position: 'relative',
+                                                width: 120,
+                                                height: 120,
+                                                mx: 'auto',
+                                                borderRadius: 3,
+                                                boxShadow: 2,
+                                                backgroundColor: '#f5f7fa',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                overflow: 'hidden',
+                                                transition: 'box-shadow 0.2s',
+                                                '&:hover': {boxShadow: 4}
+                                            }}
+                                        >
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                style={{display: 'none'}}
+                                                id={`${field}-upload`}
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    handleFileUpload(file, field);
+                                                }}
+                                            />
+                                            {value ? (
+                                                <>
+                                                    <ModalImage
+                                                        small={value}
+                                                        large={value}
+                                                        alt={label}
+                                                    />
+                                                    <IconButton
+                                                        size="small"
+                                                        sx={{
+                                                            position: 'absolute',
+                                                            top: 6,
+                                                            right: 6,
+                                                            backgroundColor: 'rgba(255,255,255,0.85)',
+                                                        }}
+                                                        onClick={() => setForm(prev => ({...prev, [formKey]: ""}))}
+                                                    >
+                                                        <DeleteIcon fontSize="small"/>
+                                                    </IconButton>
+                                                    <label htmlFor={`${field}-upload`}>
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{
+                                                                position: 'absolute',
+                                                                bottom: 6,
+                                                                right: 6,
+                                                                backgroundColor: 'rgba(255,255,255,0.85)',
+                                                            }}
+                                                        >
+                                                            <CloudUploadIcon fontSize="small"/>
+                                                        </IconButton>
+                                                    </label>
+                                                </>
+                                            ) : (
+                                                <label htmlFor={`${field}-upload`}
+                                                       style={{width: '100%', height: '100%'}}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        component="span"
+                                                        sx={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: 3,
+                                                            fontWeight: 600,
+                                                            fontSize: 14,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            justifyContent: 'center',
+                                                            alignItems: 'center'
+                                                        }}
+                                                        startIcon={<CloudUploadIcon/>}
+                                                    >
+                                                        Upload {label}
+                                                    </Button>
+                                                </label>
+                                            )}
+                                        </Box>
+                                        <Typography align="center" variant="body2" sx={{mt: 1, fontWeight: 500}}>
+                                            {label}
+                                        </Typography>
+                                        {errors[formKey] && (
+                                            <FormHelperText error>{errors[formKey]}</FormHelperText>
+                                        )}
+                                    </Grid>
+                                ))}
                             </Grid>
                         </Stack>
                     </DialogContent>
@@ -1149,7 +1136,7 @@ const ChildrenList = () => {
                         bottom: 0,
                         right: 0,
                         width: '100%',
-                        bgcolor: 'background.paper',
+                        backgroundColor: 'background.paper',
                         borderTop: '1px solid',
                         borderColor: 'divider',
                         p: 2,
@@ -1162,10 +1149,7 @@ const ChildrenList = () => {
                             type="submit"
                             sx={{
                                 minWidth: 120,
-                                bgcolor: 'rgb(51, 62, 77)',
-                                '&:hover': {
-                                    bgcolor: 'rgb(41, 52, 67)'
-                                }
+                                backgroundColor: 'rgb(51, 62, 77)',
                             }}
                         >
                             SAVE
@@ -1177,9 +1161,9 @@ const ChildrenList = () => {
                 open={snackbar.open}
                 autoHideDuration={3000}
                 onClose={handleSnackbarClose}
-                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                anchorOrigin={{vertical: "top", horizontal: "center"}}
             >
-                <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+                <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{width: "100%"}}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>
@@ -1192,343 +1176,209 @@ const ChildrenList = () => {
                 fullWidth
                 PaperProps={{
                     sx: {
-                        borderRadius: '12px',
-                        overflow: 'hidden'
+                        borderRadius: 4,
+                        boxShadow: 8,
+                        overflow: 'hidden',
+                        background: 'rgba(255,255,255,0.98)'
                     }
                 }}
             >
-                <DialogContent sx={{ p: 0 }}>
+                <DialogTitle sx={{
+                    px: 4, py: 3, bgcolor: 'primary.main', color: 'white', fontWeight: 700, fontSize: 22
+                }}>
+                    Child Details
+                    <IconButton
+                        onClick={() => setViewDialogOpen(false)}
+                        sx={{position: 'absolute', right: 16, top: 16, color: 'white'}}
+                    >
+                        <CloseIcon/>
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{p: 4}}>
+                    {/* BASIC INFO */}
+                    <Typography variant="h6" sx={{mb: 2, color: 'primary.main', fontWeight: 600}}>
+                        Basic Information
+                    </Typography>
                     {selectedChild && (
-                        <Box>
-                            <Tabs
-                                value={activeTab}
-                                onChange={(e, newValue) => {
-                                    setActiveTab(newValue);
-                                    // Fetch classes when Classes tab is selected and child is a student
-                                    if (newValue === 2 && selectedChild?.isStudent) {
-                                        fetchStudentClasses(selectedChild.id);
-                                    }
-                                }}
-                                sx={{
-                                    borderBottom: 1,
-                                    borderColor: 'divider',
-                                    bgcolor: 'background.paper'
-                                }}
-                            >
-                                <Tab
-                                    label="Basic Information"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        '&.Mui-selected': { color: 'rgb(51, 62, 77)' }
-                                    }}
-                                />
-                                <Tab
-                                    label="Documents"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        '&.Mui-selected': { color: 'rgb(51, 62, 77)' }
-                                    }}
-                                />
-                                <Tab
-                                    label="Classes"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        '&.Mui-selected': { color: 'rgb(51, 62, 77)' }
-                                    }}
-                                />
-                            </Tabs>
-
-                            <Box sx={{ p: 3 }}>
-                                {activeTab === 0 ? (
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12}>
-                                            <Paper elevation={0} sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
-                                                <Grid container spacing={3}>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box>
-                                                            <Typography variant="subtitle2" color="text.secondary">
-                                                                Name
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
-                                                                {selectedChild.name}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box>
-                                                            <Typography variant="subtitle2" color="text.secondary">
-                                                                Gender
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
-                                                                {selectedChild.gender}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box>
-                                                            <Typography variant="subtitle2" color="text.secondary">
-                                                                Date of Birth
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
-                                                                {formatDateForDisplay(selectedChild.dateOfBirth)}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box>
-                                                            <Typography variant="subtitle2" color="text.secondary">
-                                                                Place of Birth
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
-                                                                {selectedChild.placeOfBirth}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                    <Grid item xs={12} sm={6}>
-                                                        <Box>
-                                                            <Typography variant="subtitle2" color="text.secondary">
-                                                                Status
-                                                            </Typography>
-                                                            <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
-                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                                    {`Updates: ${selectedChild.updateCount || 0}/5`}
-                                                                </Typography>
-                                                                {selectedChild.isStudent && (
-                                                                    <Chip
-                                                                        label="Enrolled"
-                                                                        size="small"
-                                                                        color="success"
-                                                                        sx={{ ml: 1 }}
-                                                                    />
-                                                                )}
-                                                            </Box>
-                                                        </Box>
-                                                    </Grid>
-                                                </Grid>
+                        <Grid container spacing={3} sx={{mb: 4}}>
+                            <Grid item xs={12} sm={6}>
+                                <Paper elevation={2}
+                                       sx={{p: 3, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2}}>
+                                    <AccountCircleIcon color="primary" sx={{fontSize: 40}}/>
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">Name</Typography>
+                                        <Typography variant="h6" fontWeight={600}>{selectedChild.name}</Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Paper elevation={2}
+                                       sx={{p: 3, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2}}>
+                                    <WcIcon color="primary" sx={{fontSize: 40}}/>
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">Gender</Typography>
+                                        <Typography variant="h6" fontWeight={600}>{selectedChild.gender}</Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Paper elevation={2}
+                                       sx={{p: 3, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2}}>
+                                    <CakeIcon color="primary" sx={{fontSize: 40}}/>
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">Date of
+                                            Birth</Typography>
+                                        <Typography variant="h6"
+                                                    fontWeight={600}>{formatDateForDisplay(selectedChild.dateOfBirth)}</Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Paper elevation={2}
+                                       sx={{p: 3, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2}}>
+                                    <LocationOnIcon color="primary" sx={{fontSize: 40}}/>
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">Place of
+                                            Birth</Typography>
+                                        <Typography variant="h6"
+                                                    fontWeight={600}>{selectedChild.placeOfBirth}</Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <Paper elevation={2}
+                                       sx={{p: 3, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 2}}>
+                                    <UpdateIcon color="primary" sx={{fontSize: 40}}/>
+                                    <Box>
+                                        <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                                        <Typography variant="h6" fontWeight={600}>
+                                            Updates: {selectedChild.updateCount || 0}/5
+                                            {selectedChild.isStudent && (
+                                                <Chip label="Enrolled" size="small" color="success" sx={{ml: 2}}/>
+                                            )}
+                                        </Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    )}
+                    <Divider sx={{my: 3}}/>
+                    {/* DOCUMENTS */}
+                    <Typography variant="h6" sx={{mb: 2, color: 'primary.main', fontWeight: 600}}>
+                        Documents
+                    </Typography>
+                    {selectedChild && (
+                        <Grid container spacing={3} sx={{mb: 4}}>
+                            {[
+                                {key: 'profileImage', label: 'Profile'},
+                                {key: 'birthCertificateImg', label: 'Birth Certificate'},
+                                {key: 'householdRegistrationImg', label: 'Household Registration'}
+                            ].map(({key, label}) => (
+                                <Grid item xs={12} sm={4} key={key}>
+                                    <Paper elevation={2} sx={{
+                                        p: 2, borderRadius: 3, textAlign: 'center', position: 'relative', minHeight: 220
+                                    }}>
+                                        {selectedChild[key] ? (
+                                            <>
+                                                <img
+                                                    src={selectedChild[key]}
+                                                    alt={label}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: 160,
+                                                        objectFit: 'cover',
+                                                        borderRadius: 8,
+                                                        boxShadow: '0 2px 8px #0001'
+                                                    }}
+                                                />
+                                                <IconButton
+                                                    onClick={() => handleImageClick(selectedChild[key])}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        bgcolor: 'white',
+                                                        boxShadow: 1
+                                                    }}
+                                                >
+                                                    <ZoomInIcon/>
+                                                </IconButton>
+                                            </>
+                                        ) : (
+                                            <Box sx={{
+                                                width: '100%',
+                                                height: 160,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: 'grey.100',
+                                                borderRadius: 2,
+                                                color: 'grey.400'
+                                            }}>
+                                                <InsertPhotoIcon sx={{fontSize: 48}}/>
+                                            </Box>
+                                        )}
+                                        <Typography variant="subtitle2" sx={{mt: 2}}>
+                                            {label}
+                                        </Typography>
+                                    </Paper>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    )}
+                    <Divider sx={
+                        {my: 3}}/>
+                    {/* CLASSES */}
+                    {selectedChild && selectedChild.isStudent && (
+                        <Box sx={{mt: 3}}>
+                            <Stack direction="row" alignItems="center" spacing={1} sx={{mb: 2}}>
+                                <SchoolIcon color="primary" sx={{fontSize: 28}}/>
+                                <Typography variant="h6" fontWeight={700}>
+                                    Classes
+                                </Typography>
+                            </Stack>
+                            <Grid container spacing={2}>
+                                {studentClasses.length === 0 ? (
+                                    <Grid item xs={12}>
+                                        <Typography color="text.secondary" align="center" sx={{py: 2}}>
+                                            No classes assigned yet.
+                                        </Typography>
+                                    </Grid>
+                                ) : (
+                                    studentClasses.map((cls) => (
+                                        <Grid item xs={12} sm={6} md={4} key={cls.classId}>
+                                            <Paper
+                                                elevation={4}
+                                                sx={{
+                                                    p: 3,
+                                                    borderRadius: 4,
+                                                    transition: '0.2s',
+                                                    '&:hover': {boxShadow: 8, background: '#f0f7ff'},
+                                                    cursor: 'pointer',
+                                                    border: '1.5px solid #e3e3e3',
+                                                    minHeight: 120,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                }}
+                                                onClick={() => handleClassDetailsOpen(cls)}
+                                            >
+                                                <SchoolIcon color="primary" sx={{fontSize: 48, mr: 2}}/>
+                                                <Box>
+                                                    <Typography variant="subtitle1" fontWeight={700}>
+                                                        {cls.className}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Grade: {cls.grade}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Room: {cls.room}
+                                                    </Typography>
+                                                </Box>
                                             </Paper>
                                         </Grid>
-                                    </Grid>
-                                ) : activeTab === 1 ? (
-                                    <Grid container spacing={3}>
-                                        {selectedChild.profileImage && (
-                                            <Grid item xs={12} md={4}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        p: 2,
-                                                        bgcolor: 'grey.50',
-                                                        borderRadius: 2,
-                                                        height: '100%'
-                                                    }}
-                                                >
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        Profile Image
-                                                    </Typography>
-                                                    <Card
-                                                        sx={{
-                                                            mt: 1,
-                                                            cursor: 'pointer',
-                                                            '&:hover': {
-                                                                opacity: 0.9,
-                                                                boxShadow: 3
-                                                            }
-                                                        }}
-                                                        onClick={() => handleImageClick(selectedChild.profileImage)}
-                                                    >
-                                                        <CardMedia
-                                                            component="img"
-                                                            height="200"
-                                                            image={selectedChild.profileImage}
-                                                            alt="Profile"
-                                                            sx={{
-                                                                objectFit: 'cover',
-                                                                borderRadius: 1
-                                                            }}
-                                                        />
-                                                    </Card>
-                                                </Paper>
-                                            </Grid>
-                                        )}
-                                        {selectedChild.birthCertificateImg && (
-                                            <Grid item xs={12} md={4}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        p: 2,
-                                                        bgcolor: 'grey.50',
-                                                        borderRadius: 2,
-                                                        height: '100%'
-                                                    }}
-                                                >
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        Birth Certificate
-                                                    </Typography>
-                                                    <Card
-                                                        sx={{
-                                                            mt: 1,
-                                                            cursor: 'pointer',
-                                                            '&:hover': {
-                                                                opacity: 0.9,
-                                                                boxShadow: 3
-                                                            }
-                                                        }}
-                                                        onClick={() => handleImageClick(selectedChild.birthCertificateImg)}
-                                                    >
-                                                        <CardMedia
-                                                            component="img"
-                                                            height="200"
-                                                            image={selectedChild.birthCertificateImg}
-                                                            alt="Birth Certificate"
-                                                            sx={{
-                                                                objectFit: 'cover',
-                                                                borderRadius: 1
-                                                            }}
-                                                        />
-                                                    </Card>
-                                                </Paper>
-                                            </Grid>
-                                        )}
-                                        {selectedChild.householdRegistrationImg && (
-                                            <Grid item xs={12} md={4}>
-                                                <Paper
-                                                    elevation={0}
-                                                    sx={{
-                                                        p: 2,
-                                                        bgcolor: 'grey.50',
-                                                        borderRadius: 2,
-                                                        height: '100%'
-                                                    }}
-                                                >
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        Household Registration
-                                                    </Typography>
-                                                    <Card
-                                                        sx={{
-                                                            mt: 1,
-                                                            cursor: 'pointer',
-                                                            '&:hover': {
-                                                                opacity: 0.9,
-                                                                boxShadow: 3
-                                                            }
-                                                        }}
-                                                        onClick={() => handleImageClick(selectedChild.householdRegistrationImg)}
-                                                    >
-                                                        <CardMedia
-                                                            component="img"
-                                                            height="200"
-                                                            image={selectedChild.householdRegistrationImg}
-                                                            alt="Household Registration"
-                                                            sx={{
-                                                                objectFit: 'cover',
-                                                                borderRadius: 1
-                                                            }}
-                                                        />
-                                                    </Card>
-                                                </Paper>
-                                            </Grid>
-                                        )}
-                                    </Grid>
-                                ) : activeTab === 2 ? (
-                                    <Box>
-                                        {selectedChild.isStudent ? (
-                                            <Box>
-                                                <Typography variant="h6" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                                    Assigned Classes
-                                                </Typography>
-                                                {loadingClasses ? (
-                                                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                        <CircularProgress />
-                                                    </Box>
-                                                ) : classes.length > 0 ? (
-                                                    <Grid container spacing={2}>
-                                                        {classes.map((classItem) => (
-                                                            <Grid item xs={12} sm={6} md={4} key={classItem.id}>
-                                                                <Paper
-                                                                    elevation={1}
-                                                                    sx={{
-                                                                        p: 3,
-                                                                        bgcolor: 'grey.50',
-                                                                        borderRadius: 2,
-                                                                        border: '1px solid',
-                                                                        borderColor: 'primary.main',
-                                                                        '&:hover': {
-                                                                            boxShadow: 3,
-                                                                            bgcolor: 'grey.100'
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'rgb(51, 62, 77)' }}>
-                                                                        {classItem.class || 'N/A'}
-                                                                    </Typography>
-                                                                    {classItem.grade && (
-                                                                        <Box sx={{ mb: 1 }}>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                Grade: {classItem.grade}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    )}
-                                                                    {classItem.room && (
-                                                                        <Box sx={{ mb: 1 }}>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                Room: {classItem.room}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    )}
-                                                                    {classItem.startDate && (
-                                                                        <Box sx={{ mb: 1 }}>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                Start Date: {classItem.startDate}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    )}
-                                                                    {classItem.endDate && (
-                                                                        <Box sx={{ mb: 1 }}>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                End Date: {classItem.endDate}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    )}
-                                                                    <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                                                                        <Button
-                                                                            variant="outlined"
-                                                                            size="small"
-                                                                            onClick={() => handleClassDetailsOpen(classItem)}
-                                                                            sx={{
-                                                                                flex: 1,
-                                                                                borderColor: 'primary.main',
-                                                                                color: 'primary.main',
-                                                                                '&:hover': {
-                                                                                    borderColor: 'primary.dark',
-                                                                                    backgroundColor: 'primary.main',
-                                                                                    color: 'white'
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            View Details
-                                                                        </Button>
-                                                                    </Box>
-                                                                </Paper>
-                                                            </Grid>
-                                                        ))}
-                                                    </Grid>
-                                                ) : (
-                                                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                        <Typography variant="body1" color="text.secondary">
-                                                            No classes assigned yet.
-                                                        </Typography>
-                                                    </Box>
-                                                )}
-                                            </Box>
-                                        ) : (
-                                            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                <Typography variant="body1" color="text.secondary">
-                                                    This child is not enrolled as a student yet.
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                ) : null}
-                            </Box>
+                                    ))
+                                )}
+                            </Grid>
                         </Box>
                     )}
                 </DialogContent>
@@ -1542,7 +1392,7 @@ const ChildrenList = () => {
                 fullWidth
                 PaperProps={{
                     sx: {
-                        bgcolor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
                         maxHeight: '90vh',
                         m: 2
                     }
@@ -1558,22 +1408,22 @@ const ChildrenList = () => {
                         <IconButton
                             onClick={() => handleZoom(false)}
                             disabled={imageZoom <= 0.5}
-                            sx={{ color: 'white' }}
+                            sx={{color: 'white'}}
                         >
-                            <ZoomOutIcon />
+                            <ZoomOutIcon/>
                         </IconButton>
                         <IconButton
                             onClick={() => handleZoom(true)}
                             disabled={imageZoom >= 3}
-                            sx={{ color: 'white' }}
+                            sx={{color: 'white'}}
                         >
-                            <ZoomInIcon />
+                            <ZoomInIcon/>
                         </IconButton>
                         <IconButton
                             onClick={() => setSelectedImage(null)}
-                            sx={{ color: 'white' }}
+                            sx={{color: 'white'}}
                         >
-                            <CloseIcon />
+                            <CloseIcon/>
                         </IconButton>
                     </Stack>
                 </DialogTitle>
@@ -1603,201 +1453,299 @@ const ChildrenList = () => {
                 onClose={handleClassDetailsClose}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{
-                    sx: {
-                        borderRadius: '12px',
-                        overflow: 'hidden'
-                    }
-                }}
             >
-                <DialogContent sx={{ p: 0 }}>
-                    {selectedClass && (
+                <DialogTitle>
+                    <IconButton onClick={handleClassDetailsClose} sx={{position: 'absolute', right: 16, top: 16}}>
+                        <CloseIcon/>
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    {selectedClass ? (
                         <Box>
-                            <Tabs
-                                value={classDetailsTab}
-                                onChange={(e, newValue) => {
-                                    setClassDetailsTab(newValue);
-                                    // Fetch data when tab changes
-                                    if (newValue === 0) {
-                                        fetchSyllabus(selectedClass.id);
-                                    } else if (newValue === 1) {
-                                        fetchActivities(selectedClass.id);
-                                    }
-                                }}
-                                sx={{
-                                    borderBottom: 1,
-                                    borderColor: 'divider',
-                                    bgcolor: 'background.paper'
-                                }}
-                            >
-                                <Tab
-                                    label="Syllabus"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        '&.Mui-selected': { color: 'rgb(51, 62, 77)' }
-                                    }}
-                                />
-                                <Tab
-                                    label="Activities"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        '&.Mui-selected': { color: 'rgb(51, 62, 77)' }
-                                    }}
-                                />
-                            </Tabs>
-
-                            <Box sx={{ p: 3 }}>
-                                {/* Class Information Header */}
-                                <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
-                                    <Typography variant="h6" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                        {selectedClass.class || 'N/A'}
+                            {/* Thông tin cơ bản */}
+                            <Typography variant="h4" fontWeight={700} sx={{ mb: 2, color: 'primary.main' }}>
+                                {selectedClass.className}
+                            </Typography>
+                            <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
+                                <Typography variant="subtitle1" color="text.secondary">
+                                    <b>Grade:</b> {selectedClass.grade}
+                                </Typography>
+                                <Typography variant="subtitle1" color="text.secondary">
+                                    <b>Room:</b> {selectedClass.room}
+                                </Typography>
+                            </Stack>
+                            {selectedClass.syllabus && (
+                                <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5faff', borderLeft: '6px solid #1976d2' }}>
+                                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                                        Syllabus: {selectedClass.syllabus.title}
                                     </Typography>
-                                    <Grid container spacing={2}>
-                                        {selectedClass.grade && (
-                                            <Grid item xs={6} sm={3}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Grade: {selectedClass.grade}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                        {selectedClass.startDate && (
-                                            <Grid item xs={6} sm={3}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Start: {selectedClass.startDate}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                        {selectedClass.endDate && (
-                                            <Grid item xs={6} sm={3}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    End: {selectedClass.endDate}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                    </Grid>
+                                    <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                                        {selectedClass.syllabus.description}
+                                    </Typography>
                                 </Paper>
+                            )}
+                            {/* Weekly Schedules */}
+                            <Typography variant="h6" sx={{mt: 2, mb: 1}}>Weekly Schedules</Typography>
+                            {selectedClass.schedules && selectedClass.schedules.length > 0 ? (
+                                selectedClass.schedules.map((week, idx) => {
+                                    const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+                                    const allTimes = Array.from(
+                                        new Set(
+                                            week.activities.map(a => `${a.startTime} - ${a.endTime}`)
+                                        )
+                                    );
+                                    return (
+                                        <Box key={idx} sx={{mb: 3}}>
+                                            <Typography variant="subtitle1" fontWeight={600} sx={{mb: 1, color: '#1976d2'}}>
+                                                Week {week.weekNumber} ({week.startDate} - {week.endDate})
+                                            </Typography>
+                                            <TableContainer component={Paper} sx={{mb: 1, bgcolor: '#fffde7', borderRadius: 2, boxShadow: 2}}>
+                                                <Table size="small">
+                                                    <TableHead>
+                                                        <TableRow sx={{bgcolor: '#ffe082'}}>
+                                                            <TableCell sx={{fontWeight: 700}}>Time</TableCell>
+                                                            {daysOfWeek.map(day => (
+                                                                <TableCell key={day} align="center" sx={{fontWeight: 700}}>{day}</TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {allTimes.map(time => (
+                                                            <TableRow key={time}>
+                                                                <TableCell sx={{fontWeight: 600, bgcolor: '#fffde7'}}>{time}</TableCell>
+                                                                {daysOfWeek.map(day => (
+                                                                    <TableCell key={day} align="center" sx={{p: 0.5, bgcolor: '#e3f2fd'}}>
+                                                                        {week.activities
+                                                                            .filter(a => `${a.startTime} - ${a.endTime}` === time && a.dayOfWeek === day)
+                                                                            .map((a, i) => (
+                                                                                <Paper key={i} sx={{
+                                                                                    p: 1,
+                                                                                    mb: 0.5,
+                                                                                    bgcolor: '#b2dfdb',
+                                                                                    borderRadius: 2,
+                                                                                    boxShadow: 1,
+                                                                                    borderLeft: '6px solid #1976d2'
+                                                                                }}>
+                                                                                    <Typography variant="body2" fontWeight={600} color="#00695c">{a.topic}</Typography>
+                                                                                    <Typography variant="caption" color="text.secondary">{a.description}</Typography>
+                                                                                </Paper>
+                                                                            ))}
+                                                                    </TableCell>
+                                                                ))}
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+                                            {/* Danh sách lesson của tuần */}
+                                            <Typography variant="subtitle2" sx={{mt: 1}}>Lessons this week:</Typography>
+                                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                                {week.lessons && week.lessons.map((lesson, i) => (
+                                                    <Chip key={i} label={lesson.topic} variant="outlined" sx={{mb: 1, bgcolor: '#fffde7', fontWeight: 600}}/>
+                                                ))}
+                                            </Stack>
+                                        </Box>
+                                    );
+                                })
+                            ) : (
+                                <Typography color="text.secondary">No weekly schedules available.</Typography>
+                            )}
+                        </Box>
+                    ) : (
+                        <Typography color="text.secondary">No class selected.</Typography>
+                    )}
+                </DialogContent>
+            </Dialog>
 
-                                {classDetailsTab === 0 ? (
-                                    <Box>
-                                        <Typography variant="h4" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                            Syllabus
-                                        </Typography>
-                                        {loadingSyllabus ? (
-                                            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                <CircularProgress />
-                                            </Box>
-                                        ) : syllabus && Array.isArray(syllabus.lessons) && syllabus.lessons.length > 0 ? (
-                                            <>
-                                            <Box sx={{ mb: 2 }}>
-                                                <Typography variant="h7" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                                    {syllabus.title}
-                                                </Typography>
-                                            </Box>
-                                            <Box sx={{ mb: 2 }}>
-                                                <Typography variant="p" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                                    {syllabus.description}
-                                                </Typography>
-                                            </Box>
-                                            <Grid container spacing={2}>
-                                                {syllabus.lessons.map((item, index) => (
-                                                    <Grid item xs={12} key={index}>
-                                                        <Paper
-                                                            elevation={1}
-                                                            sx={{
-                                                                p: 3,
-                                                                bgcolor: 'white',
-                                                                borderRadius: 2,
-                                                                border: '1px solid',
-                                                                borderColor: 'primary.main'
-                                                            }}
-                                                        >
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'rgb(51, 62, 77)' }}>
-                                                                {item.title || item.name || `Lesson ${index + 1}`}
-                                                            </Typography>
-                                                            {item.description && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                    {item.description}
-                                                                </Typography>
-                                                            )}
-                                                        </Paper>
-                                                    </Grid>
+            {/* Dialog hiển thị weekly details */}
+            <Dialog
+                open={weeklyDialogOpen}
+                onClose={() => setWeeklyDialogOpen(false)}
+                maxWidth="lg"
+                fullWidth
+            >
+                <DialogTitle>
+                    Weekly Class Details
+                    <IconButton
+                        onClick={() => setWeeklyDialogOpen(false)}
+                        sx={{position: 'absolute', right: 16, top: 16}}
+                    >
+                        <CloseIcon/>
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    {weeklyLoading ? (
+                        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                            <CircularProgress/>
+                        </Box>
+                    ) : weeklyError ? (
+                        <Alert severity="error">{weeklyError}</Alert>
+                    ) : (
+                        weeklyDetails && weeklyDetails.length > 0 ? (
+                            weeklyDetails.map((classDetail, idx) => (
+                                <Box key={idx} sx={{mb: 4}}>
+                                    <Typography variant="h6" sx={{mb: 2}}>
+                                        {classDetail.className} (Grade: {classDetail.grade}, Room: {classDetail.room})
+                                    </Typography>
+                                    {classDetail.schedules.map((week, widx) => (
+                                        <Paper key={widx} sx={{mb: 2, p: 2}}>
+                                            <Typography variant="subtitle1">
+                                                Week {week.weekNumber}: {week.startDate} - {week.endDate}
+                                            </Typography>
+                                            <Typography variant="body2"
+                                                        sx={{mt: 1, fontWeight: 600}}>Lessons:</Typography>
+                                            <ul>
+                                                {week.lessons && week.lessons.map((lesson, lidx) => (
+                                                    <li key={lidx}>
+                                                        <b>{lesson.topic}</b>: {lesson.description}
+                                                    </li>
                                                 ))}
-                                            </Grid>
-                                            </>
-                                        ) : (
-                                            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                <Typography variant="body1" color="text.secondary">
-                                                    No syllabus available for this class.
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                ) : (
-                                    <Box>
-                                        <Typography variant="h6" sx={{ mb: 2, color: 'rgb(51, 62, 77)' }}>
-                                            Activities
-                                        </Typography>
-                                        {loadingActivities ? (
-                                            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                <CircularProgress />
-                                            </Box>
-                                        ) : activities.length > 0 ? (
-                                            <Grid container spacing={2}>
-                                                {activities.map((item, index) => (
-                                                    <Grid item xs={12} sm={6} key={index}>
-                                                        <Paper
-                                                            elevation={1}
-                                                            sx={{
-                                                                p: 3,
-                                                                bgcolor: 'white',
-                                                                borderRadius: 2,
-                                                                border: '1px solid',
-                                                                borderColor: 'primary.main',
-                                                                height: '100%'
-                                                            }}
-                                                        >
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'rgb(51, 62, 77)' }}>
-                                                                {item.topic || item.name || `Activity ${index + 1}`}
-                                                            </Typography>
-                                                            {item.description && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                    {item.description}
-                                                                </Typography>
-                                                            )}
-                                                            {item.dayOfWeek && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                    Day: {item.dayOfWeek}
-                                                                </Typography>
-                                                            )}
-                                                            {item.startTime && item.endTime && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                    Time: {item.startTime} - {item.endTime}
-                                                                </Typography>
-                                                            )}
-                                                            {item.location && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                    Location: {item.location}
-                                                                </Typography>
-                                                            )}
-                                                            {item.type && (
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    Type: {item.type}
-                                                                </Typography>
-                                                            )}
-                                                        </Paper>
-                                                    </Grid>
+                                            </ul>
+                                            <Typography variant="body2"
+                                                        sx={{mt: 1, fontWeight: 600}}>Activities:</Typography>
+                                            <ul>
+                                                {week.activities && week.activities.map((act, aidx) => (
+                                                    <li key={aidx}>
+                                                        <b>{act.type === "lesson" ? "Lesson" : "Extra"}:</b> {act.topic} ({act.dayOfWeek}, {act.startTime} - {act.endTime})<br/>
+                                                        {act.description}
+                                                    </li>
                                                 ))}
-                                            </Grid>
-                                        ) : (
-                                            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                                                <Typography variant="body1" color="text.secondary">
-                                                    No activities available for this class.
-                                                </Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                )}
-                            </Box>
+                                            </ul>
+                                        </Paper>
+                                    ))}
+                                </Box>
+                            ))
+                        ) : (
+                            <Typography>No weekly details available.</Typography>
+                        )
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog hiển thị thông tin chi tiết lớp */}
+            <Dialog
+                open={classDetailDialogOpen}
+                onClose={() => setClassDetailDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle>
+                    Class Detail
+                    <IconButton onClick={() => setClassDetailDialogOpen(false)}
+                                sx={{position: 'absolute', right: 16, top: 16}}>
+                        <CloseIcon/>
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    {selectedClassDetail && (
+                        <Box>
+                            {/* Thông tin cơ bản */}
+                            <Typography variant="h5" fontWeight={700} sx={{mb: 2}}>
+                                {selectedClassDetail.className}
+                            </Typography>
+                            <Stack direction="row" spacing={3} sx={{mb: 2}}>
+                                <Typography variant="body1"><b>Grade:</b> {selectedClassDetail.grade}</Typography>
+                                <Typography variant="body1"><b>Room:</b> {selectedClassDetail.room}</Typography>
+                            </Stack>
+                            {/* Syllabus */}
+                            {selectedClassDetail.syllabus && (
+                                <Paper sx={{p: 2, mb: 3, background: '#f5f7fa'}}>
+                                    <Typography variant="subtitle1"
+                                                fontWeight={600}>Syllabus: {selectedClassDetail.syllabus.title}</Typography>
+                                    <Typography variant="body2"
+                                                color="text.secondary">{selectedClassDetail.syllabus.description}</Typography>
+                                </Paper>
+                            )}
+                            {/* Schedules (theo tuần) */}
+                            <Typography variant="h6" sx={{mb: 1}}>Weekly Schedules</Typography>
+                            {selectedClassDetail.schedules && selectedClassDetail.schedules.length > 0 ? (
+                                selectedClassDetail.schedules.map((week, idx) => {
+                                    // Lấy tất cả các ngày có trong tuần này
+                                    const daysOfWeek = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+                                    // Lấy tất cả các khung giờ unique trong tuần này
+                                    const allTimes = Array.from(
+                                        new Set(
+                                            week.activities.map(a => `${a.startTime} - ${a.endTime}`)
+                                        )
+                                    );
+
+                                    return (
+                                        <Paper key={idx} sx={{
+                                            mb: 3,
+                                            p: 2,
+                                            borderLeft: '4px solid #1976d2',
+                                            background: '#f8fafc'
+                                        }}>
+                                            <Typography variant="subtitle1" fontWeight={600} sx={{mb: 1}}>
+                                                Week {week.weekNumber}: {week.startDate} - {week.endDate}
+                                            </Typography>
+                                            <Table size="small"
+                                                   sx={{mb: 2, background: 'white', borderRadius: 2, boxShadow: 1}}>
+                                                <TableHead>
+                                                    <TableRow>
+                                                        <TableCell sx={{
+                                                            fontWeight: 700,
+                                                            background: '#e3eafc'
+                                                        }}>Time</TableCell>
+                                                        {daysOfWeek.map(day => (
+                                                            <TableCell key={day} align="center"
+                                                                       sx={{fontWeight: 700, background: '#e3eafc'}}>
+                                                                {day.charAt(0) + day.slice(1).toLowerCase()}
+                                                            </TableCell>
+                                                        ))}
+                                                    </TableRow>
+                                                </TableHead>
+                                                <TableBody>
+                                                    {allTimes.map(time => (
+                                                        <TableRow key={time}>
+                                                            <TableCell sx={{fontWeight: 600}}>{time}</TableCell>
+                                                            {daysOfWeek.map(day => (
+                                                                <TableCell key={day} align="center">
+                                                                    {week.activities
+                                                                        .filter(a => `${a.startTime} - ${a.endTime}` === time && a.dayOfWeek === day)
+                                                                        .map((a, i) => (
+                                                                            <Box
+                                                                                key={i}
+                                                                                sx={{
+                                                                                    mb: 0.5,
+                                                                                    p: 1,
+                                                                                    borderRadius: 2,
+                                                                                    background: a.type === 'lesson' ? '#e3f2fd' : '#fff3e0',
+                                                                                    color: '#222',
+                                                                                    fontSize: 13,
+                                                                                    boxShadow: 1,
+                                                                                }}
+                                                                            >
+                                                                                <b>{a.topic}</b>
+                                                                                <Typography variant="caption"
+                                                                                            display="block"
+                                                                                            color="text.secondary">
+                                                                                    {a.description}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        ))}
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                            {/* Lessons summary dưới bảng */}
+                                            <Typography variant="body2" fontWeight={600} sx={{mt: 1}}>Lessons this
+                                                week:</Typography>
+                                            <ul>
+                                                {week.lessons && week.lessons.map((lesson, lidx) => (
+                                                    <li key={lidx}>
+                                                        <b>{lesson.topic}</b>: {lesson.description}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </Paper>
+                                    );
+                                })
+                            ) : (
+                                <Typography>No schedules available.</Typography>
+                            )}
                         </Box>
                     )}
                 </DialogContent>

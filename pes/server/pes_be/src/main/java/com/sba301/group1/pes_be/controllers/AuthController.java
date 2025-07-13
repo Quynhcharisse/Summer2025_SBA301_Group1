@@ -1,8 +1,8 @@
 package com.sba301.group1.pes_be.controllers;
 
-import com.sba301.group1.pes_be.requests.LoginRequest;
-import com.sba301.group1.pes_be.requests.RegisterRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.LoginRequest;
+import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,5 +39,4 @@ public class AuthController {
     public ResponseEntity<ResponseObject> register(@RequestBody RegisterRequest request) {
         return authService.register(request);
     }
-
 }

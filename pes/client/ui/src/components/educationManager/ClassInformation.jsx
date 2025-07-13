@@ -50,7 +50,7 @@ const ClassInformation = ({
             numberStudent: classData?.numberStudent || 1,
             roomNumber: classData?.roomNumber || null,
             startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
-            status: classData?.status?.toLowerCase() || 'active',
+            status: classData?.status?.toUpperCase() || '',
             grade: classData?.grade || ''
         });
     }, [classData]);
@@ -190,19 +190,17 @@ const ClassInformation = ({
     ];
 
     const statusOptions = [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-        { value: 'pending approval', label: 'Pending Approval' }
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'INACTIVE', label: 'Inactive' },
+        { value: 'DRAFT', label: 'Draft' }
     ];
 
     const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active':
+        switch (status) {
+            case 'ACTIVE':
                 return 'success';
-            case 'inactive':
+            case 'INACTIVE':
                 return 'error';
-            case 'pending':
-                return 'warning';
             default:
                 return 'default';
         }

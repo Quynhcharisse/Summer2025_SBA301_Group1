@@ -17,13 +17,21 @@ import {
     FormControlLabel,
     Radio,
     Alert,
-    Snackbar
+    Snackbar,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Box,
+    IconButton
 } from "@mui/material";
 import { viewParentProfile, updateParentProfile } from "../../services/ParentService";
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { format, parse } from 'date-fns';
+import CloseIcon from '@mui/icons-material/Close';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const ProfileParent = () => {
     const [parent, setParent] = useState(null);
@@ -165,113 +173,225 @@ const ProfileParent = () => {
                 </CardActions>
             </Card>
 
-            <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-                <DialogTitle>Update Profile</DialogTitle>
-                <DialogContent dividers>
+            <Dialog 
+                open={open} 
+                onClose={handleClose} 
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                        m: 2
+                    }
+                }}
+            >
+                <DialogTitle sx={{ 
+                    p: 3,
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+                    bgcolor: 'rgba(0, 0, 0, 0.02)'
+                }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <AccountCircleIcon color="primary" sx={{ fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 500 }}>Update Profile</Typography>
+                    </Box>
+                    <IconButton 
+                        onClick={handleClose} 
+                        size="small"
+                        sx={{ 
+                            '&:hover': { 
+                                bgcolor: 'rgba(0, 0, 0, 0.04)' 
+                            } 
+                        }}
+                    >
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                </DialogTitle>
+
+                <DialogContent sx={{ p: 3 }}>
                     <form onSubmit={handleSubmit}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Name"
-                                    name="name"
-                                    value={form.name || ''}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Phone"
-                                    name="phone"
-                                    value={form.phone || ''}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Identity Number"
-                                    name="identityNumber"
-                                    value={form.identityNumber || ''}
-                                    fullWidth
-                                    size="small"
-                                    disabled
-                                    InputProps={{
-                                        readOnly: true,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Address"
-                                    name="address"
-                                    value={form.address || ''}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Job"
-                                    name="job"
-                                    value={form.job || ''}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    label="Relationship to Child"
-                                    name="relationshipToChild"
-                                    value={form.relationshipToChild || ''}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    required
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                    <DatePicker
-                                        label="Date of Birth"
-                                        value={form.dayOfBirth ? parse(form.dayOfBirth, 'yyyy-MM-dd', new Date()) : null}
-                                        onChange={handleDateChange}
-                                        renderInput={(params) => (
-                                            <TextField {...params} fullWidth size="small" required />
-                                        )}
-                                        format="yyyy-MM-dd"
+                        <Stack spacing={3}>
+                            <Box>
+                                <Typography variant="body2" color="textSecondary" gutterBottom>
+                                    Personal Information
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                
+                                <Stack spacing={2.5}>
+                                    <TextField
+                                        label="Name"
+                                        name="name"
+                                        value={form.name || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        required
+                                        size="small"
+                                        sx={{ bgcolor: 'white' }}
                                     />
-                                </LocalizationProvider>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle2" gutterBottom>Gender</Typography>
-                                <RadioGroup
-                                    name="gender"
-                                    value={form.gender || parent.gender || ''}
-                                    onChange={handleChange}
-                                    row
-                                    required
-                                >
-                                    <FormControlLabel value="male" control={<Radio />} label="Male" />
-                                    <FormControlLabel value="female" control={<Radio />} label="Female" />
-                                </RadioGroup>
-                            </Grid>
-                        </Grid>
+                                    
+                                    <TextField
+                                        label="Phone"
+                                        name="phone"
+                                        value={form.phone || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        required
+                                        size="small"
+                                        sx={{ bgcolor: 'white' }}
+                                    />
+                                    
+                                    <TextField
+                                        label="Identity Number"
+                                        name="identityNumber"
+                                        value={form.identityNumber || ''}
+                                        fullWidth
+                                        size="small"
+                                        disabled
+                                        sx={{ bgcolor: 'rgba(0, 0, 0, 0.02)' }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                    />
+                                    
+                                    <TextField
+                                        label="Address"
+                                        name="address"
+                                        value={form.address || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        required
+                                        size="small"
+                                        multiline
+                                        rows={2}
+                                        sx={{ bgcolor: 'white' }}
+                                    />
+                                </Stack>
+                            </Box>
+
+                            <Box>
+                                <Typography variant="body2" color="textSecondary" gutterBottom>
+                                    Additional Information
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                
+                                <Stack spacing={2.5}>
+                                    <TextField
+                                        label="Job"
+                                        name="job"
+                                        value={form.job || ''}
+                                        onChange={handleChange}
+                                        fullWidth
+                                        required
+                                        size="small"
+                                        sx={{ bgcolor: 'white' }}
+                                    />
+                                    
+                                    <FormControl 
+                                        component="fieldset" 
+                                        sx={{ 
+                                            width: '100%',
+                                            p: 1.5,
+                                            border: '1px solid rgba(0, 0, 0, 0.23)',
+                                            borderRadius: 1,
+                                            bgcolor: 'white'
+                                        }}
+                                    >
+                                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                                            Relationship to Child *
+                                        </Typography>
+                                        <RadioGroup
+                                            name="relationshipToChild"
+                                            value={form.relationshipToChild || ''}
+                                            onChange={handleChange}
+                                            row
+                                            required
+                                            sx={{ justifyContent: 'flex-start', gap: 4, ml: 1 }}
+                                        >
+                                            <FormControlLabel value="Mother" control={<Radio size="small" />} label="Mother" />
+                                            <FormControlLabel value="Father" control={<Radio size="small" />} label="Father" />
+                                        </RadioGroup>
+                                    </FormControl>
+                                    
+                                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                                        <DatePicker
+                                            label="Date of Birth"
+                                            value={form.dayOfBirth ? parse(form.dayOfBirth, 'yyyy-MM-dd', new Date()) : null}
+                                            onChange={handleDateChange}
+                                            renderInput={(params) => (
+                                                <TextField {...params} fullWidth size="small" required sx={{ bgcolor: 'white' }} />
+                                            )}
+                                            format="yyyy-MM-dd"
+                                        />
+                                    </LocalizationProvider>
+                                    
+                                    <FormControl 
+                                        component="fieldset" 
+                                        sx={{ 
+                                            width: '100%',
+                                            p: 1.5,
+                                            border: '1px solid rgba(0, 0, 0, 0.23)',
+                                            borderRadius: 1,
+                                            bgcolor: 'white'
+                                        }}
+                                    >
+                                        <Typography variant="body2" color="textSecondary" gutterBottom>
+                                            Gender *
+                                        </Typography>
+                                        <RadioGroup
+                                            name="gender"
+                                            value={form.gender || parent.gender || ''}
+                                            onChange={handleChange}
+                                            row
+                                            required
+                                            sx={{ justifyContent: 'flex-start', gap: 4, ml: 1 }}
+                                        >
+                                            <FormControlLabel value="male" control={<Radio size="small" />} label="Male" />
+                                            <FormControlLabel value="female" control={<Radio size="small" />} label="Female" />
+                                        </RadioGroup>
+                                    </FormControl>
+                                </Stack>
+                            </Box>
+                        </Stack>
                     </form>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose} color="inherit" disabled={saving}>
+
+                <DialogActions 
+                    sx={{ 
+                        p: 3, 
+                        borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+                        bgcolor: 'rgba(0, 0, 0, 0.02)',
+                        gap: 1
+                    }}
+                >
+                    <Button 
+                        onClick={handleClose} 
+                        color="inherit" 
+                        disabled={saving}
+                        sx={{ 
+                            borderRadius: 2,
+                            px: 3,
+                            '&:hover': {
+                                bgcolor: 'rgba(0, 0, 0, 0.08)'
+                            }
+                        }}
+                    >
                         Cancel
                     </Button>
-                    <Button onClick={handleSubmit} variant="contained" disabled={saving}>
+                    <Button 
+                        onClick={handleSubmit} 
+                        variant="contained" 
+                        disabled={saving}
+                        sx={{ 
+                            borderRadius: 2,
+                            px: 4,
+                            '&:hover': {
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                            }
+                        }}
+                    >
                         {saving ? 'Saving...' : 'Save Changes'}
                     </Button>
                 </DialogActions>

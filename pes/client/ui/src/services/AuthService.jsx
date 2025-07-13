@@ -1,11 +1,17 @@
 import axiosClient from '../config/APIConfig.jsx'
 
-export const login = async (email, password) => {
-    const response = await axiosClient.post('/auth/login', {
-        email,
-        password
-    })
-    return response ? response.data : null
+
+export async function login(email, password) {
+    try {
+        const response = await axiosClient.post('/auth/login', { email, password });
+        return response ? response.data : null;
+    } catch (error) {
+        if (error.response && error.response.data) {
+            // Lấy message từ backend kể cả khi lỗi HTTP
+            return error.response.data;
+        }
+        return { success: false, message: "Login failed!" };
+    }
 }
 
 export const logout = async  () => {

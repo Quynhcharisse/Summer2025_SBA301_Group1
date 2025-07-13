@@ -11,9 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface ScheduleRepo extends JpaRepository<Schedule, Integer> {
-    
-    List<Schedule> findByClassesId(Integer classId);
-    
     @Query("SELECT s FROM Schedule s WHERE s.classes.id = :classId AND s.weekNumber = :weekNumber")
     Optional<Schedule> findByClassesIdAndWeekNumber(@Param("classId") Integer classId, @Param("weekNumber") int weekNumber);
     

@@ -55,7 +55,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             Account account = (Account) userDetailsService.loadUserByUsername(email);
 
-            if (account == null || !account.getStatus().equalsIgnoreCase(Status.ACCOUNT_ACTIVE.getValue())) {
+            if (account == null || !account.getStatus().equals(Status.ACCOUNT_ACTIVE)) {
                 filterChain.doFilter(request, response);
                 return;
             }

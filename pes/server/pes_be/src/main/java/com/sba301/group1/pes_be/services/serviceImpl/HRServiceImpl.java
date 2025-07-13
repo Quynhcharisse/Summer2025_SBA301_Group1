@@ -4,10 +4,11 @@ import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Parent;
+import com.sba301.group1.pes_be.models.Student;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
-import com.sba301.group1.pes_be.requests.ParentRequest;
-import com.sba301.group1.pes_be.response.ResponseObject;
+import com.sba301.group1.pes_be.dto.requests.ParentRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.HRService;
 import com.sba301.group1.pes_be.services.JWTService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,9 +47,8 @@ public class HRServiceImpl implements HRService {
         parentData.put("job", parent.getJob());
         parentData.put("relationshipToChild", parent.getRelationshipToChild());
         parentData.put("dayOfBirth", parent.getDayOfBirth());
-//        parentData.put("account", parent.getAccount());
         parentData.put("address", parent.getAddress());
-        parentData.put("status", parent.getAccount().getStatus());
+        parentData.put("status", parent.getAccount().getStatus().getValue());
         parentData.put("phone", parent.getAccount().getPhone());
         parentData.put("name", parent.getAccount().getName());
         return ResponseEntity.ok(
@@ -81,12 +81,10 @@ public class HRServiceImpl implements HRService {
                             .build());
         }
 
-        // Update fields (giả sử ParentRequest có các trường tương ứng)
         parent.setJob(request.getJob());
         parent.setRelationshipToChild(request.getRelationshipToChild());
         parent.setDayOfBirth(request.getDayOfBirth());
         parent.setAddress(request.getAddress());
-        // Thêm các trường khác nếu cần
 
         parentRepo.save(parent);
 
@@ -120,17 +118,22 @@ public class HRServiceImpl implements HRService {
                             .build());
         }
 
-        // Có thể kiểm tra quyền xóa ở đây nếu cần
+        // Kiểm tra nếu parent còn con đang học
+        if (parent.getStudentList() != null && parent.getStudentList().stream().anyMatch(Student::isStudent)) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("Cannot ban parent: There are still children enrolled in school.")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
 
-
-//        parentRepo.delete(parent);
         Account parentAccount = accountRepo.getReferenceById(parent.getAccount().getId());
-        System.out.println(parentAccount);
-        parentAccount.setStatus(Status.ACCOUNT_BAN.getValue());
+        parentAccount.setStatus(Status.ACCOUNT_BAN);
         accountRepo.save(parentAccount);
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
-                        .message("Parent deleted successfully")
+                        .message("Parent banned successfully")
                         .success(true)
                         .data(null)
                         .build());
@@ -158,13 +161,9 @@ public class HRServiceImpl implements HRService {
                             .build());
         }
 
-        // Có thể kiểm tra quyền xóa ở đây nếu cần
-
-
-//        parentRepo.delete(parent);
         Account parentAccount = accountRepo.getReferenceById(parent.getAccount().getId());
         System.out.println(parentAccount);
-        parentAccount.setStatus(Status.ACCOUNT_ACTIVE.getValue());
+        parentAccount.setStatus(Status.ACCOUNT_ACTIVE);
         accountRepo.save(parentAccount);
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -194,8 +193,7 @@ public class HRServiceImpl implements HRService {
             parentData.put("job", parent.getJob());
             parentData.put("relationshipToChild", parent.getRelationshipToChild());
             parentData.put("dayOfBirth", parent.getDayOfBirth());
-//            parentData.put("account", parent.getAccount());
-            parentData.put("status", parent.getAccount().getStatus());
+            parentData.put("status", parent.getAccount().getStatus().getValue());
             parentData.put("address", parent.getAddress());
             parentData.put("name", parent.getAccount().getName());
             parentData.put("phone", parent.getAccount().getPhone());

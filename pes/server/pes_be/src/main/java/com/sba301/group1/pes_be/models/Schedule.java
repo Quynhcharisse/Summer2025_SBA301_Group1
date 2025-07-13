@@ -36,9 +36,10 @@ public class Schedule {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    @Column(name = "`week_number`")
+    @Column(name = "`week_number`", length = 7)
     int weekNumber;
 
+    @Column(length = 50)
     String note;
 
     @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
