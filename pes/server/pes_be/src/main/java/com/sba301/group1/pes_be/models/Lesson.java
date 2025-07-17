@@ -40,7 +40,6 @@ public class Lesson {
     @Column(length = 150)
     String description;
 
-    @Column(length = 10)
     Integer duration;
 
     @Column(length = 50)

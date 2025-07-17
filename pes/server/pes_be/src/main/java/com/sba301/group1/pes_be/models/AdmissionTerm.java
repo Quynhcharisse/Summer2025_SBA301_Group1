@@ -45,10 +45,10 @@ public class AdmissionTerm {
     String name;
 
     @Column(name = "`start_date`")
-    LocalDateTime startDate; //theo ngày + h
+    LocalDateTime startDate;
 
     @Column(name = "`end_date`")
-    LocalDateTime endDate; //theo ngày + h
+    LocalDateTime endDate;
 
     int year;
 

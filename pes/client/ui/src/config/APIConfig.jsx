@@ -1,10 +1,12 @@
 import axios from "axios";
 import {refreshToken} from "../services/JWTService.jsx";
 
-axios.defaults.baseURL = "http://localhost:8080/api/v1"
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const REFRESH_ENDPOINT = import.meta.env.VITE_REFRESH_ENDPOINT;
+const LOGIN_PAGE_URL = import.meta.env.VITE_LOGIN_PAGE_URL;
 
 const axiosClient = axios.create({
-    baseURL: axios.defaults.baseURL,
+    baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -17,9 +19,9 @@ axiosClient.interceptors.response.use(
         const originalRequest = error.config;
 
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            if (originalRequest.url === "/auth/refresh") {
+            if (originalRequest.url === REFRESH_ENDPOINT) {
                 console.error("Refresh token request failed, redirecting to the login.");
-                window.location.href = "/login";
+                window.location.href = LOGIN_PAGE_URL;
                 return Promise.reject(error);
             }
 
@@ -28,11 +30,11 @@ axiosClient.interceptors.response.use(
                 if (refreshRes.success) {
                     return axiosClient(originalRequest);
                 } else {
-                    window.location.href = "/login";
+                    window.location.href = LOGIN_PAGE_URL;
                 }
             } catch (refreshError) {
                 console.error("Refresh token request failed", refreshError);
-                window.location.href = "/login";
+                window.location.href = LOGIN_PAGE_URL;
             }
         }
         return Promise.reject(error);

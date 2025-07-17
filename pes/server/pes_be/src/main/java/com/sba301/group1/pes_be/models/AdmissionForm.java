@@ -38,12 +38,6 @@ public class AdmissionForm {
     @Column(name = "`household_registration_address`", length = 100)
     String householdRegistrationAddress;
 
-    @Column(name = "`birth_certificate_img`")
-    String birthCertificateImg;
-
-    @Column(name = "`household_registration_img`")
-    String householdRegistrationImg ;
-
     @Column(name = "`child_characteristics_form_img`")
     String childCharacteristicsFormImg;
 

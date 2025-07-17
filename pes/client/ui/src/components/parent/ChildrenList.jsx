@@ -827,11 +827,13 @@ const ChildrenList = () => {
                                                     {child.isStudent && (
                                                         <Typography variant="caption"
                                                                     color="success.main">(Enrolled)</Typography>
+                                                        //đã được nhập học
                                                     )}
                                                     {child.hadForm && (
                                                         <Typography variant="caption" color="warning.main">(Form
                                                             Submitted)</Typography>
                                                     )}
+                                                    {/*đã nộp đơn đăng kí*/}
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
@@ -1463,10 +1465,10 @@ const ChildrenList = () => {
                     {selectedClass ? (
                         <Box>
                             {/* Thông tin cơ bản */}
-                            <Typography variant="h4" fontWeight={700} sx={{ mb: 2, color: 'primary.main' }}>
+                            <Typography variant="h4" fontWeight={700} sx={{mb: 2, color: 'primary.main'}}>
                                 {selectedClass.className}
                             </Typography>
-                            <Stack direction="row" spacing={3} sx={{ mb: 2 }}>
+                            <Stack direction="row" spacing={3} sx={{mb: 2}}>
                                 <Typography variant="subtitle1" color="text.secondary">
                                     <b>Grade:</b> {selectedClass.grade}
                                 </Typography>
@@ -1475,11 +1477,11 @@ const ChildrenList = () => {
                                 </Typography>
                             </Stack>
                             {selectedClass.syllabus && (
-                                <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5faff', borderLeft: '6px solid #1976d2' }}>
-                                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                                <Paper sx={{p: 2, mb: 3, bgcolor: '#f5faff', borderLeft: '6px solid #1976d2'}}>
+                                    <Typography variant="subtitle1" fontWeight={700} sx={{mb: 1}}>
                                         Syllabus: {selectedClass.syllabus.title}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{whiteSpace: 'pre-line'}}>
                                         {selectedClass.syllabus.description}
                                     </Typography>
                                 </Paper>
@@ -1496,25 +1498,36 @@ const ChildrenList = () => {
                                     );
                                     return (
                                         <Box key={idx} sx={{mb: 3}}>
-                                            <Typography variant="subtitle1" fontWeight={600} sx={{mb: 1, color: '#1976d2'}}>
+                                            <Typography variant="subtitle1" fontWeight={600}
+                                                        sx={{mb: 1, color: '#1976d2'}}>
                                                 Week {week.weekNumber} ({week.startDate} - {week.endDate})
                                             </Typography>
-                                            <TableContainer component={Paper} sx={{mb: 1, bgcolor: '#fffde7', borderRadius: 2, boxShadow: 2}}>
+                                            <TableContainer component={Paper} sx={{
+                                                mb: 1,
+                                                bgcolor: '#fffde7',
+                                                borderRadius: 2,
+                                                boxShadow: 2
+                                            }}>
                                                 <Table size="small">
                                                     <TableHead>
                                                         <TableRow sx={{bgcolor: '#ffe082'}}>
                                                             <TableCell sx={{fontWeight: 700}}>Time</TableCell>
                                                             {daysOfWeek.map(day => (
-                                                                <TableCell key={day} align="center" sx={{fontWeight: 700}}>{day}</TableCell>
+                                                                <TableCell key={day} align="center"
+                                                                           sx={{fontWeight: 700}}>{day}</TableCell>
                                                             ))}
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
                                                         {allTimes.map(time => (
                                                             <TableRow key={time}>
-                                                                <TableCell sx={{fontWeight: 600, bgcolor: '#fffde7'}}>{time}</TableCell>
+                                                                <TableCell sx={{
+                                                                    fontWeight: 600,
+                                                                    bgcolor: '#fffde7'
+                                                                }}>{time}</TableCell>
                                                                 {daysOfWeek.map(day => (
-                                                                    <TableCell key={day} align="center" sx={{p: 0.5, bgcolor: '#e3f2fd'}}>
+                                                                    <TableCell key={day} align="center"
+                                                                               sx={{p: 0.5, bgcolor: '#e3f2fd'}}>
                                                                         {week.activities
                                                                             .filter(a => `${a.startTime} - ${a.endTime}` === time && a.dayOfWeek === day)
                                                                             .map((a, i) => (
@@ -1526,8 +1539,11 @@ const ChildrenList = () => {
                                                                                     boxShadow: 1,
                                                                                     borderLeft: '6px solid #1976d2'
                                                                                 }}>
-                                                                                    <Typography variant="body2" fontWeight={600} color="#00695c">{a.topic}</Typography>
-                                                                                    <Typography variant="caption" color="text.secondary">{a.description}</Typography>
+                                                                                    <Typography variant="body2"
+                                                                                                fontWeight={600}
+                                                                                                color="#00695c">{a.topic}</Typography>
+                                                                                    <Typography variant="caption"
+                                                                                                color="text.secondary">{a.description}</Typography>
                                                                                 </Paper>
                                                                             ))}
                                                                     </TableCell>
@@ -1541,7 +1557,8 @@ const ChildrenList = () => {
                                             <Typography variant="subtitle2" sx={{mt: 1}}>Lessons this week:</Typography>
                                             <Stack direction="row" spacing={1} flexWrap="wrap">
                                                 {week.lessons && week.lessons.map((lesson, i) => (
-                                                    <Chip key={i} label={lesson.topic} variant="outlined" sx={{mb: 1, bgcolor: '#fffde7', fontWeight: 600}}/>
+                                                    <Chip key={i} label={lesson.topic} variant="outlined"
+                                                          sx={{mb: 1, bgcolor: '#fffde7', fontWeight: 600}}/>
                                                 ))}
                                             </Stack>
                                         </Box>
