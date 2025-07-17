@@ -12,10 +12,11 @@ const ProtectRoute = ({ children, allowedRoles }) => {
     const checkAuth = async () => {
         const accessToken = Cookies.get('access');
         const checkToken = Cookies.get('check');
+        const LOGIN_URL = import.meta.env.VITE_LOGIN_PAGE_URL || "/login";
 
         if (!accessToken && !checkToken) {
             enqueueSnackbar("You are not authenticated", { variant: 'error' });
-            navigate('/login');
+            navigate(LOGIN_URL);
             return;
         }
 
@@ -36,13 +37,12 @@ const ProtectRoute = ({ children, allowedRoles }) => {
         if (checkToken) {
             const res = await refreshToken();
             if (res.success) {
-                // ✅ Sau khi có token mới → kiểm tra lại
                 await checkAuth();
             } else {
-                navigate('/login');
+                navigate(LOGIN_URL);
             }
         } else {
-            navigate('/login');
+            navigate(LOGIN_URL);
         }
     };
 

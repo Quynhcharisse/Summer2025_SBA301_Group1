@@ -275,8 +275,8 @@ public class AdmissionServiceImpl implements AdmissionService {
                             data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
                             data.put("profileImage", form.getStudent().getAdmissionFormList());
                             data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
-                            data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
-                            data.put("birthCertificateImg", form.getBirthCertificateImg());
+                            data.put("householdRegistrationImg", form.getStudent().getHouseholdRegistrationImg());
+                            data.put("birthCertificateImg", form.getStudent().getBirthCertificateImg());
                             data.put("commitmentImg", form.getCommitmentImg());
                             data.put("childCharacteristicsFormImg", form.getChildCharacteristicsFormImg());
                             data.put("submittedDate", form.getSubmittedDate());

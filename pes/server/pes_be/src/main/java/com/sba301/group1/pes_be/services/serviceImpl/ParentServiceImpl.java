@@ -160,8 +160,8 @@ public class ParentServiceImpl implements ParentService {
         data.put("studentDateOfBirth", form.getStudent().getDateOfBirth());
         data.put("studentPlaceOfBirth", form.getStudent().getPlaceOfBirth());
         data.put("profileImage", form.getStudent().getProfileImage());
-        data.put("householdRegistrationImg", form.getHouseholdRegistrationImg());
-        data.put("birthCertificateImg", form.getBirthCertificateImg());
+        data.put("householdRegistrationImg", form.getStudent().getHouseholdRegistrationImg());
+        data.put("birthCertificateImg", form.getStudent().getBirthCertificateImg());
         data.put("childCharacteristicsFormImg", form.getChildCharacteristicsFormImg());
         data.put("commitmentImg", form.getCommitmentImg());
         data.put("householdRegistrationAddress", form.getHouseholdRegistrationAddress());
