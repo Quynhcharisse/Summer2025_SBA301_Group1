@@ -1,6 +1,7 @@
 package com.sba301.group1.pes_be.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,12 +25,13 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "student_class", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"student_id", "class_id"})
+        @UniqueConstraint(columnNames = {"student_id", "classes_id"})
 })
 public class StudentClass {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`student_class_id`")
     Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)

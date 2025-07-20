@@ -36,6 +36,7 @@ public class Student {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`student_id`")
     Integer id;
 
     @Column(length = 50)

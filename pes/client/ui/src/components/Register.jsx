@@ -53,22 +53,40 @@ export default function Register() {
   const validateStep1 = () => {
     const newErrors = {};
     
-    if (!form.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-      newErrors.email = "Email is invalid";
+    // Email validation
+    if (!form.email || form.email.trim() === "") {
+      newErrors.email = "Email is required.";
+    } else if (!/^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/.test(form.email)) {
+      newErrors.email = "Invalid email format.";
     }
     
-    if (!form.password) {
-      newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    // Password validation
+    if (!form.password || form.password.trim() === "") {
+      newErrors.password = "Password is required.";
+    } else if (form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters long.";
+    } else {
+      const digitPattern = /.*\d.*/;
+      const lowerCasePattern = /.*[a-z].*/;
+      const upperCasePattern = /.*[A-Z].*/;
+      const specialPattern = /.*[^A-Za-z0-9].*/;
+      
+      if (!digitPattern.test(form.password)) {
+        newErrors.password = "Password must contain at least one digit.";
+      } else if (!lowerCasePattern.test(form.password)) {
+        newErrors.password = "Password must contain at least one lowercase letter.";
+      } else if (!upperCasePattern.test(form.password)) {
+        newErrors.password = "Password must contain at least one uppercase letter.";
+      } else if (!specialPattern.test(form.password)) {
+        newErrors.password = "Password must contain at least one special character.";
+      }
     }
     
+    // Confirm password validation
     if (!form.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Confirm password does not match password.";
     }
     
     setErrors(newErrors);
@@ -78,14 +96,71 @@ export default function Register() {
   const validateStep2 = () => {
     const newErrors = {};
     
-    if (!form.name) newErrors.name = "Name is required";
-    if (!form.phone) newErrors.phone = "Phone is required";
-    if (!form.gender) newErrors.gender = "Gender is required";
-    if (!form.identityNumber) newErrors.identityNumber = "Identity Number is required";
-    if (!form.address) newErrors.address = "Address is required";
-    if (!form.job) newErrors.job = "Job is required";
-    if (!form.relationshipToChild) newErrors.relationshipToChild = "Relationship to child is required";
-    if (!form.dayOfBirth) newErrors.dayOfBirth = "Date of birth is required";
+    // Name validation
+    if (!form.name || form.name.trim() === "") {
+      newErrors.name = "Name is required.";
+    } else if (!form.name.trim().match(/^[a-zA-Z\s'-]+$/)) {
+      newErrors.name = "Name can only contain letters, spaces, hyphens, and apostrophes.";
+    } else if (form.name.trim().length < 2 || form.name.trim().length > 50) {
+      newErrors.name = "Name must be between 2 and 50 characters.";
+    }
+    
+    // Phone validation
+    if (!form.phone || form.phone.trim() === "") {
+      newErrors.phone = "Phone number is required.";
+    } else if (!form.phone.trim().match(/^(03|05|07|08|09)\d{8}$/)) {
+      newErrors.phone = "Phone number must start with a valid prefix and be 10 digits.";
+    }
+    
+    // Gender validation
+    if (!form.gender || form.gender.trim() === "") {
+      newErrors.gender = "Gender is required.";
+    } else if (form.gender.trim() !== "male" && form.gender.trim() !== "female") {
+      newErrors.gender = "Gender must be 'male' or 'female'.";
+    }
+    
+    // Identity Number validation
+    if (!form.identityNumber || form.identityNumber.trim() === "") {
+      newErrors.identityNumber = "Identity number is required.";
+    } else if (!form.identityNumber.match(/^\d{12}$/)) {
+      newErrors.identityNumber = "Identity number must be exactly 12 digits.";
+    }
+    
+    // Address validation
+    if (!form.address || form.address.trim() === "") {
+      newErrors.address = "Address is required.";
+    } else if (form.address.trim().length < 5 || form.address.trim().length > 255) {
+      newErrors.address = "Address must be between 5 and 255 characters.";
+    }
+    
+    // Job validation
+    if (!form.job || form.job.trim() === "") {
+      newErrors.job = "Job is required.";
+    } else if (!form.job.trim().match(/^[a-zA-Z\s'-]{2,50}$/)) {
+      newErrors.job = "Job can only contain letters and must be between 2 and 50 characters.";
+    }
+    
+    // Relationship validation
+    if (!form.relationshipToChild || form.relationshipToChild.trim() === "") {
+      newErrors.relationshipToChild = "Relationship to child is required.";
+    } else if (!form.relationshipToChild.trim().match(/^(Father|Mother|Guardian)$/)) {
+      newErrors.relationshipToChild = "Relationship to child must be one of: Father, Mother, Guardian.";
+    }
+    
+    // Date of birth validation
+    if (!form.dayOfBirth) {
+      newErrors.dayOfBirth = "Day of birth is required.";
+    } else {
+      const birthDate = new Date(form.dayOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+      
+      if (age < 18 || (age === 18 && monthDiff < 0) || (age === 18 && monthDiff === 0 && dayDiff < 0)) {
+        newErrors.dayOfBirth = "Parent must be at least 18 years old.";
+      }
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -275,17 +350,24 @@ export default function Register() {
               error={!!errors.job}
               helperText={errors.job}
             />
-            <TextField
-              label="Relationship To Child"
-              name="relationshipToChild"
-              value={form.relationshipToChild}
-              onChange={handleChange}
-              fullWidth
-              required
-              margin="normal"
-              error={!!errors.relationshipToChild}
-              helperText={errors.relationshipToChild}
-            />
+            <FormControl component="fieldset" margin="normal" required error={!!errors.relationshipToChild}>
+              <FormLabel component="legend">Relationship To Child</FormLabel>
+              <RadioGroup
+                row
+                name="relationshipToChild"
+                value={form.relationshipToChild}
+                onChange={handleChange}
+              >
+                <FormControlLabel value="Father" control={<Radio />} label="Father" />
+                <FormControlLabel value="Mother" control={<Radio />} label="Mother" />
+                <FormControlLabel value="Guardian" control={<Radio />} label="Guardian" />
+              </RadioGroup>
+              {errors.relationshipToChild && (
+                <Typography color="error" variant="caption">
+                  {errors.relationshipToChild}
+                </Typography>
+              )}
+            </FormControl>
             <TextField
               label="Day of Birth"
               name="dayOfBirth"

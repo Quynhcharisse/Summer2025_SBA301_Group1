@@ -39,6 +39,7 @@ public class Classes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`classes_id`")
     Integer id;
 
     @Column(length = 50)

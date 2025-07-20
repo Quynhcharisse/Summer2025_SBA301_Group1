@@ -28,6 +28,7 @@ public class Activity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`activity_id`")
     Integer id;
 
     @Column(length = 50)
