@@ -28,7 +28,10 @@ echo "--- Database initialization complete ---"
 
 echo "--- 2. Starting Spring Boot application to create tables ---"
 cd /d "%PROJECT_ROOT%\server\pes_be"
-start "PES_BE" mvnw.cmd spring-boot:run
+echo "--- Packaging Spring Boot application ---"
+call mvnw.cmd package -DskipTests
+echo "--- Starting Spring Boot application from JAR ---"
+start "PES_BE" java -jar "target/pes_be-0.0.1-SNAPSHOT.jar"
 
 echo "--- Waiting for application to start ---"
 timeout /t 30 /nobreak
