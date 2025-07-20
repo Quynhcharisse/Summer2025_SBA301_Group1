@@ -171,17 +171,26 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
     const [openConfirm, setOpenConfirm] = useState(false);
     const [openImage, setOpenImage] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
+    const [isCancelling, setIsCancelling] = useState(false);
 
     const handleOpenConfirm = () => setOpenConfirm(true);
     const handleCloseConfirm = () => setOpenConfirm(false);
 
     async function HandleCancel() {
-        const response = await cancelAdmission(selectedForm.id)
-        if (response && response.success) {
-            enqueueSnackbar("Form cancelled successfully", {variant: "success"});
-            handleClosePopUp()
-        } else {
-            enqueueSnackbar(response.message || "Failed to cancel admission form", {variant: "error"});
+        setIsCancelling(true);
+        try {
+            const response = await cancelAdmission(selectedForm.id)
+            if (response && response.success) {
+                enqueueSnackbar("Form cancelled successfully", {variant: "success"});
+                handleClosePopUp()
+            } else {
+                enqueueSnackbar(response.message || "Failed to cancel admission form", {variant: "error"});
+            }
+        } catch (error) {
+            enqueueSnackbar("Error cancelling form", {variant: "error"});
+        } finally {
+            setIsCancelling(false);
+            setOpenConfirm(false);
         }
     }
 
@@ -307,8 +316,9 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                                 variant="contained"
                                 color="error"
                                 onClick={handleOpenConfirm}
+                                disabled={isCancelling}
                             >
-                                Cancel Form
+                                {isCancelling ? 'Cancelling...' : 'Cancel Form'}
                             </Button>
                         )}
 
@@ -323,8 +333,22 @@ function RenderDetailPopUp({handleClosePopUp, isPopUpOpen, selectedForm}) {
                                 </DialogContentText>
                             </DialogContent>
                             <DialogActions>
-                                <Button onClick={handleCloseConfirm} color="inherit">Disagree</Button>
-                                <Button onClick={HandleCancel} color="error" autoFocus>Agree</Button>
+                                <Button 
+                                    onClick={handleCloseConfirm} 
+                                    color="inherit"
+                                    disabled={isCancelling}
+                                >
+                                    Disagree
+                                </Button>
+                                <Button 
+                                    onClick={HandleCancel} 
+                                    color="error" 
+                                    autoFocus
+                                    disabled={isCancelling}
+                                    startIcon={isCancelling ? <CircularProgress size={16} color="inherit" /> : null}
+                                >
+                                    {isCancelling ? 'Cancelling...' : 'Agree'}
+                                </Button>
                             </DialogActions>
                         </Dialog>
                     </Stack>
@@ -345,7 +369,8 @@ function RenderFormPopUp({
                              selectedForm,
                              GetForm,
                              isRefill = false,
-                             formId
+                             formId,
+                             setIsFormSubmitting
                          }) {
     // Nếu là refill, lấy id học sinh từ selectedForm
     const [selectedStudentId, setSelectedStudentId] = useState(
@@ -388,10 +413,12 @@ function RenderFormPopUp({
     async function HandleSubmit() {
         setIsSubmit(true);
         setIsLoading(true);
+        setIsFormSubmitting && setIsFormSubmitting(true);
 
         if (!input.address.trim()) {
             enqueueSnackbar("Please enter household registration address", {variant: "error"});
             setIsLoading(false);
+            setIsFormSubmitting && setIsFormSubmitting(false);
             return;
         }
 
@@ -399,11 +426,13 @@ function RenderFormPopUp({
         if (!uploadedFile.childCharacteristics && !uploadedFile.childCharacteristicsUrl) {
             enqueueSnackbar("Please upload child characteristics form", {variant: "error"});
             setIsLoading(false);
+            setIsFormSubmitting && setIsFormSubmitting(false);
             return;
         }
         if (!uploadedFile.commitment && !uploadedFile.commitmentUrl) {
             enqueueSnackbar("Please upload commitment form", {variant: "error"});
             setIsLoading(false);
+            setIsFormSubmitting && setIsFormSubmitting(false);
             return;
         }
 
@@ -461,7 +490,6 @@ function RenderFormPopUp({
                 };
 
                 const response = await submittedForm(requestData);
-                setIsLoading(false);
                 if (response && response.success) {
                     enqueueSnackbar(response.message, {variant: 'success'});
                     GetForm();
@@ -471,8 +499,10 @@ function RenderFormPopUp({
                 }
             }
         } catch (error) {
-            setIsLoading(false);
             enqueueSnackbar("Error uploading files", {variant: "error"});
+        } finally {
+            setIsLoading(false);
+            setIsFormSubmitting && setIsFormSubmitting(false);
         }
     }
 
@@ -936,8 +966,9 @@ function RenderFormPopUp({
                         onClick={HandleSubmit}
                         sx={{px: 4, bgcolor: '#2c3e50', '&:hover': {bgcolor: '#1a252f'}}}
                         disabled={isLoading}
+                        startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
                     >
-                        {isLoading ? <CircularProgress size={24} color="inherit" /> : "SUBMIT"}
+                        {isLoading ? "SUBMITTING..." : "SUBMIT"}
                     </Button>
                 </Box>
             </Box>
@@ -945,7 +976,7 @@ function RenderFormPopUp({
     );
 }
 
-function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList, openRefillForm}) {
+function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList, openRefillForm, isFormSubmitting}) {
     return (
         <div className="container">
             {/*1.tiêu đề */}
@@ -971,7 +1002,10 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelect
                         marginRight: '3rem'
                     }}
                     onClick={openFormPopUpFunc}
-                    disabled={studentList && studentList.filter(student => !student.hadForm).length === 0} // disable  - có student và filter trả về 1 list mới.length = 0 bị rỗng
+                    disabled={
+                        isFormSubmitting || 
+                        (studentList && studentList.filter(student => !student.hadForm).length === 0)
+                    }
             >
                 Create new form
             </Button>
@@ -999,6 +1033,7 @@ export default function AdmissionForm() {
     })
 
     const [selectedForm, setSelectedForm] = useState(null)
+    const [isFormSubmitting, setIsFormSubmitting] = useState(false)
 
     function HandleSelectedForm(form) {
         setSelectedForm(form)
@@ -1042,6 +1077,7 @@ export default function AdmissionForm() {
                 HandleSelectedForm={HandleSelectedForm}
                 studentList={data.studentList}
                 openRefillForm={handleRefillForm}
+                isFormSubmitting={isFormSubmitting}
             />
             {
                 popUp.isOpen && popUp.type === 'form' &&
@@ -1050,6 +1086,7 @@ export default function AdmissionForm() {
                     handleClosePopUp={handleClosePopUp}
                     studentList={data.studentList}
                     GetForm={GetForm}
+                    setIsFormSubmitting={setIsFormSubmitting}
                 />
             }
             {
@@ -1070,6 +1107,7 @@ export default function AdmissionForm() {
                     GetForm={GetForm}
                     isRefill={true}
                     formId={selectedForm.id}
+                    setIsFormSubmitting={setIsFormSubmitting}
                 />
             }
         </>

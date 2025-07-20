@@ -59,12 +59,11 @@ public class AdmissionServiceImpl implements AdmissionService {
                         .grade(Grade.valueOf(request.getGrade().toUpperCase()))
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
-                        .year(Integer.parseInt(LocalDate.now().getYear() + "-" + (LocalDate.now().getYear() + 1)))
+                        .year(LocalDate.now().getYear())
                         .maxNumberRegistration(request.getMaxNumberRegistration())
                         .status(Status.INACTIVE_TERM)
                         .build()
         );
-
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
                         .message("Create term successfully")
@@ -120,8 +119,6 @@ public class AdmissionServiceImpl implements AdmissionService {
     }
 
     public static String updateTermValidate(UpdateAdmissionTermRequest request) {
-
-        System.out.println("Term ID: " + request.getTermId());
         if (request.getTermId() <= 0) {
             return "Term ID must be a positive number";
         }
