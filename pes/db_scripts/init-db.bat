@@ -35,10 +35,12 @@ echo "--- Data population complete ---"
 
 
 echo "--- 4. Stopping Spring Boot application ---"
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8080"') do (
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8080" ^| findstr "LISTENING"') do (
     echo "Stopping Spring Boot application (PID: %%a)"
     taskkill /F /PID %%a
+    goto :after_kill
 )
+:after_kill
 
 
 echo "--- Full database initialization complete ---"

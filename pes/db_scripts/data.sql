@@ -93,7 +93,7 @@ SET IDENTITY_INSERT admission_term OFF;
 
 -- Insert data into the admission_form table
 SET IDENTITY_INSERT admission_form ON;
-INSERT INTO admission_form (id, household_registration_address, child_characteristics_form_img, commitment_img, cancel_reason, submitted_date, note, status, parent_id, student_id, admission_term_id) VALUES
+INSERT INTO admission_form (admission_form_id, household_registration_address, child_characteristics_form_img, commitment_img, cancel_reason, submitted_date, note, status, parent_id, student_id, admission_term_id) VALUES
 (1, '123 Main St', 'https://picsum.photos/seed/ccf1/200/300', 'https://picsum.photos/seed/c1/200/300', NULL, '2025-02-15', 'First time applicant', 'PENDING_APPROVAL', 1, 1, 1),
 (2, '456 Oak Ave', 'https://picsum.photos/seed/ccf2/200/300', 'https://picsum.photos/seed/c2/200/300', NULL, '2025-02-20', 'Sibling already in school', 'PENDING_APPROVAL', 2, 2, 2);
 SET IDENTITY_INSERT admission_form OFF;
