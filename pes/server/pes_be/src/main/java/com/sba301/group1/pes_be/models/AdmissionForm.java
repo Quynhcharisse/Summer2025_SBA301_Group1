@@ -33,6 +33,7 @@ public class AdmissionForm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`admission_form_id`")
     Integer id;
 
     @Column(name = "`household_registration_address`", length = 100)
@@ -42,7 +43,7 @@ public class AdmissionForm {
     String childCharacteristicsFormImg;
 
     @Column(name = "`commitment_img`")
-    String commitmentImg ;
+    String commitmentImg;
 
     @Column(name = "`cancel_reason`", length = 50)
     String cancelReason;

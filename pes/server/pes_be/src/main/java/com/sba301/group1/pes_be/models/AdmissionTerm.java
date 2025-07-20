@@ -39,6 +39,7 @@ public class AdmissionTerm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`admission_term_id`")
     Integer id;
 
     @Column(length = 50)

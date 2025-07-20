@@ -30,11 +30,5 @@ public interface ParentService {
 
     ResponseEntity<ResponseObject> updateProfileParent(UpdateParentRequest request, HttpServletRequest httpRequest);
 
-//    ResponseEntity<ResponseObject> getStudentClasses(int studentId, HttpServletRequest request);
-
     ResponseEntity<ResponseObject> getStudentClassDetailsGroupedByWeek(int studentId, HttpServletRequest request);
-
-//    ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request);
-//
-//    ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request);
 }

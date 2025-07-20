@@ -3,6 +3,7 @@ package com.sba301.group1.pes_be.validations.AuthValidation;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
 
+import java.time.LocalDate;
 import java.util.regex.Pattern;
 
 public class RegisterValidation {
@@ -88,6 +89,33 @@ public class RegisterValidation {
             return "Identity number must be exactly 12 digits.";
         }
 
+        if (request.getAddress() == null || request.getAddress().trim().isEmpty()) {
+            return "Address is required.";
+        }
+        if (request.getAddress().trim().length() < 5 || request.getAddress().trim().length() > 255) {
+            return "Address must be between 5 and 255 characters.";
+        }
+
+        if (request.getJob() == null || request.getJob().trim().isEmpty()) {
+            return "Job is required.";
+        }
+        if (!request.getJob().trim().matches("^[a-zA-Z\\s'-]{2,50}$")) {
+            return "Job can only contain letters and must be between 2 and 50 characters.";
+        }
+
+        if (request.getRelationshipToChild() == null || request.getRelationshipToChild().trim().isEmpty()) {
+            return "Relationship to child is required.";
+        }
+        if (!request.getRelationshipToChild().trim().matches("^(Father|Mother|Guardian)$")) {
+            return "Relationship to child must be one of: Father, Mother, Guardian.";
+        }
+
+        if (request.getDayOfBirth() == null) {
+            return "Day of birth is required.";
+        }
+        if (request.getDayOfBirth().isAfter(LocalDate.now().minusYears(18))) {
+            return "Parent must be at least 18 years old.";
+        }
         return "";
     }
 }
