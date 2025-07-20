@@ -9,7 +9,6 @@ import com.sba301.group1.pes_be.dto.requests.UpdateParentRequest;
 import com.sba301.group1.pes_be.dto.response.ActivityResponse;
 import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.dto.response.ScheduleResponse;
-import com.sba301.group1.pes_be.dto.response.SyllabusResponse;
 import com.sba301.group1.pes_be.email.Format;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
@@ -30,13 +29,11 @@ import com.sba301.group1.pes_be.repositories.ActivityRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.AdmissionTermRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
-import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
 import com.sba301.group1.pes_be.repositories.StudentRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusLessonRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
-import com.sba301.group1.pes_be.services.EducationService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.services.MailService;
 import com.sba301.group1.pes_be.services.ParentService;
@@ -56,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -274,11 +270,10 @@ public class ParentServiceImpl implements ParentService {
 
         admissionFormRepo.save(form);
 
-        //Gửi email thông báo hủy
         try {
-            String subject = "[PES] Admission Form Cancelled";
-            String heading = "Admission Form Cancelled";
-            String bodyHtml = Format.getAdmissionCancelledBody(account.getName());
+            String subject = "[PES] Submitted Form";
+            String heading = "Admission Form submitted";
+            String bodyHtml = Format.getAdmissionSubmittedBody(account.getName(), LocalDate.now());
             mailService.sendMail(
                     account.getEmail(),
                     subject,
@@ -352,11 +347,27 @@ public class ParentServiceImpl implements ParentService {
         form.setStatus(Status.CANCELLED);
         admissionFormRepo.save(form);
 
+
+        try {
+            String subject = "[PES] Cancelled Form";
+            String heading = "Admission Form cancelled";
+            String bodyHtml = Format.getAdmissionCancelledBody(account.getName());
+            mailService.sendMail(
+                    account.getEmail(),
+                    subject,
+                    heading,
+                    bodyHtml
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send email notification: " + e.getMessage());
+        }
+
+
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
                         .message("Successfully cancelled")
                         .success(true)
-                        .data(null) //ko cần thiết trả về chỉ quan tâm là thông báo thành công hay thất bại
+                        .data(null)
                         .build()
         );
     }
@@ -688,14 +699,19 @@ public class ParentServiceImpl implements ParentService {
         form.setSubmittedDate(LocalDate.now());
         admissionFormRepo.save(form);
 
-//        SubmitAdmissionFormRequest submitRequest = SubmitAdmissionFormRequest.builder()
-//                .studentId(request.getStudentId())
-//                .childCharacteristicsFormImg(request.getChildCharacteristicsFormImg())
-//                .householdRegistrationAddress(request.getHouseholdRegistrationAddress())
-//                .commitmentImg(request.getCommitmentImg())
-//                .note(request.getNote())
-//                .build();
-//        return submitAdmissionForm(submitRequest, httpRequest);
+        try {
+            String subject = "[PES] Refilled Form";
+            String heading = "Admission Form refilled";
+            String bodyHtml = Format.getAdmissionRefilledBody(form.getParent().getAccount().getName(), LocalDate.now());
+            mailService.sendMail(
+                    form.getParent().getAccount().getName(),
+                    subject,
+                    heading,
+                    bodyHtml
+            );
+        } catch (Exception e) {
+            System.err.println("Failed to send email notification: " + e.getMessage());
+        }
 
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -705,122 +721,6 @@ public class ParentServiceImpl implements ParentService {
                         .build()
         );
     }
-//
-//    @Override
-//    public ResponseEntity<ResponseObject> getStudentClasses(int studentId, HttpServletRequest request) {
-//        Account account = jwtService.extractAccountFromCookie(request);
-//        if (account == null || !account.getRole().equals(Role.PARENT)) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-//                    ResponseObject.builder()
-//                            .message("Forbidden: Only parents can access this resource")
-//                            .success(false)
-//                            .data(null)
-//                            .build());
-//        }
-//
-//        // Tìm học sinh theo ID
-//        Student student = studentRepo.findById(studentId).orElse(null);
-//        if (student == null || !Objects.equals(student.getParent().getId(), account.getParent().getId())) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-//                    ResponseObject.builder()
-//                            .message("Student not found or access denied")
-//                            .success(false)
-//                            .data(null)
-//                            .build());
-//        }
-//
-//        // Lấy danh sách lớp học của học sinh
-//        List<Map<String, Object>> classes = student.getStudentClassList().stream()
-//                .map(studentClass -> {
-//                    Map<String, Object> classData = new HashMap<>();
-//                    classData.put("id", studentClass.getId());
-//                    classData.put("class", studentClass.getClasses().getName());
-//                    classData.put("student", studentClass.getStudent().getName());
-//                    classData.put("grade", studentClass.getClasses().getGrade());
-//                    classData.put("startDate", studentClass.getClasses().getStartDate());
-//                    classData.put("endDate", studentClass.getClasses().getEndDate());
-//                    classData.put("room", studentClass.getClasses().getRoomNumber());
-//                    classData.put("syllabus", Objects.requireNonNull(getSyllabusByClassId(studentClass.getClasses().getId(), request).getBody()).getData()); //
-//                    classData.put("activities", Objects.requireNonNull(getActivitiesByClassId(studentClass.getClasses().getId(), request).getBody()).getData()); //
-//                    return classData;
-//                })
-//                .toList();
-//
-//        return ResponseEntity.status(HttpStatus.OK).body(
-//                ResponseObject.builder()
-//                        .message("Student classes retrieved successfully")
-//                        .success(true)
-//                        .data(classes)
-//                        .build()
-//        );
-//    }
-//
-//    @Override
-//    public ResponseEntity<ResponseObject> getActivitiesByClassId(int classId, HttpServletRequest request) {
-//        try {
-//            List<Activity> activities = activityRepo.findByClassId(classId);
-//            List<ActivityResponse> activityResponses = convertToResponse(activities);
-//            return ResponseEntity.ok().body(
-//                    ResponseObject.builder()
-//                            .message("Activities retrieved successfully")
-//                            .success(true)
-//                            .data(activityResponses)
-//                            .build()
-//            );
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-//                    ResponseObject.builder()
-//                            .message("Error retrieving activities: " + e.getMessage())
-//                            .success(false)
-//                            .data(null)
-//                            .build()
-//            );
-//        }
-//    }
-//
-//    @Override
-//    public ResponseEntity<ResponseObject> getSyllabusByClassId(int classId, HttpServletRequest request) {
-//        try {
-//            if (!classesRepo.existsById(classId)) {
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-//                        ResponseObject.builder()
-//                                .message("Class not found")
-//                                .success(false)
-//                                .data(null)
-//                                .build()
-//                );
-//            }
-//
-//            Syllabus syllabus = syllabusRepo.findByClassId(classId);
-//            if (syllabus == null) {
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-//                        ResponseObject.builder()
-//                                .message("No syllabus found for this class")
-//                                .success(false)
-//                                .data(null)
-//                                .build()
-//                );
-//            }
-//
-//            SyllabusResponse syllabusResponse = SyllabusResponse.fromEntity(syllabus);
-//            return ResponseEntity.ok().body(
-//                    ResponseObject.builder()
-//                            .message("Syllabus retrieved successfully")
-//                            .success(true)
-//                            .data(syllabusResponse)
-//                            .build()
-//            );
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-//                    ResponseObject.builder()
-//                            .message("Error retrieving syllabus: " + e.getMessage())
-//                            .success(false)
-//                            .data(null)
-//                            .build()
-//            );
-//        }
-//    }
 
     @Override
     public ResponseEntity<ResponseObject> getStudentClassDetailsGroupedByWeek(int studentId, HttpServletRequest request) {

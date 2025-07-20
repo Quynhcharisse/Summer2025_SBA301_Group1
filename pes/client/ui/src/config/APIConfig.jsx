@@ -1,9 +1,9 @@
 import axios from "axios";
 import {refreshToken} from "../services/JWTService.jsx";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const REFRESH_ENDPOINT = import.meta.env.VITE_REFRESH_ENDPOINT;
-const LOGIN_PAGE_URL = import.meta.env.VITE_LOGIN_PAGE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+const REFRESH_ENDPOINT = import.meta.env.VITE_REFRESH_ENDPOINT || "/auth/refresh";
+const LOGIN_PAGE_URL = import.meta.env.VITE_LOGIN_PAGE_URL || "http://localhost:5173/login";
 
 const axiosClient = axios.create({
     baseURL: BASE_URL,

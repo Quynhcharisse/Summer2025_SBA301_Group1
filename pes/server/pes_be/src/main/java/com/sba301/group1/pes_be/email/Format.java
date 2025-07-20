@@ -1,18 +1,20 @@
 package com.sba301.group1.pes_be.email;
 
+import java.time.LocalDate;
+
 public class Format {
     /** Fragment khi phụ huynh nộp đơn lần đầu */
-    public static String getAdmissionSubmittedBody(String parentName, String dateTime) {
+    public static String getAdmissionSubmittedBody(String parentName, LocalDate date) {
         return
                 "<p>Dear " + parentName + ",</p>\n" +
-                        "<p>We have received your admission form on <strong>" + dateTime + "</strong>.</p>" +
+                        "<p>We have received your admission form on <strong>" + date + "</strong>.</p>" +
                         "<p>Please wait while our Admission Manager reviews your submission.</p>" +
                         "<p>For any questions, feel free to contact us at <a href=\"mailto:contact@merrystarpreschool.edu.vn\">contact@merrystarpreschool.edu.vn</a> or (443) 235-5647.</p>" +
                         "<p>Best regards,<br/>MerryStar Preschool</p>";
     }
 
     /** Fragment khi phụ huynh refill đơn (resubmit) */
-    public static String getAdmissionRefilledBody(String parentName, String dateTime) {
+    public static String getAdmissionRefilledBody(String parentName, LocalDate dateTime) {
         return
                 "<p>Dear " + parentName + ",</p>\n" +
                         "<p>Your admission form has been <strong>resubmitted</strong> on <strong>" + dateTime + "</strong>.</p>" +

@@ -25,9 +25,6 @@ public class SecurityConfig {
 
     private final AuthenticationProvider authenticationProvider;
 
-    @Value("${app.cors.allowed-origin}")
-    private String allowedOrigin;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -36,7 +33,7 @@ public class SecurityConfig {
                                 cors.configurationSource(
                                         request -> {
                                             CorsConfiguration config = new CorsConfiguration();
-                                            config.setAllowedOrigins(Collections.singletonList(allowedOrigin));
+                                            config.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
                                             config.setAllowedMethods(Collections.singletonList("*"));
                                             config.setAllowedHeaders(Collections.singletonList("*"));
                                             config.setAllowCredentials(true);
