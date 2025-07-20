@@ -35,6 +35,7 @@ public class Parent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "`parent_id`")
     Integer id;
 
     @Column(length = 100)

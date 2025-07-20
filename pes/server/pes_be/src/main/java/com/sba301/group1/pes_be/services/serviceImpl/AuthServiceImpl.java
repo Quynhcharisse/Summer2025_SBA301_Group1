@@ -1,14 +1,14 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dto.requests.LoginRequest;
+import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
+import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Parent;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ParentRepo;
-import com.sba301.group1.pes_be.dto.requests.LoginRequest;
-import com.sba301.group1.pes_be.dto.requests.RegisterRequest;
-import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.AuthService;
 import com.sba301.group1.pes_be.services.JWTService;
 import com.sba301.group1.pes_be.utils.CookieUtil;
@@ -136,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseEntity<ResponseObject> register(RegisterRequest request) {
         String error = RegisterValidation.validate(request, accountRepo);
-        if(!error.isEmpty()){
+        if (!error.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
                     ResponseObject.builder()
                             .message(error)
@@ -167,7 +167,6 @@ public class AuthServiceImpl implements AuthService {
                 .relationshipToChild(request.getRelationshipToChild())
                 .dayOfBirth(request.getDayOfBirth())
                 .build();
-
         parentRepo.save(parent);
 
         return ResponseEntity.status(HttpStatus.OK).body(
