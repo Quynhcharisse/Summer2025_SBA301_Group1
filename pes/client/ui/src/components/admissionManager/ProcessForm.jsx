@@ -2,6 +2,7 @@ import {
     AppBar,
     Box,
     Button,
+    CircularProgress,
     Dialog,
     FormControl,
     FormControlLabel,
@@ -136,27 +137,43 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
         reason: ''
     });
 
+    // Loading state cho approve/reject
+    const [isProcessing, setIsProcessing] = useState(false);
+
     //tạo state để hiển thị ảnh
     const [openImage, setOpenImage] = useState(false);
     const [selectedImage, setSelectedImage] = useState('');
 
     async function HandleProcessForm(isApproved, reason) {
-        const response = await processAdmissionForm(selectedForm.id, isApproved, reason)
+        setIsProcessing(true); // Bắt đầu loading
+        
+        try {
+            const response = await processAdmissionForm(selectedForm.id, isApproved, reason)
 
-        console.log("API Response: ", response.success);
+            console.log("API Response: ", response.success);
 
-        if (response && response.success) {
+            if (response && response.success) {
+                enqueueSnackbar(
+                    isApproved ? "Approved successfully" : "Rejected successfully",
+                    {variant: "success"})
+            } else {
+                console.error("Process failed:", response?.message || "No response");
+                enqueueSnackbar(
+                    isApproved ? "Approval failed" : "Rejection failed",
+                    {variant: "error"}
+                )
+            }
+        } catch (error) {
+            console.error("Error processing form:", error);
             enqueueSnackbar(
-                isApproved ? "Approved successfully" : "Rejected successfully",
-                {variant: "success"})
-        } else {
-            console.error("Process failed:", response?.message || "No response");
-            enqueueSnackbar(
-                isApproved ? "Approval failed" : "Rejection failed",
+                "Something went wrong. Please try again.",
                 {variant: "error"}
-            )
+            );
+        } finally {
+            setIsProcessing(false); // Kết thúc loading
+            setConfirmDialog({open: false, type: '', reason: ''}); // Đóng dialog
+            handleClosePopUp()
         }
-        handleClosePopUp()
     }
 
     return (
@@ -277,17 +294,19 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                                     sx={{width: '8%', height: '5vh'}}
                                     variant="contained"
                                     color="success"
+                                    disabled={isProcessing}
                                     onClick={() => setConfirmDialog({open: true, type: 'approve', reason: ''})}
                                 >
-                                    Approve
+                                    {isProcessing ? 'Processing...' : 'Approve'}
                                 </Button>
                                 <Button
                                     sx={{width: '8%', height: '5vh'}}
                                     variant="contained"
                                     color="error"
+                                    disabled={isProcessing}
                                     onClick={() => setConfirmDialog({open: true, type: 'reject', reason: ''})}
                                 >
-                                    Reject
+                                    {isProcessing ? 'Processing...' : 'Reject'}
                                 </Button>
                             </>
                         )}
@@ -322,12 +341,17 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                                 )}
 
                                 <Stack direction="row" spacing={2} justifyContent="flex-end">
-                                    <Button onClick={() => setConfirmDialog({open: false, type: '', reason: ''})}>
+                                    <Button 
+                                        disabled={isProcessing}
+                                        onClick={() => setConfirmDialog({open: false, type: '', reason: ''})}
+                                    >
                                         Cancel
                                     </Button>
                                     <Button
                                         variant="contained"
                                         color={confirmDialog.type === 'approve' ? 'success' : 'error'}
+                                        disabled={isProcessing}
+                                        startIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : null}
                                         onClick={() => {
                                             const isApproved = confirmDialog.type === 'approve';
                                             const reason = isApproved ? '' : confirmDialog.reason.trim();
@@ -348,7 +372,7 @@ function RenderDetailPopUp({isPopUpOpen, handleClosePopUp, selectedForm}) {
                                             HandleProcessForm(isApproved, reason);
                                         }}
                                     >
-                                        Confirm
+                                        {isProcessing ? 'Processing...' : 'Confirm'}
                                     </Button>
                                 </Stack>
                             </Stack>
