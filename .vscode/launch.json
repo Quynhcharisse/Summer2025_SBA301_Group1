@@ -3,7 +3,7 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Spring Boot-PesBeApplication",
+      "name": "Launch Backend",
       "request": "launch",
       "cwd": "${workspaceFolder}/pes/server/pes_be",
       "mainClass": "com.sba301.group1.pes_be.PesBeApplication",
