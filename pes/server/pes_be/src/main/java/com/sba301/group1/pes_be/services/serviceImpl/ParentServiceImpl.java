@@ -541,7 +541,7 @@ public class ParentServiceImpl implements ParentService {
         student.setBirthCertificateImg(request.getBirthCertificateImg());
         student.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
         student.setModifiedDate(LocalDate.now());
-        student.setUpdateCount(count + 1); // safe increment // Tăng số lần cập nhật
+        student.setUpdateCount(count + 1);
         studentRepo.save(student);
 
         int remaining = 5 - student.getUpdateCount();
