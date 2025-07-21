@@ -47,7 +47,8 @@ function CreateClass() {
         teacher: null,
         syllabus: null,
         startDate: '',
-        endDate: ''
+        endDate: '',
+        roomNumber: null
     });
     const [schedules, setSchedules] = useState([]);
     const [activities, setActivities] = useState([]);
@@ -538,7 +539,6 @@ function CreateClass() {
                                 syllabus={syllabus}
                                 classLessons={classLessons}
                                 onTeacherClick={handleTeacherClick}
-                                teachers={teachers}
                                 syllabi={syllabi}
                                 onUpdateClass={handleCreateClass}
                                 isCreateMode={true}

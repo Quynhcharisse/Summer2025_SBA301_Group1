@@ -89,9 +89,9 @@ function ClassDetails() {
         }
     }, []);
 
-    const fetchAllTeachers = useCallback(async () => {
+    const fetchAllTeachers = useCallback(async (startYear) => {
         try {
-            const response = await getAllTeachers();
+            const response = await getAllTeachers(startYear);
             if (response && response.success) {
                 setTeachers(response.data || []);
             }
@@ -161,7 +161,12 @@ function ClassDetails() {
             await fetchClassDetails();
             await fetchAllLessons();
             await fetchAllClasses();
-            await fetchAllTeachers();
+            if (classResponse && classResponse.success) {
+                const year = new Date(classResponse.data.startDate).getFullYear();
+                await fetchAllTeachers(year);
+            } else {
+                await fetchAllTeachers();
+            }
             await fetchAllSyllabi();
         };
 
@@ -581,10 +586,10 @@ function ClassDetails() {
                                 syllabus={syllabus}
                                 classLessons={classLessons}
                                 onTeacherClick={handleTeacherClick}
-                                teachers={teachers}
                                 syllabi={syllabi}
                                 onUpdateClass={handleUpdateClass}
                                 isCreateMode={false}
+                                roomAvailability={[]}
                             />
                         </CardContent>
                     </Card>

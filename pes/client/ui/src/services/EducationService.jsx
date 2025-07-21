@@ -348,9 +348,10 @@ export const deleteSchedule = async (scheduleId) => {
     return response.status === 204 ? { success: true, message: 'Schedule deleted successfully' } : (response ? response.data : null)
 }
 
-export const getAllTeachers = async () => {
+export const getAllTeachers = async (startYear) => {
     try {
-        const response = await axiosClient.get('/education/teachers')
+        const params = startYear ? { startYear } : {};
+        const response = await axiosClient.get('/education/teachers', { params });
         return response ? response.data : null
     } catch (error) {
         throw {
@@ -451,9 +452,10 @@ export const getStudentClassAssignments = async () => {
     }
 }
 
-export const getRoomAvailability = async () => {
+export const getRoomAvailability = async (startYear) => {
     try {
-        const response = await axiosClient.get('/education/rooms/availability')
+        const params = startYear ? { startYear } : {};
+        const response = await axiosClient.get('/education/rooms/availability', { params });
         return response ? response.data : null
     } catch (error) {
         throw {

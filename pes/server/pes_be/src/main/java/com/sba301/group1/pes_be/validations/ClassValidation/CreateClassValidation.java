@@ -5,8 +5,6 @@ import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.dto.requests.ClassRequest;
 import com.sba301.group1.pes_be.enums.Role;
-import com.sba301.group1.pes_be.enums.Status;
-
 import java.time.LocalDate;
 
 public class CreateClassValidation {
@@ -35,11 +33,11 @@ public class CreateClassValidation {
         LocalDate now = LocalDate.now();
         LocalDate oneWeekFromNow = now.plusWeeks(1);
         
-        if (request.getStartDate().isBefore(oneWeekFromNow)) {
+        if (LocalDate.parse(request.getStartDate()).isBefore(oneWeekFromNow)) {
             return "Start date must be at least 1 week from now";
         }
         
-        if (!request.getEndDate().isAfter(request.getStartDate())) {
+        if (!LocalDate.parse(request.getEndDate()).isAfter(LocalDate.parse(request.getStartDate()))) {
             return "End date must be after start date";
         }
         
@@ -56,8 +54,12 @@ public class CreateClassValidation {
             return "Selected account is not a teacher";
         }
         
-        if (classesRepo.existsByTeacherIdAndStatus(request.getTeacherId(), Status.ACTIVE)) {
-            return "Teacher is already assigned to another active class";
+        if (classesRepo.existsByTeacherAndYear(request.getTeacherId(), String.valueOf(LocalDate.parse(request.getStartDate()).getYear()))) {
+            return "Teacher is already assigned to another class in the same year";
+        }
+
+        if (classesRepo.existsByRoomNumberAndYear(request.getRoomNumber(), String.valueOf(LocalDate.parse(request.getStartDate()).getYear()))) {
+            return "Room is already assigned to another class in the same year";
         }
         
         if (request.getSyllabusId() == null) {

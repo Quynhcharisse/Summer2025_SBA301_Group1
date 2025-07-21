@@ -51,6 +51,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -924,8 +926,8 @@ public class EducationServiceImpl implements EducationService {
                     .syllabus(syllabus)
                     .numberStudent(request.getNumberStudent())
                     .roomNumber(request.getRoomNumber() != null ? request.getRoomNumber() : null)
-                    .startDate(request.getStartDate().toString())
-                    .endDate(request.getEndDate().toString())
+                    .startDate(request.getStartDate())
+                    .endDate(request.getEndDate())
                     .status(request.getStatus() != null
                             ? (request.getStatus().equalsIgnoreCase("active") ? Status.ACTIVE : Status.fromValue(request.getStatus()))
                             : Status.DRAFT)
@@ -985,8 +987,8 @@ public class EducationServiceImpl implements EducationService {
             existingClass.setSyllabus(syllabus);
             existingClass.setNumberStudent(request.getNumberStudent());
             existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber() : null);
-            existingClass.setStartDate(request.getStartDate().toString());
-            existingClass.setEndDate(request.getEndDate().toString());
+            existingClass.setStartDate(request.getStartDate());
+            existingClass.setEndDate(request.getEndDate());
             existingClass.setStatus(request.getStatus() != null ? (request.getStatus().equalsIgnoreCase("active") ? Status.ACTIVE : Status.fromValue(request.getStatus())) : Status.DRAFT);
             existingClass.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
@@ -2180,7 +2182,7 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
-    public ResponseEntity<ResponseObject> getAllTeachers() {
+    public ResponseEntity<ResponseObject> getAllTeachersByStartYear(Integer startYear) {
         try {
             List<Account> teachers = accountRepo.findByRoleWithClasses(com.sba301.group1.pes_be.enums.Role.TEACHER);
 
@@ -2194,7 +2196,10 @@ public class EducationServiceImpl implements EducationService {
                 );
             }
 
-            List<TeacherResponse> teacherResponses = TeacherResponse.fromEntityList(teachers);
+            List<TeacherResponse> teacherResponses = teachers.stream()
+                .map(teacher -> TeacherResponse.fromEntity(teacher, startYear))
+                .collect(Collectors.toList());
+
             return ResponseEntity.ok().body(
                     ResponseObject.builder()
                             .message("All teachers retrieved successfully")
@@ -2211,6 +2216,11 @@ public class EducationServiceImpl implements EducationService {
                             .build()
             );
         }
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllTeachers() {
+        return getAllTeachersByStartYear(null);
     }
 
     @Override
@@ -2259,17 +2269,20 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
-    public ResponseEntity<List<RoomResponse>> getRoomAvailability() {
+    public ResponseEntity<List<RoomResponse>> getRoomAvailability(Integer startYear) {
         try {
             List<Classes> allClasses = classesRepo.findAll();
             Set<Integer> occupiedRoomNumbers = new HashSet<>();
 
             for (Classes classEntity : allClasses) {
                 if (classEntity.getRoomNumber() != null && !classEntity.getRoomNumber().isEmpty()) {
-                    try {
-                        occupiedRoomNumbers.add(Integer.parseInt(classEntity.getRoomNumber()));
-                    } catch (NumberFormatException e) {
-                        System.err.println("Error parsing room number for class " + classEntity.getId() + ": " + classEntity.getRoomNumber());
+                    boolean isOccupiedInYear = startYear == null || (classEntity.getStartDate() != null && LocalDate.parse(classEntity.getStartDate()).getYear() == startYear);
+                    if (isOccupiedInYear) {
+                        try {
+                            occupiedRoomNumbers.add(Integer.parseInt(classEntity.getRoomNumber()));
+                        } catch (NumberFormatException e) {
+                            System.err.println("Error parsing room number for class " + classEntity.getId() + ": " + classEntity.getRoomNumber());
+                        }
                     }
                 }
             }
