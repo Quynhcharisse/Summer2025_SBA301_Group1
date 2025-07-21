@@ -19,8 +19,8 @@ import com.sba301.group1.pes_be.dto.response.ScheduleResponse;
 import com.sba301.group1.pes_be.dto.response.SimpleStudentResponse;
 import com.sba301.group1.pes_be.dto.response.SyllabusResponse;
 import com.sba301.group1.pes_be.dto.response.TeacherResponse;
-import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
 import com.sba301.group1.pes_be.models.Activity;
 import com.sba301.group1.pes_be.models.Classes;
@@ -927,8 +927,8 @@ public class EducationServiceImpl implements EducationService {
                     .startDate(request.getStartDate().toString())
                     .endDate(request.getEndDate().toString())
                     .status(request.getStatus() != null
-                            ? ClassStatus.valueOf(request.getStatus().toUpperCase())
-                            : ClassStatus.DRAFT)
+                            ? (request.getStatus().equalsIgnoreCase("active") ? Status.ACTIVE : Status.fromValue(request.getStatus()))
+                            : Status.DRAFT)
                     .grade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null)
                     .build();
 
@@ -987,7 +987,7 @@ public class EducationServiceImpl implements EducationService {
             existingClass.setRoomNumber(request.getRoomNumber() != null ? request.getRoomNumber() : null);
             existingClass.setStartDate(request.getStartDate().toString());
             existingClass.setEndDate(request.getEndDate().toString());
-            existingClass.setStatus(request.getStatus() != null ? ClassStatus.valueOf(request.getStatus().toUpperCase()) : ClassStatus.DRAFT);
+            existingClass.setStatus(request.getStatus() != null ? (request.getStatus().equalsIgnoreCase("active") ? Status.ACTIVE : Status.fromValue(request.getStatus())) : Status.DRAFT);
             existingClass.setGrade(request.getGrade() != null ? Grade.valueOf(request.getGrade().toUpperCase()) : null);
 
             classesRepo.save(existingClass);
@@ -1015,7 +1015,7 @@ public class EducationServiceImpl implements EducationService {
             return classesRepo.findById(classId)
                     .map(classes -> {
                         try {
-                            if (classes.getStatus() != ClassStatus.DRAFT && classes.getStatus() != ClassStatus.INACTIVE) {
+                            if (classes.getStatus() != Status.DRAFT && classes.getStatus() != Status.INACTIVE) {
                                 return ResponseEntity.status(HttpStatus.CONFLICT).body(
                                         ResponseObject.builder()
                                                 .message("Cannot delete class. Only classes with status DRAFT or INACTIVE can be deleted.")

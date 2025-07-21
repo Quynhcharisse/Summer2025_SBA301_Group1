@@ -1,11 +1,11 @@
 package com.sba301.group1.pes_be.validations.ClassValidation;
 
-import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.dto.requests.ClassRequest;
 import com.sba301.group1.pes_be.enums.Role;
+import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Classes;
 
 import java.time.LocalDate;
@@ -57,7 +57,7 @@ public class UpdateClassValidation {
             return "Selected account is not a teacher";
         }
         
-        if (classesRepo.existsByTeacherIdAndStatusAndIdNot(request.getTeacherId(), ClassStatus.ACTIVE, existingClass.getId())) {
+        if (classesRepo.existsByTeacherIdAndStatusAndIdNot(request.getTeacherId(), Status.ACTIVE, existingClass.getId())) {
             return "Teacher is already assigned to another active class";
         }
         

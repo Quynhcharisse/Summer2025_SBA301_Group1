@@ -1,7 +1,6 @@
 package com.sba301.group1.pes_be.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.enums.Grade;
 import com.sba301.group1.pes_be.enums.Status;
 import jakarta.persistence.CascadeType;
@@ -58,7 +57,7 @@ public class Classes {
     String endDate;
 
     @Enumerated(EnumType.STRING)
-    ClassStatus status;
+    Status status;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10)

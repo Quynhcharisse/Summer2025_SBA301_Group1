@@ -1,7 +1,7 @@
 package com.sba301.group1.pes_be.repositories;
 
-import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.enums.Grade;
+import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Classes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,9 +28,9 @@ public interface ClassesRepo extends JpaRepository<Classes, Integer> {
     
     boolean existsByNameAndIdNot(String name, Integer id);
     
-    boolean existsByTeacherIdAndStatus(Integer teacherId, String status);
+    boolean existsByTeacherIdAndStatus(Integer teacherId, Status status);
     
-    boolean existsByTeacherIdAndStatusAndIdNot(Integer teacherId, ClassStatus status, Integer id);
+    boolean existsByTeacherIdAndStatusAndIdNot(Integer teacherId, Status status, Integer id);
 
     // Add query to fetch classes with all relationships including students
     @Query("SELECT DISTINCT c FROM Classes c LEFT JOIN FETCH c.teacher LEFT JOIN FETCH c.syllabus LEFT JOIN FETCH c.studentClassList")

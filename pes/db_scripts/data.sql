@@ -10,6 +10,7 @@ INSERT INTO account (account_id, email, password, role, status, created_at, name
 (4, 'education@pes.com', '123', 'EDUCATION', 'ACCOUNT_ACTIVE', '2025-07-13', 'Education Manager', '1234567893', 'Female', 'ID123459'),
 (5, 'teacher1@pes.com', '123', 'TEACHER', 'ACCOUNT_ACTIVE', '2025-07-13', 'Teacher One', '1234567894', 'Male', 'ID123460'),
 (6, 'teacher2@pes.com', '123', 'TEACHER', 'ACCOUNT_ACTIVE', '2025-07-13', 'Teacher Two', '1234567895', 'Female', 'ID123461'),
+(9, 'teacher3@pes.com', '123', 'TEACHER', 'ACCOUNT_ACTIVE', '2025-07-13', 'Teacher Three', '1234567896', 'Male', 'ID123462'),
 (7, 'parent1@pes.com', '123', 'PARENT', 'ACCOUNT_ACTIVE', '2025-07-13', 'Parent One', '1234567896', 'Male', 'ID123462'),
 (8, 'parent2@pes.com', '123', 'PARENT', 'ACCOUNT_ACTIVE', '2025-07-13', 'Parent Two', '1234567897', 'Female', 'ID123463');
 SET IDENTITY_INSERT account OFF;

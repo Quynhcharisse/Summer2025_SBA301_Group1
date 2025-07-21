@@ -33,10 +33,10 @@ const ClassInformation = ({
     teachers = [],
     syllabi,
     onUpdateClass,
-    isCreateMode // Add isCreateMode prop
+    isCreateMode
 }) => {
     const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
+    const [isEditing, setIsEditing] = useState(isCreateMode);
     const [showAllLessons, setShowAllLessons] = useState(false);
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
@@ -55,14 +55,12 @@ const ClassInformation = ({
         });
     }, [classData]);
 
-    // Effect to initialize editData when in create mode or when classData changes
     useEffect(() => {
         if (isCreateMode || classData) {
             initializeEditData();
         }
     }, [isCreateMode, classData, initializeEditData]);
 
-    // Effect to fetch room availability when in edit mode or create mode
     useEffect(() => {
         const fetchRoomData = async () => {
             try {
@@ -74,10 +72,10 @@ const ClassInformation = ({
             }
         };
 
-        if (isEditing || isCreateMode) {
+        if (isEditing) {
             fetchRoomData();
         }
-    }, [isEditing, isCreateMode]);
+    }, [isEditing]);
 
     const validateForm = () => {
         const validationErrors = [];
@@ -146,7 +144,13 @@ const ClassInformation = ({
                 updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
             }
             updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
-            await onUpdateClass(classData.id, updatedClassData);
+
+            if (isCreateMode) {
+                await onUpdateClass(updatedClassData);
+            } else {
+                await onUpdateClass(classData.id, updatedClassData);
+            }
+            
             setIsEditing(false);
             setErrors([]);
         } catch (error) {

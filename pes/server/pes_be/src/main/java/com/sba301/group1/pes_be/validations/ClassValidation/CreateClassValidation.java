@@ -5,6 +5,7 @@ import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
 import com.sba301.group1.pes_be.dto.requests.ClassRequest;
 import com.sba301.group1.pes_be.enums.Role;
+import com.sba301.group1.pes_be.enums.Status;
 
 import java.time.LocalDate;
 
@@ -55,7 +56,7 @@ public class CreateClassValidation {
             return "Selected account is not a teacher";
         }
         
-        if (classesRepo.existsByTeacherIdAndStatus(request.getTeacherId(), "active")) {
+        if (classesRepo.existsByTeacherIdAndStatus(request.getTeacherId(), Status.ACTIVE)) {
             return "Teacher is already assigned to another active class";
         }
         
