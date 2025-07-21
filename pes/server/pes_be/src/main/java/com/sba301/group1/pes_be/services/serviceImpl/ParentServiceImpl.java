@@ -271,7 +271,7 @@ public class ParentServiceImpl implements ParentService {
         try {
             String subject = "[PES] Submitted Form";
             String heading = "Admission Form submitted";
-            String bodyHtml = Format.getAdmissionSubmittedBody(account.getName(), LocalDate.now());
+            String bodyHtml = Format.getAdmissionSubmittedBody(account.getName(), student.getName(), LocalDate.now());
             mailService.sendMail(
                     account.getEmail(),
                     subject,
@@ -409,7 +409,7 @@ public class ParentServiceImpl implements ParentService {
                     studentDetail.put("modifiedDate", student.getModifiedDate());
                     studentDetail.put("isStudent", student.isStudent());
                     studentDetail.put("hadForm", !student.getAdmissionFormList().isEmpty());
-                    studentDetail.put("updateCount", student.getUpdateCount() != null ? student.getUpdateCount() : 0);
+                    // updateCount no longer used
                     return studentDetail;
                 })
                 .toList();
@@ -460,7 +460,7 @@ public class ParentServiceImpl implements ParentService {
                         .modifiedDate(LocalDate.now())
                         .isStudent(false)         // mặc định là chưa chính thức
                         .parent(parent)           // gán cha mẹ
-                        .updateCount(0)           // khởi tạo số lần cập nhật là 0
+                        // updateCount no longer used
                         .build());
 
 
@@ -503,18 +503,6 @@ public class ParentServiceImpl implements ParentService {
         Student student = studentRepo.findById(request.getId()).orElse(null);
         assert student != null;
 
-        // tránh bị null
-        int count = student.getUpdateCount() == null ? 0 : student.getUpdateCount();
-        // Deny if update limit exceeded
-        if (count >= 5) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                    ResponseObject.builder()
-                            .message("This is critical information and can only be updated 5 times. You have reached the limit.")
-                            .success(false)
-                            .data(null)
-                            .build());
-        }
-
         boolean hasSubmittedForm = student.getAdmissionFormList()
                 .stream()
                 .anyMatch(
@@ -539,14 +527,12 @@ public class ParentServiceImpl implements ParentService {
         student.setBirthCertificateImg(request.getBirthCertificateImg());
         student.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
         student.setModifiedDate(LocalDate.now());
-        student.setUpdateCount(count + 1); // safe increment // Tăng số lần cập nhật
+        // Remove updateCount increment
         studentRepo.save(student);
-
-        int remaining = 5 - student.getUpdateCount();
 
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseObject.builder()
-                        .message("Update successful. You have " + remaining + " update(s) remaining.")
+                        .message("Update successful.")
                         .success(true)
                         .data(null)
                         .build());
@@ -700,9 +686,9 @@ public class ParentServiceImpl implements ParentService {
         try {
             String subject = "[PES] Refilled Form";
             String heading = "Admission Form refilled";
-            String bodyHtml = Format.getAdmissionRefilledBody(form.getParent().getAccount().getName(), LocalDate.now());
+            String bodyHtml = Format.getAdmissionRefilledBody(form.getParent().getAccount().getName(), form.getStudent().getName(), LocalDate.now());
             mailService.sendMail(
-                    form.getParent().getAccount().getName(),
+                    form.getParent().getAccount().getEmail(),
                     subject,
                     heading,
                     bodyHtml

@@ -194,6 +194,7 @@ export default function Register() {
 
     const registerData = {
       email: form.email,
+      confirmPassword: form.confirmPassword,
       password: form.password,
       name: form.name,
       phone: form.phone,
@@ -360,7 +361,6 @@ export default function Register() {
               >
                 <FormControlLabel value="Father" control={<Radio />} label="Father" />
                 <FormControlLabel value="Mother" control={<Radio />} label="Mother" />
-                <FormControlLabel value="Guardian" control={<Radio />} label="Guardian" />
               </RadioGroup>
               {errors.relationshipToChild && (
                 <Typography color="error" variant="caption">

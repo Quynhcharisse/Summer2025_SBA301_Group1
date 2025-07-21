@@ -110,7 +110,7 @@ const ProfileParent = () => {
                 showSnackbar(response.message, 'error');
             }
         } catch (error) {
-            showSnackbar('Failed to update profile', 'error');
+            showSnackbar('Failed to update profile: ' + error.response.data.message, 'error');
         }
         setSaving(false);
     };

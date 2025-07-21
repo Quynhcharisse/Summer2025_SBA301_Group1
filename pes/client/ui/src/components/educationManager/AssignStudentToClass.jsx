@@ -134,9 +134,7 @@ function AssignStudentToClass() {
         });
 
         // Filter out students who are already assigned to any class
-        const availableStudents = allStudents.filter(student => !assignedStudentIds.has(student.id));
-
-        let filtered = availableStudents;
+        let filtered = allStudents.filter(student => !assignedStudentIds.has(student.id));
 
         // Apply search filter
         if (searchTerm) {
@@ -166,7 +164,7 @@ function AssignStudentToClass() {
             });
         }
 
-        return filtered;
+        return sortByAgeAndName(filtered);
     };
 
     const getFilteredAssignedStudents = () => {
@@ -200,7 +198,7 @@ function AssignStudentToClass() {
             });
         }
 
-        return filtered;
+        return sortByAgeAndName(filtered);
     };
 
     const calculateAge = (birthDate) => {
@@ -251,6 +249,25 @@ function AssignStudentToClass() {
                     `Cannot assign ${selectedStudents.length} students. Only ${availableSpots} spots available in this class.`,
                     {variant: 'error'}
                 );
+                return;
+            }
+        }
+
+        const mismatchedStudents = selectedStudents.filter(studentId => {
+            const student = allStudents.find(s => s.id === studentId);
+            if (!student || !student.dateOfBirth) return false;
+            const age = calculateAge(student.dateOfBirth);
+            switch (selectedClassData.grade) {
+                case 'SEED': return age > 3;
+                case 'BUD': return age !== 4;
+                case 'LEAF': return age < 5;
+                default: return false;
+            }
+        });
+
+        if (mismatchedStudents.length > 0) {
+            const confirmMsg = `Some selected students do not match the age group for this class. Do you want to continue?`;
+            if (!window.confirm(confirmMsg)) {
                 return;
             }
         }
@@ -329,6 +346,15 @@ function AssignStudentToClass() {
         } else {
             setSelectedAssignedStudents(assignedStudents.map(s => s.id));
         }
+    };
+
+    const sortByAgeAndName = (students) => {
+        return [...students].sort((a, b) => {
+            const ageA = calculateAge(a.dateOfBirth);
+            const ageB = calculateAge(b.dateOfBirth);
+            if (ageA !== ageB) return ageA - ageB;
+            return (a.name || '').localeCompare(b.name || '');
+        });
     };
 
     const selectedClassData = selectedClass ? classes.find(c =>
