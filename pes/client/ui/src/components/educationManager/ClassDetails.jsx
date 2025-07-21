@@ -619,10 +619,7 @@ function ClassDetails() {
                 onSubmit={handleScheduleFormSubmit}
                 mode={scheduleFormMode}
                 initialData={selectedSchedule}
-                classes={allClasses.map(cls => ({
-                    ...cls,
-                    className: cls.name || cls.className
-                }))}
+                classId={classId}
                 lessons={allLessons}
                 loading={false}
                 onCreateActivity={handleCreateActivityFromForm}
