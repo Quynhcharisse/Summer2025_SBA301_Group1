@@ -17,4 +17,6 @@ public interface AccountRepo extends JpaRepository<Account, Integer> {
     
     @Query("SELECT a FROM Account a LEFT JOIN FETCH a.classesList WHERE a.role = :role")
     List<Account> findByRoleWithClasses(@Param("role") Role role);
+
+    List<Account> findAllByRole(Role role);
 }

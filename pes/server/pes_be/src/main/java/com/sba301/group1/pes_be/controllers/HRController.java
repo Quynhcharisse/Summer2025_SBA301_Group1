@@ -1,6 +1,8 @@
 package com.sba301.group1.pes_be.controllers;
 
+import com.sba301.group1.pes_be.dto.requests.AddTeacherRequest;
 import com.sba301.group1.pes_be.dto.requests.ParentRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateTeacherRequest;
 import com.sba301.group1.pes_be.dto.response.ResponseObject;
 import com.sba301.group1.pes_be.services.HRService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,5 +48,23 @@ public class HRController {
     @PreAuthorize("hasRole('hr')")
     public ResponseEntity<ResponseObject> getParentList(HttpServletRequest httpRequest) {
         return hrService.getParentList(httpRequest);
+    }
+
+    @GetMapping("/teachers")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> getAllTeachers(HttpServletRequest httpRequest) {
+        return hrService.getAllTeachers(httpRequest);
+    }
+
+    @PostMapping("/teachers/add")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> addTeacher(@RequestBody AddTeacherRequest request, HttpServletRequest httpRequest) {
+        return hrService.addTeacher(request, httpRequest);
+    }
+
+    @PutMapping("/teachers/update/{id}")
+    @PreAuthorize("hasRole('hr')")
+    public ResponseEntity<ResponseObject> updateTeacherProfile(@PathVariable int id, @RequestBody UpdateTeacherRequest request, HttpServletRequest httpRequest) {
+        return hrService.updateTeacherProfile(id, request, httpRequest);
     }
 }
