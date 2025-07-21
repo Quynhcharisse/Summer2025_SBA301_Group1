@@ -243,9 +243,9 @@ const ChildrenList = () => {
             return;
         }
 
-        if (child.updateCount >= 5) {
-            showSnackbar("You have reached the maximum number of updates allowed", "error");
-            return;
+        // Show warning if child has submitted form but allow editing
+        if (child.hadForm) {
+            showSnackbar("⚠️ WARNING: This child has already submitted an admission form. Changing personal information may affect the admission process and require resubmission of documents. Please ensure all information is accurate before saving.", "warning");
         }
 
         // Format date properly
@@ -473,6 +473,25 @@ const ChildrenList = () => {
         }
 
         try {
+            // Check if editing a child who has submitted form and show warning
+            if (editId) {
+                const currentChild = children.find(child => child.id === editId);
+                if (currentChild?.hadForm) {
+                    const confirmed = window.confirm(
+                        "⚠️ CẢNH BÁO: Bé này đã nộp đơn đăng ký tuyển sinh!\n\n" +
+                        "Việc thay đổi thông tin có thể:\n" +
+                        "• Ảnh hưởng đến quá trình xét duyệt\n" +
+                        "• Yêu cầu nộp lại giấy tờ\n" +
+                        "• Làm chậm tiến độ xét tuyển\n\n" +
+                        "Bạn có chắc chắn muốn lưu thay đổi không?"
+                    );
+                    
+                    if (!confirmed) {
+                        return; // Cancel the submit
+                    }
+                }
+            }
+
             // Format date to match backend requirements
             const formattedData = {
                 ...form,
@@ -789,7 +808,7 @@ const ChildrenList = () => {
                                 <TableCell sx={{color: 'white'}}>Gender</TableCell>
                                 <TableCell sx={{color: 'white'}}>Date of Birth</TableCell>
                                 <TableCell sx={{color: 'white'}}>Place of Birth</TableCell>
-                                <TableCell sx={{color: 'white'}}>Update Count</TableCell>
+                                <TableCell sx={{color: 'white'}}>Status</TableCell>
                                 <TableCell sx={{color: 'white'}}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -817,23 +836,26 @@ const ChildrenList = () => {
                                             <TableCell>{child.placeOfBirth}</TableCell>
                                             <TableCell>
                                                 <Box sx={{
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: 1
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: 0.5
                                                 }}>
-                                                    <Typography>
-                                                        {child.updateCount || 0}/5
+                                                    {child.isStudent ? (
+                                                        <Chip label="Enrolled" size="small" color="success"/>
+                                                    ) : child.hadForm ? (
+                                                        <Chip label="Form Submitted" size="small" color="warning"/>
+                                                    ) : (
+                                                        <Chip label="Editable" size="small" color="primary"/>
+                                                    )}
+                                                    <Typography variant="caption" sx={{fontSize: '10px', fontStyle: 'italic'}}>
+                                                        {child.isStudent ? (
+                                                            "Cannot edit - Student enrolled"
+                                                        ) : child.hadForm ? (
+                                                            "Form has been submitted - Edit carefully"
+                                                        ) : (
+                                                            "Form has not submitted- Can edit freely"
+                                                        )}
                                                     </Typography>
-                                                    {child.isStudent && (
-                                                        <Typography variant="caption"
-                                                                    color="success.main">(Enrolled)</Typography>
-                                                        //đã được nhập học
-                                                    )}
-                                                    {child.hadForm && (
-                                                        <Typography variant="caption" color="warning.main">(Form
-                                                            Submitted)</Typography>
-                                                    )}
-                                                    {/*đã nộp đơn đăng kí*/}
                                                 </Box>
                                             </TableCell>
                                             <TableCell>
@@ -853,14 +875,12 @@ const ChildrenList = () => {
                                                         onClick={() => {
                                                             handleEditOpen(child);
                                                         }}
-                                                        disabled={child.isStudent || child.updateCount >= 5}
+                                                        disabled={child.isStudent}
                                                         title={
-                                                            child.isStudent ? "Cannot edit enrolled student" :
-                                                                child.updateCount >= 5 ? "Maximum updates reached" :
-                                                                    `${5 - (child.updateCount || 0)} updates remaining`
+                                                            child.isStudent ? "Cannot edit enrolled student" : "Edit child information"
                                                         }
                                                         sx={{
-                                                            color: (child.isStudent || child.updateCount >= 5) ?
+                                                            color: (child.isStudent) ?
                                                                 'grey.400' : '#353E4C',
                                                             '&:hover': {
                                                                 backgroundColor: 'rgba(25, 118, 210, 0.04)'
@@ -937,6 +957,33 @@ const ChildrenList = () => {
                         }}>
                             Basic Information
                         </Typography>
+                        
+                        {/* Warning alert for children who have submitted forms */}
+                        {editId && children.find(child => child.id === editId)?.hadForm && (
+                            <Alert 
+                                severity="warning" 
+                                sx={{ 
+                                    mb: 3,
+                                    backgroundColor: '#fff3cd',
+                                    border: '1px solid #ffeaa7',
+                                    '& .MuiAlert-message': {
+                                        fontWeight: 600
+                                    }
+                                }}
+                            >
+                                <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                                    ⚠️ IMPORTANT NOTICE
+                                </Typography>
+                                <Typography variant="body2">
+                                    This child has already submitted an admission form. Any changes to personal information may:
+                                    <br />• Affect the current admission application status
+                                    <br />• Require resubmission of supporting documents 
+                                    <br />• Delay the admission review process
+                                    <br /><br />
+                                    Please double-check all information before saving changes.
+                                </Typography>
+                            </Alert>
+                        )}
                         <Stack spacing={3} sx={{mb: 6}}>
                             <TextField
                                 label="Name"
@@ -1254,9 +1301,21 @@ const ChildrenList = () => {
                                     <Box>
                                         <Typography variant="subtitle2" color="text.secondary">Status</Typography>
                                         <Typography variant="h6" fontWeight={600}>
-                                            Updates: {selectedChild.updateCount || 0}/5
-                                            {selectedChild.isStudent && (
-                                                <Chip label="Enrolled" size="small" color="success" sx={{ml: 2}}/>
+                                            {selectedChild.isStudent ? (
+                                                <Chip label="Enrolled" size="small" color="success"/>
+                                            ) : selectedChild.hadForm ? (
+                                                <Chip label="Form Submitted" size="small" color="warning"/>
+                                            ) : (
+                                                <Chip label="Editable" size="small" color="primary"/>
+                                            )}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{mt: 1, display: 'block', fontStyle: 'italic'}}>
+                                            {selectedChild.isStudent ? (
+                                                "Cannot edit - Student enrolled"
+                                            ) : selectedChild.hadForm ? (
+                                                "Form has been submitted - Edit carefully"
+                                            ) : (
+                                                "Form has not submitted- Can edit freely"
                                             )}
                                         </Typography>
                                     </Box>
