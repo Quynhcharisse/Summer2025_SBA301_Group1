@@ -273,7 +273,7 @@ public class ParentServiceImpl implements ParentService {
         try {
             String subject = "[PES] Submitted Form";
             String heading = "Admission Form submitted";
-            String bodyHtml = Format.getAdmissionSubmittedBody(account.getName(), LocalDate.now());
+            String bodyHtml = Format.getAdmissionSubmittedBody(account.getName(), student.getName(), LocalDate.now());
             mailService.sendMail(
                     account.getEmail(),
                     subject,
@@ -688,9 +688,9 @@ public class ParentServiceImpl implements ParentService {
         try {
             String subject = "[PES] Refilled Form";
             String heading = "Admission Form refilled";
-            String bodyHtml = Format.getAdmissionRefilledBody(form.getParent().getAccount().getName(), LocalDate.now());
+            String bodyHtml = Format.getAdmissionRefilledBody(form.getParent().getAccount().getName(), form.getStudent().getName(), LocalDate.now());
             mailService.sendMail(
-                    form.getParent().getAccount().getName(),
+                    form.getParent().getAccount().getEmail(),
                     subject,
                     heading,
                     bodyHtml
