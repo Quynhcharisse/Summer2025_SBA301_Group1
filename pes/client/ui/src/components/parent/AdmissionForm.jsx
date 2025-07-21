@@ -32,7 +32,7 @@ import {
     Typography,
     CircularProgress
 } from "@mui/material";
-import {Add, Close, CloudUpload, Info, Refresh} from '@mui/icons-material';
+import {Add, Close, CloudUpload, Info, Refresh, Edit} from '@mui/icons-material';
 import {useEffect, useState} from "react";
 import {DatePicker} from "@mui/x-date-pickers/DatePicker";
 import {cancelAdmission, getFormInformation, refillForm, submittedForm} from "../../services/ParentService.jsx";
@@ -42,9 +42,12 @@ import axios from "axios";
 import '../../styles/Parent/Form.css'
 
 
-function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefillForm}) {
+function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefillForm, refreshData}) {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [refillConfirmDialog, setRefillConfirmDialog] = useState(false);
+    const [selectedRefillForm, setSelectedRefillForm] = useState(null);
+    const [isResubmitting, setIsResubmitting] = useState(false);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -58,6 +61,42 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefill
     const handleDetailClick = (form) => {
         HandleSelectedForm(form)
         openDetailPopUpFunc();
+    }
+
+    const handleRefillClick = (form) => {
+        setSelectedRefillForm(form);
+        setRefillConfirmDialog(true);
+    }
+
+    const handleDirectResubmit = async () => {
+        setIsResubmitting(true);
+        try {
+            const response = await refillForm(
+                selectedRefillForm.studentId,
+                selectedRefillForm.id,
+                selectedRefillForm.householdRegistrationAddress,
+                selectedRefillForm.childCharacteristicsFormImg,
+                selectedRefillForm.commitmentImg,
+                selectedRefillForm.note || ''
+            );
+            
+            if (response && response.success) {
+                enqueueSnackbar("Form resubmitted successfully", {variant: 'success'});
+                refreshData(); // Refresh data to update the table
+            } else {
+                enqueueSnackbar(response.message || "Failed to resubmit form", {variant: "error"});
+            }
+        } catch (error) {
+            enqueueSnackbar("Error resubmitting form", {variant: "error"});
+        } finally {
+            setIsResubmitting(false);
+            setRefillConfirmDialog(false);
+        }
+    }
+
+    const handleEditThenResubmit = () => {
+        setRefillConfirmDialog(false);
+        openRefillForm(selectedRefillForm);
     }
 
     // Helper function to format status text
@@ -81,89 +120,316 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefill
     };
 
     return (
-        <Paper sx={{
-            width: '100%',
-            height: 500,
-            borderRadius: 3,
-            overflow: 'hidden',
-            backgroundColor: '#fff',
-            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-            border: '2px solid rgb(254, 254, 253)'
-        }}>
-            <TableContainer sx={{height: 500}}>
-                <Table stickyHeader>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell align={"center"}>No</TableCell>
-                            <TableCell align={"center"}>Child Name</TableCell>
-                            <TableCell align={"center"}>Submit Date</TableCell>
-                            <TableCell align={"center"}>Cancel Reason</TableCell>
-                            <TableCell align={"center"}>Status</TableCell>
-                            <TableCell align={"center"}>Note</TableCell>
-                            <TableCell align={"center"}>Action</TableCell>
-                        </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                        {Array.isArray(forms) && forms.length === 0 ? (
+        <>
+            <Paper sx={{
+                width: '100%',
+                height: 500,
+                borderRadius: 3,
+                overflow: 'hidden',
+                backgroundColor: '#fff',
+                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+                border: '2px solid rgb(254, 254, 253)'
+            }}>
+                <TableContainer sx={{height: 500}}>
+                    <Table stickyHeader>
+                        <TableHead>
                             <TableRow>
-                                <TableCell colSpan={7} align="center">
-                                    No forms found
-                                </TableCell>
+                                <TableCell align={"center"}>No</TableCell>
+                                <TableCell align={"center"}>Child Name</TableCell>
+                                <TableCell align={"center"}>Submit Date</TableCell>
+                                <TableCell align={"center"}>Cancel Reason</TableCell>
+                                <TableCell align={"center"}>Status</TableCell>
+                                <TableCell align={"center"}>Note</TableCell>
+                                <TableCell align={"center"}>Action</TableCell>
                             </TableRow>
-                        ) : (
-                            forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
-                                <TableRow key={form.id}>
-                                    <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                                    <TableCell align="center">{form.studentName}</TableCell>
-                                    <TableCell align="center">{form.submittedDate}</TableCell>
-                                    <TableCell align="center">{form.cancelReason || "N/A"}</TableCell>
-                                    <TableCell
-                                        align="center"
-                                        sx={{
-                                            color: getStatusColor(form.status),
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        {formatStatus(form.status)}
-                                    </TableCell>
-                                    <TableCell align="center">{form.note || "N/A"}</TableCell>
-                                    <TableCell align="center">
-                                        <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="primary" onClick={() => handleDetailClick(form)}>
-                                                <Info sx={{color: '#2c3e50'}}/>
-                                            </IconButton>
-                                            {(form.status === 'CANCELLED' || form.status === 'REJECTED') && (
-                                                <IconButton
-                                                    onClick={() => openRefillForm(form)}
-                                                    sx={{
-                                                        color: '#e67e22',
-                                                        '&:hover': {
-                                                            color: '#d35400'
-                                                        }
-                                                    }}
-                                                >
-                                                    <Refresh/>
-                                                </IconButton>
-                                            )}
-                                        </Stack>
+                        </TableHead>
+
+                        <TableBody>
+                            {Array.isArray(forms) && forms.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} align="center">
+                                        No forms found
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <TablePagination
-                component="div"
-                rowsPerPageOptions={[5, 10, 15]}
-                count={Array.isArray(forms) ? forms.length : 0}
-                page={page}
-                onPageChange={handleChangePage}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-        </Paper>
+                            ) : (
+                                forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
+                                    <TableRow key={form.id}>
+                                        <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
+                                        <TableCell align="center">{form.studentName}</TableCell>
+                                        <TableCell align="center">{form.submittedDate}</TableCell>
+                                        <TableCell align="center">{form.cancelReason || "N/A"}</TableCell>
+                                        <TableCell
+                                            align="center"
+                                            sx={{
+                                                color: getStatusColor(form.status),
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            {formatStatus(form.status)}
+                                        </TableCell>
+                                        <TableCell align="center">{form.note || "N/A"}</TableCell>
+                                        <TableCell align="center">
+                                            <Stack direction="row" spacing={1} justifyContent="center">
+                                                <IconButton color="primary" onClick={() => handleDetailClick(form)}>
+                                                    <Info sx={{color: '#2c3e50'}}/>
+                                                </IconButton>
+                                                {(form.status === 'CANCELLED' || form.status === 'REJECTED') && (
+                                                    <IconButton
+                                                        onClick={() => handleRefillClick(form)}
+                                                        sx={{
+                                                            color: '#e67e22',
+                                                            '&:hover': {
+                                                                color: '#d35400'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Refresh/>
+                                                    </IconButton>
+                                                )}
+                                            </Stack>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <TablePagination
+                    component="div"
+                    rowsPerPageOptions={[5, 10, 15]}
+                    count={Array.isArray(forms) ? forms.length : 0}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+            </Paper>
+            
+            {/* Refill Confirmation Dialog */}
+            <Dialog 
+                open={refillConfirmDialog} 
+                onClose={() => setRefillConfirmDialog(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        boxShadow: '0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12), 0 11px 15px -7px rgba(0,0,0,0.20)',
+                        overflow: 'hidden'
+                    }
+                }}
+            >
+                <Box sx={{ 
+                    bgcolor: '#d32f2f',
+                    p: 3,
+                    color: 'white',
+                    textAlign: 'center'
+                }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                        ⚠️ IMPORTANT NOTICE - ADMISSION FORM RESUBMISSION
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        Please read carefully before proceeding
+                    </Typography>
+                </Box>
+
+                <DialogContent sx={{ p: 4 }}>
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: 3,
+                            borderRadius: 2,
+                            '& .MuiAlert-icon': { fontSize: 24 },
+                            '& .MuiAlert-message': { fontSize: '16px' }
+                        }}
+                    >
+                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                            FORM REJECTION NOTICE
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                            The admission form for <strong>{selectedRefillForm?.studentName}</strong> has been <strong>REJECTED</strong> by the admission committee.
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                            You must choose ONE of the following options to proceed with resubmission.
+                        </Typography>
+                    </Alert>
+
+                    <Alert 
+                        severity="warning" 
+                        sx={{ 
+                            mb: 4,
+                            borderRadius: 2,
+                            '& .MuiAlert-icon': { fontSize: 24 }
+                        }}
+                    >
+                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                            CRITICAL REMINDER:
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            • This is your opportunity to correct any issues that led to the rejection
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 1 }}>
+                            • Resubmitting identical information may result in another rejection
+                        </Typography>
+                        <Typography variant="body2">
+                            • Consider carefully whether any information needs to be updated before resubmitting
+                        </Typography>
+                    </Alert>
+
+                    <Typography variant="h6" sx={{ mb: 3, color: '#d32f2f', fontWeight: 700, textAlign: 'center' }}>
+                        SELECT YOUR RESUBMISSION METHOD:
+                    </Typography>
+
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} md={6}>
+                            <Paper 
+                                elevation={2}
+                                sx={{ 
+                                    p: 3,
+                                    border: '2px solid #2196f3',
+                                    borderRadius: 2,
+                                    backgroundColor: '#f8f9fa'
+                                }}
+                            >
+                                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#1976d2', textAlign: 'center' }}>
+                                    OPTION 1: RESUBMIT AS IS
+                                </Typography>
+                                <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
+                                    What this means:
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    • Submit the exact same information without any modifications
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    • All documents and data remain unchanged
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    • Fastest option - immediate resubmission
+                                </Typography>
+                                <Alert severity="info" sx={{ mt: 2 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                        WARNING: Use this option only if you believe the rejection was due to administrative reasons, not data issues.
+                                    </Typography>
+                                </Alert>
+                            </Paper>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <Paper 
+                                elevation={2}
+                                sx={{ 
+                                    p: 3,
+                                    border: '2px solid #ff9800',
+                                    borderRadius: 2,
+                                    backgroundColor: '#fff8f0'
+                                }}
+                            >
+                                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#f57c00', textAlign: 'center' }}>
+                                    OPTION 2: EDIT THEN RESUBMIT
+                                </Typography>
+                                <Typography variant="body1" sx={{ mb: 2, fontWeight: 600 }}>
+                                    What this means:
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    • Review and modify your application information
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                    • Update documents if necessary
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    • Address potential issues that caused rejection
+                                </Typography>
+                                <Alert severity="warning" sx={{ mt: 2 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                        RECOMMENDED: Choose this option if you suspect there were errors or incomplete information in your original submission.
+                                    </Typography>
+                                </Alert>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 700, mb: 1 }}>
+                            FINAL WARNING:
+                        </Typography>
+                        <Typography variant="body2">
+                            By proceeding with resubmission, you acknowledge that this is your second attempt. Subsequent rejections may impact your eligibility for this admission term. Please ensure all information is accurate and complete.
+                        </Typography>
+                    </Alert>
+                </DialogContent>
+
+                <Box sx={{ 
+                    bgcolor: '#f5f5f5',
+                    p: 4,
+                    borderTop: '3px solid #d32f2f'
+                }}>
+                    <Typography variant="body1" sx={{ fontWeight: 700, mb: 2, textAlign: 'center', color: '#d32f2f' }}>
+                        PROCEED WITH CAUTION - YOUR DECISION CANNOT BE UNDONE
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+                        <Button 
+                            onClick={() => setRefillConfirmDialog(false)} 
+                            variant="outlined"
+                            color="inherit"
+                            disabled={isResubmitting}
+                            size="large"
+                            sx={{
+                                px: 4,
+                                py: 1.5,
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                minWidth: 120
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleEditThenResubmit}
+                            variant="contained"
+                            color="warning"
+                            disabled={isResubmitting}
+                            startIcon={<Edit />}
+                            size="large"
+                            sx={{
+                                px: 4,
+                                py: 1.5,
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                minWidth: 200
+                            }}
+                        >
+                            Edit Then Resubmit
+                        </Button>
+                        <Button 
+                            onClick={handleDirectResubmit}
+                            variant="contained"
+                            color="error"
+                            disabled={isResubmitting}
+                            startIcon={isResubmitting ? <CircularProgress size={18} color="inherit" /> : <Refresh />}
+                            size="large"
+                            sx={{
+                                px: 4,
+                                py: 1.5,
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                minWidth: 200,
+                                bgcolor: '#d32f2f',
+                                '&:hover': {
+                                    bgcolor: '#b71c1c'
+                                }
+                            }}
+                        >
+                            {isResubmitting ? 'Processing...' : 'Resubmit As Is'}
+                        </Button>
+                    </Box>
+                    
+                    <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 2, fontStyle: 'italic', color: '#666' }}>
+                        * By clicking any option above, you confirm that you have read and understood all warnings and consequences.
+                    </Typography>
+                </Box>
+            </Dialog>
+        </>
     )
 }
 
@@ -976,7 +1242,7 @@ function RenderFormPopUp({
     );
 }
 
-function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList, openRefillForm, isFormSubmitting}) {
+function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelectedForm, studentList, openRefillForm, isFormSubmitting, refreshData}) {
     return (
         <div className="container">
             {/*1.tiêu đề */}
@@ -1016,6 +1282,7 @@ function RenderPage({openFormPopUpFunc, openDetailPopUpFunc, forms, HandleSelect
                 openDetailPopUpFunc={openDetailPopUpFunc}
                 HandleSelectedForm={HandleSelectedForm}//selected form moi dc
                 openRefillForm={openRefillForm}
+                refreshData={refreshData}
             />
         </div>
     )
@@ -1078,6 +1345,7 @@ export default function AdmissionForm() {
                 studentList={data.studentList}
                 openRefillForm={handleRefillForm}
                 isFormSubmitting={isFormSubmitting}
+                refreshData={GetForm}
             />
             {
                 popUp.isOpen && popUp.type === 'form' &&
