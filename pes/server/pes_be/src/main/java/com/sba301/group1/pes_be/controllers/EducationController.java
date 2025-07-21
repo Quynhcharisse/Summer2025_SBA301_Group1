@@ -377,8 +377,12 @@ public class EducationController {
     @GetMapping("/teachers")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Get all teachers")
-    public ResponseEntity<ResponseObject> getAllTeachers() {
-        return educationService.getAllTeachers();
+    public ResponseEntity<ResponseObject> getAllTeachers(@RequestParam(required = false) Integer startYear) {
+        if (startYear != null) {
+            return educationService.getAllTeachersByStartYear(startYear);
+        } else {
+            return educationService.getAllTeachers();
+        }
     }
 
     @GetMapping("/teachers/{teacherId}")
@@ -434,7 +438,7 @@ public class EducationController {
     @GetMapping("/rooms/availability")
     @PreAuthorize("hasRole('education')")
     @Operation(summary = "Get room availability (1-20)", description = "Retrieves a list of rooms from 1 to 20 with their occupancy status.")
-    public ResponseEntity<List<RoomResponse>> getRoomAvailability() {
-        return educationService.getRoomAvailability();
+    public ResponseEntity<List<RoomResponse>> getRoomAvailability(@RequestParam(required = false) Integer startYear) {
+        return educationService.getRoomAvailability(startYear);
     }
 }

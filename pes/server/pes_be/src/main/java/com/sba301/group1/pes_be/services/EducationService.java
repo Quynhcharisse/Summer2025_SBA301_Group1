@@ -381,6 +381,12 @@ public interface EducationService {
     * Retrieves all teachers in the system
     * @return ResponseEntity containing the list of all teachers
     */
+   ResponseEntity<ResponseObject> getAllTeachersByStartYear(Integer startYear);
+
+   /**
+    * Retrieves all teachers in the system
+    * @return ResponseEntity containing the list of all teachers
+    */
    ResponseEntity<ResponseObject> getAllTeachers();
 
    /**
@@ -401,5 +407,5 @@ public interface EducationService {
      * A room is considered occupied if there is at least one class assigned to it.
      * @return ResponseEntity containing a list of RoomResponse objects.
      */
-    ResponseEntity<List<RoomResponse>> getRoomAvailability();
+    ResponseEntity<List<RoomResponse>> getRoomAvailability(Integer startYear);
 }

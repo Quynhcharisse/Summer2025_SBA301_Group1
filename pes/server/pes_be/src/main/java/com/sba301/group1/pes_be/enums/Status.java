@@ -16,9 +16,21 @@ public enum Status {
     APPROVED("approved"),
     REJECTED("rejected"),
 
+    ACTIVE("active"),
+    INACTIVE("inactive"),
+
     ACTIVE_TERM("active"), // trong khoảng ngày cho phép
     INACTIVE_TERM("inactive"), // chưa đến ngày
     LOCKED_TERM("locked");// đã hết ngày cho phép đăng ký
 
     private final String value;
+
+    public static Status fromValue(String value) {
+        for (Status status : Status.values()) {
+            if (status.value.equalsIgnoreCase(value)) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("Unknown enum type " + value);
+    }
 }

@@ -1,6 +1,5 @@
 package com.sba301.group1.pes_be.validations.ClassValidation;
 
-import com.sba301.group1.pes_be.enums.ClassStatus;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.SyllabusRepo;
@@ -36,11 +35,11 @@ public class UpdateClassValidation {
         LocalDate now = LocalDate.now();
         LocalDate oneWeekFromNow = now.plusWeeks(1);
         
-        if (request.getStartDate().isBefore(oneWeekFromNow)) {
+        if (LocalDate.parse(request.getStartDate()).isBefore(oneWeekFromNow)) {
             return "Start date must be at least 1 week from now";
         }
         
-        if (!request.getEndDate().isAfter(request.getStartDate())) {
+        if (!LocalDate.parse(request.getEndDate()).isAfter(LocalDate.parse(request.getStartDate()))) {
             return "End date must be after start date";
         }
         
@@ -57,8 +56,12 @@ public class UpdateClassValidation {
             return "Selected account is not a teacher";
         }
         
-        if (classesRepo.existsByTeacherIdAndStatusAndIdNot(request.getTeacherId(), ClassStatus.ACTIVE, existingClass.getId())) {
-            return "Teacher is already assigned to another active class";
+        if (classesRepo.existsByTeacherAndYearAndIdNot(request.getTeacherId(), String.valueOf(LocalDate.parse(request.getStartDate()).getYear()), existingClass.getId())) {
+            return "Teacher is already assigned to another class in the same year";
+        }
+
+        if (classesRepo.existsByRoomNumberAndYearAndIdNot(request.getRoomNumber(), String.valueOf(LocalDate.parse(request.getStartDate()).getYear()), existingClass.getId())) {
+            return "Room is already assigned to another class in the same year";
         }
         
         if (request.getSyllabusId() == null) {

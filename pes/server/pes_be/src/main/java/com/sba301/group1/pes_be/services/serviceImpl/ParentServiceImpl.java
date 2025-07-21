@@ -81,8 +81,6 @@ public class ParentServiceImpl implements ParentService {
 
     private final SyllabusLessonRepo syllabusLessonRepo;
 
-    private final ClassesRepo classesRepo;
-
     // Private helper method to convert list of Activity entities to Responses
     private List<ActivityResponse> convertToResponse(List<Activity> activities) {
         return ActivityResponse.fromEntityList(activities);

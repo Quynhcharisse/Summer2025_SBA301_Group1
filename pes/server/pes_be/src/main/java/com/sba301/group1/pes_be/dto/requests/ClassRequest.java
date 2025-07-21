@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -21,8 +20,8 @@ public class ClassRequest {
     private String name;
     private int numberStudent;
     private String roomNumber;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
     private String status;
     private String grade;
 }

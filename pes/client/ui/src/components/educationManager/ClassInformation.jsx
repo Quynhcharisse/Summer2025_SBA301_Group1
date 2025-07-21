@@ -22,7 +22,7 @@ import {
     Cancel,
     PersonAdd
 } from '@mui/icons-material';
-import { getRoomAvailability } from '../../services/EducationService.jsx';
+import { getRoomAvailability, getAllTeachers } from '../../services/EducationService.jsx';
 import { useNavigate } from 'react-router-dom';
 
 const ClassInformation = ({
@@ -30,17 +30,17 @@ const ClassInformation = ({
     syllabus,
     classLessons,
     onTeacherClick,
-    teachers = [],
     syllabi,
     onUpdateClass,
-    isCreateMode // Add isCreateMode prop
+    isCreateMode
 }) => {
     const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(isCreateMode); // Initialize isEditing based on isCreateMode
+    const [isEditing, setIsEditing] = useState(isCreateMode);
     const [showAllLessons, setShowAllLessons] = useState(false);
     const [editData, setEditData] = useState({});
     const [errors, setErrors] = useState([]);
     const [roomAvailability, setRoomAvailability] = useState([]);
+    const [teachers, setTeachers] = useState([]);
 
     const initializeEditData = useCallback(() => {
         setEditData({
@@ -49,35 +49,48 @@ const ClassInformation = ({
             syllabusId: classData?.syllabus?.id || null,
             numberStudent: classData?.numberStudent || 1,
             roomNumber: classData?.roomNumber || null,
-            startDate: classData?.startDate ? new Date(classData.startDate).getFullYear().toString() : '',
+            startYear: classData?.startDate ? new Date(classData.startDate).getFullYear() : '',
             status: classData?.status?.toUpperCase() || '',
             grade: classData?.grade || ''
         });
     }, [classData]);
 
-    // Effect to initialize editData when in create mode or when classData changes
     useEffect(() => {
         if (isCreateMode || classData) {
             initializeEditData();
         }
     }, [isCreateMode, classData, initializeEditData]);
 
-    // Effect to fetch room availability when in edit mode or create mode
     useEffect(() => {
-        const fetchRoomData = async () => {
+        const fetchRoomsAndTeachers = async () => {
+            if (!editData.startYear) {
+                setRoomAvailability([]);
+                setTeachers([]);
+                return;
+            }
             try {
-                const data = await getRoomAvailability();
-                setRoomAvailability(data);
+                const [roomsData, teachersResponse] = await Promise.all([
+                    getRoomAvailability(editData.startYear),
+                    getAllTeachers(editData.startYear)
+                ]);
+
+                setRoomAvailability(roomsData || []);
+
+                if (teachersResponse && teachersResponse.success) {
+                    setTeachers(teachersResponse.data || []);
+                } else {
+                    setTeachers([]);
+                }
             } catch (error) {
-                console.error('Failed to fetch room availability:', error);
-                setErrors(prev => [...prev, 'Failed to load room availability.']);
+                console.error('Failed to fetch room/teacher data:', error);
+                setErrors(prev => [...prev, 'Failed to load room or teacher data.']);
             }
         };
 
-        if (isEditing || isCreateMode) {
-            fetchRoomData();
+        if (isEditing) {
+            fetchRoomsAndTeachers();
         }
-    }, [isEditing, isCreateMode]);
+    }, [isEditing, editData.startYear]);
 
     const validateForm = () => {
         const validationErrors = [];
@@ -102,17 +115,17 @@ const ClassInformation = ({
             validationErrors.push('Room number is required');
         }
         
-        if (!editData.startDate) {
-            validationErrors.push('Start date is required');
+        if (!editData.startYear) {
+            validationErrors.push('Start year is required');
         }
         
         if (editData.numberStudent <= 0) {
             validationErrors.push('Number of students must be greater than 0');
         }
         
-        if (editData.startDate) {
+        if (editData.startYear) {
             const currentYear = new Date().getFullYear();
-            const startYear = parseInt(editData.startDate);
+            const startYear = parseInt(editData.startYear);
             if (startYear < currentYear) {
                 validationErrors.push('Start year cannot be in the past');
             }
@@ -142,11 +155,18 @@ const ClassInformation = ({
 
         try {
             const updatedClassData = { ...editData };
-            if (updatedClassData.startDate) {
-                updatedClassData.startDate = `${updatedClassData.startDate}-09-01`;
+            if (updatedClassData.startYear) {
+                updatedClassData.startDate = `${updatedClassData.startYear}-09-01`;
+                updatedClassData.endDate = `${parseInt(updatedClassData.startYear) + 1}-05-31`;
+                delete updatedClassData.startYear;
             }
-            updatedClassData.endDate = `${parseInt(updatedClassData.startDate) + 1}-05-31`;
-            await onUpdateClass(classData.id, updatedClassData);
+
+            if (isCreateMode) {
+                await onUpdateClass(updatedClassData);
+            } else {
+                await onUpdateClass(classData.id, updatedClassData);
+            }
+            
             setIsEditing(false);
             setErrors([]);
         } catch (error) {
@@ -169,12 +189,6 @@ const ClassInformation = ({
                 [field]: processedValue
             };
 
-            if (field === 'startDate' && value) {
-                const startYear = parseInt(value);
-                if (!isNaN(startYear)) {
-                    newState.endDate = (startYear + 1).toString();
-                }
-            }
             return newState;
         });
         
@@ -365,14 +379,31 @@ const ClassInformation = ({
                             )}
                         </Box>
                         <Box>
+                            <Typography variant="body2" color="text.secondary">Start Year</Typography>
+                            {isEditing ? (
+                                <TextField
+                                    type="number"
+                                    size="small"
+                                    sx={{ width: '120px' }}
+                                    value={editData.startYear}
+                                    onChange={(e) => handleFieldChange('startYear', e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
+                                    error={errors.some(error => error.includes('Start year'))}
+                                    inputProps={{ min: new Date().getFullYear() }}
+                                />
+                            ) : (
+                                <Typography variant="body1">{new Date(classData.startDate).getFullYear().toString()}</Typography>
+                            )}
+                        </Box>
+                        <Box>
                             <Typography variant="body2" color="text.secondary">Teacher</Typography>
                             {isEditing ? (
                                 <FormControl size="small" fullWidth>
-                                    {!isEditing && <InputLabel shrink={false}>Teacher</InputLabel>}
                                     <Select
                                         value={editData.teacherId}
                                         onChange={(e) => handleFieldChange('teacherId', e.target.value)}
                                         error={errors.some(error => error.includes('Teacher'))}
+                                        disabled={!editData.startYear}
                                     >
                                         {teachers && teachers
                                             .sort((a, b) => {
@@ -436,10 +467,11 @@ const ClassInformation = ({
                                     <Select
                                         value={editData.roomNumber}
                                         onChange={(e) => handleFieldChange('roomNumber', e.target.value)}
-                                        displayEmpty // Allows displaying the placeholder when value is null/undefined
+                                        displayEmpty
+                                        disabled={!editData.startYear}
                                         renderValue={(selected) => {
                                             if (selected === null || selected === '') {
-                                                return <em>Room Number</em>; // Placeholder text
+                                                return <em>Room Number</em>;
                                                 }
                                                 return selected;
                                             }}
@@ -521,19 +553,7 @@ const ClassInformation = ({
                 </Box>
                 <Box sx={{display: 'flex', gap: 2}}>
                     <Box sx={{flex: 1}}>
-                        {isEditing ? (
-                            <TextField
-                                type="number"
-                                size="small"
-                                sx={{ width: '120px' }}
-                                label="Start Year"
-                                value={editData.startDate}
-                                onChange={(e) => handleFieldChange('startDate', e.target.value)}
-                                InputLabelProps={{ shrink: true }}
-                                error={errors.some(error => error.includes('Start date'))}
-                                inputProps={{ min: 1900, max: 2100 }}
-                            />
-                        ) : (
+                        {!isEditing && (
                             <Box>
                                 <Typography variant="body2" color="text.secondary">School Year</Typography>
                                 <Typography variant="body1">{formatSchoolYear(classData?.startDate, classData?.endDate)}</Typography>

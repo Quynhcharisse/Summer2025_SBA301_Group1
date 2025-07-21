@@ -25,7 +25,7 @@ function ScheduleForm({
                           onSubmit,
                           mode,
                           initialData,
-                          classes,
+                          classId, // Directly receive classId
                           lessons,
                           loading,
                           onCreateActivity,
@@ -53,7 +53,7 @@ function ScheduleForm({
                 const newFormData = {
                     weekNumber: initialData?.weekNumber || 1,
                     note: initialData?.note || '',
-                    classId: initialData?.classId || ''
+                    classId: classId || initialData?.classId || ''
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(null);
@@ -61,19 +61,10 @@ function ScheduleForm({
                 setTempActivities([]); // Clear temporary activities on new form open
             } else if (mode === 'edit' && initialData) {
                 // Handle different possible data structures from backend
-                let classId = '';
-                if (initialData.classId) {
-                    classId = initialData.classId;
-                } else if (initialData.classes?.id) {
-                    classId = initialData.classes.id;
-                } else if (typeof initialData.getClassId === 'function') {
-                    classId = initialData.getClassId();
-                }
-                
                 const newFormData = {
                     weekNumber: initialData.weekNumber || 1,
                     note: initialData.note || '',
-                    classId: classId
+                    classId: classId || initialData.classId || (initialData.classes ? initialData.classes.id : '')
                 };
                 setFormData(newFormData);
                 setSelectedSchedule(initialData);
@@ -199,20 +190,6 @@ function ScheduleForm({
                             helperText="Enter the week number for this schedule. Note: Each class can only have one schedule per week number."
                         />
 
-                        <FormControl fullWidth required>
-                            <InputLabel>Class</InputLabel>
-                            <Select
-                                value={formData.classId}
-                                onChange={(e) => setFormData({...formData, classId: e.target.value})}
-                                label="Class"
-                            >
-                                {classes.map((cls) => (
-                                    <MenuItem key={cls.id} value={cls.id}>
-                                        {cls.className} (Grade {cls.grade})
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
 
                         <TextField
                             fullWidth

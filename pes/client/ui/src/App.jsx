@@ -14,6 +14,7 @@ import AdmissionLayout from "./layouts/AdmissionLayout.jsx";
 import EducationLayout from "./layouts/EducationLayout.jsx";
 import ClassList from "./components/educationManager/ClassList.jsx";
 import ClassDetails from "./components/educationManager/ClassDetails.jsx";
+import CreateClass from "./components/educationManager/CreateClass.jsx";
 import EducationDashboard from "./components/educationManager/EducationDashboard.jsx";
 import AdmissionTerm from "./components/admissionManager/AdmissionTerm.jsx";
 import ChildrenList from "./components/parent/ChildrenList.jsx";
@@ -110,7 +111,12 @@ const router = createBrowserRouter([
             {
                 path: 'classes',
                 element: <ClassList/>
-            }, {
+            },
+            {
+                path: 'classes/new',
+                element: <CreateClass />
+            },
+            {
                 path: 'classes/:id',
                 element: <ClassDetails/>
             },

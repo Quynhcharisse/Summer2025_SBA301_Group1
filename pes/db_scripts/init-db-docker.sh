@@ -30,7 +30,10 @@ echo "--- Database initialization complete ---"
 
 echo "--- 2. Starting Spring Boot application to create tables ---"
 cd "$PROJECT_ROOT/server/pes_be"
-./mvnw spring-boot:run &
+echo "--- Packaging Spring Boot application ---"
+./mvnw package -DskipTests
+echo "--- Starting Spring Boot application from JAR ---"
+java -jar target/pes_be-0.0.1-SNAPSHOT.jar &
 APP_PID=$!
 
 echo "--- Waiting for application to start (PID: $APP_PID) ---"

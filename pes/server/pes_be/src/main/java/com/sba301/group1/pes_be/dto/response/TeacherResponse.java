@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,7 @@ public class TeacherResponse {
         String grade;
     }
 
-    public static TeacherResponse fromEntity(Account account) {
+    public static TeacherResponse fromEntity(Account account, Integer startYear) {
         TeacherResponse.TeacherResponseBuilder builder = TeacherResponse.builder()
                 .id(account.getId())
                 .email(account.getEmail())
@@ -59,40 +60,55 @@ public class TeacherResponse {
                 .gender(account.getGender())
                 .identityNumber(account.getIdentityNumber());
 
-        boolean isOccupied = account.getClassesList() != null && account.getClassesList().stream()
-                .anyMatch(classEntity -> {
+        List<Classes> filteredClasses = account.getClassesList() != null ? account.getClassesList().stream()
+                .filter(classEntity -> {
+                    if (startYear == null) {
+                        return true;
+                    }
                     try {
-                        LocalDate endDate = LocalDate.parse(classEntity.getEndDate());
-                        return endDate.isAfter(LocalDate.now());
+                        LocalDate startDate = LocalDate.parse(classEntity.getStartDate(), DateTimeFormatter.ISO_LOCAL_DATE);
+                        return startDate.getYear() == startYear;
                     } catch (Exception e) {
                         return false;
                     }
-                });
+                })
+                .collect(Collectors.toList()) : java.util.Collections.emptyList();
 
-        if (account.getClassesList() != null && !account.getClassesList().isEmpty()) {
-            Classes classEntity = account.getClassesList().get(0);
-            
+        boolean isOccupied = !filteredClasses.isEmpty();
+
+        if (!filteredClasses.isEmpty()) {
+            Classes classEntity = filteredClasses.get(0); // Or handle multiple classes appropriately
             ClassInfo classInfo = ClassInfo.builder()
                     .id(classEntity.getId())
                     .name(classEntity.getName())
                     .numberStudent(classEntity.getNumberStudent())
                     .roomNumber(classEntity.getRoomNumber())
-                    .startDate(classEntity.getStartDate())
-                    .endDate(classEntity.getEndDate())
+                    .startDate(classEntity.getStartDate().toString())
+                    .endDate(classEntity.getEndDate().toString())
                     .status(classEntity.getStatus().toString())
                     .grade(classEntity.getGrade() != null ? classEntity.getGrade().name() : null)
                     .build();
             builder.classes(classInfo);
         }
-        
+
         builder.isOccupied(isOccupied);
 
         return builder.build();
     }
 
+    public static TeacherResponse fromEntity(Account account) {
+        return fromEntity(account, null);
+    }
+
+    public static List<TeacherResponse> fromEntityList(List<Account> accounts, Integer startYear) {
+        return accounts.stream()
+                .map(account -> fromEntity(account, startYear))
+                .collect(Collectors.toList());
+    }
+
     public static List<TeacherResponse> fromEntityList(List<Account> accounts) {
         return accounts.stream()
-                .map(TeacherResponse::fromEntity)
+                .map(account -> fromEntity(account, null))
                 .collect(Collectors.toList());
     }
 }

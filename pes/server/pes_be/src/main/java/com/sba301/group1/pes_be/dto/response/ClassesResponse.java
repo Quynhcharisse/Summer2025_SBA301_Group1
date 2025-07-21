@@ -109,8 +109,8 @@ public class ClassesResponse {
             .numberOfStudents(actualStudentCount) // Actual number of students enrolled
             .numberStudent(classes.getNumberStudent()) // Capacity of the class
             .roomNumber(classes.getRoomNumber())
-            .startDate(classes.getStartDate())
-            .endDate(classes.getEndDate())
+            .startDate(classes.getStartDate().toString())
+            .endDate(classes.getEndDate().toString())
             .status(classes.getStatus().toString())
             .grade(classes.getGrade() != null ? classes.getGrade().toString() : null)
             .syllabus(syllabusResponse)
