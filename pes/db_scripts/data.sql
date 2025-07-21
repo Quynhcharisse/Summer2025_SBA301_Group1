@@ -57,8 +57,8 @@ SET IDENTITY_INSERT syllabus_lesson OFF;
 -- Insert data into the classes table
 SET IDENTITY_INSERT classes ON;
 INSERT INTO classes (classes_id, name, number_student, room_number, start_date, end_date, status, grade, syllabus_id, teacher_id)VALUES
-(1, 'Preschool Class A', 20, '101', '2025-09-01', '2026-06-30', 'ACTIVE', 'SEED', 1, 5),
-(2, 'Kindergarten Class B', 25, '102', '2025-09-01', '2026-06-30', 'ACTIVE', 'BUD', 2, 6);
+(1, 'Preschool Class A', 20, '11', '2025-09-01', '2026-06-30', 'ACTIVE', 'SEED', 1, 5),
+(2, 'Kindergarten Class B', 25, '12', '2025-09-01', '2026-06-30', 'ACTIVE', 'BUD', 2, 6);
 SET IDENTITY_INSERT classes OFF;
 SET IDENTITY_INSERT classes OFF;
 

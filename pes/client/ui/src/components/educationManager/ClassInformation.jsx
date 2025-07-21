@@ -158,6 +158,7 @@ const ClassInformation = ({
             if (updatedClassData.startYear) {
                 updatedClassData.startDate = `${updatedClassData.startYear}-09-01`;
                 updatedClassData.endDate = `${parseInt(updatedClassData.startYear) + 1}-05-31`;
+                delete updatedClassData.startYear;
             }
 
             if (isCreateMode) {
