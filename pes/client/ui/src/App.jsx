@@ -24,6 +24,8 @@ import AssignStudentToClass from "./components/educationManager/AssignStudentToC
 
 import HrLayout from "./layouts/HrLayout.jsx";
 import ParentList from "./components/hrManager/ParentList.jsx";
+import TeacherList from "./components/hrManager/TeacherList.jsx";
+
 
 import LessonDetails from "./components/educationManager/LessonDetails.jsx";
 import SyllabusDetails from "./components/educationManager/SyllabusDetails.jsx";
@@ -148,6 +150,10 @@ const router = createBrowserRouter([
             {
                 path: 'parent-list',
                 element: <ParentList/>
+            },
+            {
+                path: 'teacher-list',
+                element: <TeacherList/>
             }
         ]
     },

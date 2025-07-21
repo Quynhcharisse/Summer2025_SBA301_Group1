@@ -10,6 +10,11 @@ function HrLayout() {
             segment: 'hr/parent-list',
             title: 'Parent List',
             icon: <AccountBoxIcon sx={{ color: '#2c3e50' }} />
+        },
+        {
+            segment: 'hr/teacher-list',
+            title: 'Teacher List',
+            icon: <AccountBoxIcon sx={{ color: '#2c3e50' }} />
         }
     ];
     return (
