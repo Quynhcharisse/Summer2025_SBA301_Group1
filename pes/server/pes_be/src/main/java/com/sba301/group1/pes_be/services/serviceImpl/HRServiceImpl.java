@@ -1,5 +1,8 @@
 package com.sba301.group1.pes_be.services.serviceImpl;
 
+import com.sba301.group1.pes_be.dto.requests.AddTeacherRequest;
+import com.sba301.group1.pes_be.dto.requests.UpdateTeacherRequest;
+import com.sba301.group1.pes_be.dto.response.TeacherResponse;
 import com.sba301.group1.pes_be.enums.Role;
 import com.sba301.group1.pes_be.enums.Status;
 import com.sba301.group1.pes_be.models.Account;
@@ -204,6 +207,136 @@ public class HRServiceImpl implements HRService {
                         .message("Parent retrieved successfully")
                         .success(true)
                         .data(result)
+                        .build());
+
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> getAllTeachers(HttpServletRequest httpRequest) {
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+        if (account == null || !account.getRole().equals(Role.HR)) {
+            return ResponseEntity.status(401).body(
+                    ResponseObject.builder()
+                            .message("Unauthorized")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+        List<Account> teacherList = accountRepo.findAllByRole(Role.TEACHER);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Account acc : teacherList) {
+            TeacherResponse response = new TeacherResponse();
+            response.setId(acc.getId());
+            response.setEmail(acc.getEmail());
+            response.setName(acc.getName());
+            response.setPhone(acc.getPhone());
+            response.setGender(acc.getGender());
+            response.setIdentityNumber(acc.getIdentityNumber());
+        }
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Teachers retrieved successfully")
+                        .success(true)
+                        .data(TeacherResponse.fromEntityList(teacherList))
+                        .build());
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> addTeacher(AddTeacherRequest request, HttpServletRequest httpRequest) {
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+        if (account == null || !account.getRole().equals(Role.HR)) {
+            return ResponseEntity.status(401).body(
+                    ResponseObject.builder()
+                            .message("Unauthorized")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        if (request.getEmail() == null || request.getPassword() == null ||
+                request.getName() == null || request.getPhone() == null ||
+                request.getGender() == null || request.getIdentityNumber() == null) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("All fields are required")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        if (accountRepo.existsByEmail(request.getEmail())) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("Email already exists")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        Account teacherAccount = Account.builder()
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .role(Role.TEACHER)
+                .status(Status.ACCOUNT_ACTIVE)
+                .createdAt(java.time.LocalDate.now())
+                .name(request.getName())
+                .phone(request.getPhone())
+                .gender(request.getGender())
+                .identityNumber(request.getIdentityNumber())
+                .build();
+        accountRepo.save(teacherAccount);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Teacher added successfully")
+                        .success(true)
+                        .data(teacherAccount)
+                        .build());
+    }
+
+    @Override
+    public ResponseEntity<ResponseObject> updateTeacherProfile(int id, UpdateTeacherRequest request, HttpServletRequest httpRequest) {
+        Account account = jwtService.extractAccountFromCookie(httpRequest);
+        if (account == null || !account.getRole().equals(Role.HR)) {
+            return ResponseEntity.status(401).body(
+                    ResponseObject.builder()
+                            .message("Unauthorized")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        Account teacherAccount = accountRepo.findById(id).orElse(null);
+        if (teacherAccount == null || !teacherAccount.getRole().equals(Role.TEACHER)) {
+            return ResponseEntity.status(404).body(
+                    ResponseObject.builder()
+                            .message("Teacher not found")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+        if(request.getName().trim().isEmpty() || request.getPhone().trim().isEmpty() ||
+                request.getGender().trim().isEmpty() || request.getIdentityNumber().trim().isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    ResponseObject.builder()
+                            .message("All fields are required")
+                            .success(false)
+                            .data(null)
+                            .build());
+        }
+
+        teacherAccount.setId(id);
+        teacherAccount.setName(request.getName());
+        teacherAccount.setPhone(request.getPhone());
+        teacherAccount.setGender(request.getGender());
+        teacherAccount.setIdentityNumber(request.getIdentityNumber());
+        accountRepo.save(teacherAccount);
+
+        return ResponseEntity.ok().body(
+                ResponseObject.builder()
+                        .message("Teacher profile updated successfully")
+                        .success(true)
+                        .data(teacherAccount)
                         .build());
 
     }
