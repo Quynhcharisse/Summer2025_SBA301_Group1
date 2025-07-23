@@ -43,7 +43,7 @@ function CreateClass() {
         name: '',
         description: '',
         grade: '',
-        status: 'active',
+        status: 'INACTIVE',
         teacher: null,
         syllabus: null,
         startDate: '',
