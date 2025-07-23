@@ -184,7 +184,8 @@ SET IDENTITY_INSERT activity OFF;
 SET IDENTITY_INSERT admission_term ON;
 INSERT INTO admission_term (admission_term_id, name, start_date, end_date, year, max_number_registration, grade, status, parent_term_id) VALUES
 (1, 'Preschool Admission 2025', '2025-01-01 00:00:00', '2025-07-31 23:59:59', 2025, 50, 'SEED', 'ACTIVE_TERM', NULL),
-(2, 'Kindergarten Admission 2025', '2025-01-01 00:00:00', '2025-07-31 23:59:59', 2025, 60, 'BUD', 'ACTIVE_TERM', NULL);
+(2, 'Kindergarten Admission 2025', '2025-01-01 00:00:00', '2025-07-31 23:59:59', 2025, 60, 'BUD', 'ACTIVE_TERM', NULL),
+(3, 'Leaf Admission 2025', '2025-01-01 00:00:00', '2025-07-31 23:59:59', 2025, 60, 'LEAF', 'ACTIVE_TERM', NULL);
 SET IDENTITY_INSERT admission_term OFF;
 
 -- Insert data into the admission_form table
