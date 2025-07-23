@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -232,6 +233,7 @@ public class HRServiceImpl implements HRService {
             response.setPhone(acc.getPhone());
             response.setGender(acc.getGender());
             response.setIdentityNumber(acc.getIdentityNumber());
+            response.setCreatedAt(acc.getCreatedAt());
         }
         return ResponseEntity.ok().body(
                 ResponseObject.builder()
@@ -283,6 +285,7 @@ public class HRServiceImpl implements HRService {
                 .phone(request.getPhone())
                 .gender(request.getGender())
                 .identityNumber(request.getIdentityNumber())
+                .createdAt(LocalDate.now())
                 .build();
         accountRepo.save(teacherAccount);
 
@@ -330,6 +333,7 @@ public class HRServiceImpl implements HRService {
         teacherAccount.setPhone(request.getPhone());
         teacherAccount.setGender(request.getGender());
         teacherAccount.setIdentityNumber(request.getIdentityNumber());
+        teacherAccount.setCreatedAt(java.time.LocalDate.now()); // cập nhật ngày sửa
         accountRepo.save(teacherAccount);
 
         return ResponseEntity.ok().body(

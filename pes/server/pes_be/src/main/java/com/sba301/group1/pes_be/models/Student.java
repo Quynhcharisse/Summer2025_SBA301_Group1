@@ -63,9 +63,6 @@ public class Student {
     @Column(name = "`household_registration_img`")
     String householdRegistrationImg;
 
-    @Column(name = "update_count")
-    Integer updateCount;
-
     @Column(name = "`is_student`")
     boolean isStudent;
 
