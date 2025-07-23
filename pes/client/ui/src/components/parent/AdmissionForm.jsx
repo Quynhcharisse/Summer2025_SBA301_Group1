@@ -121,89 +121,89 @@ function RenderTable({openDetailPopUpFunc, forms, HandleSelectedForm, openRefill
 
     return (
         <>
-            <Paper sx={{
-                width: '100%',
-                height: 500,
-                borderRadius: 3,
-                overflow: 'hidden',
-                backgroundColor: '#fff',
-                boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-                border: '2px solid rgb(254, 254, 253)'
-            }}>
-                <TableContainer sx={{height: 500}}>
-                    <Table stickyHeader>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell align={"center"}>No</TableCell>
-                                <TableCell align={"center"}>Child Name</TableCell>
-                                <TableCell align={"center"}>Submit Date</TableCell>
-                                <TableCell align={"center"}>Cancel Reason</TableCell>
-                                <TableCell align={"center"}>Status</TableCell>
-                                <TableCell align={"center"}>Note</TableCell>
-                                <TableCell align={"center"}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
+        <Paper sx={{
+            width: '100%',
+            height: 500,
+            borderRadius: 3,
+            overflow: 'hidden',
+            backgroundColor: '#fff',
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
+            border: '2px solid rgb(254, 254, 253)'
+        }}>
+            <TableContainer sx={{height: 500}}>
+                <Table stickyHeader>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell align={"center"}>No</TableCell>
+                            <TableCell align={"center"}>Child Name</TableCell>
+                            <TableCell align={"center"}>Submit Date</TableCell>
+                            <TableCell align={"center"}>Cancel Reason</TableCell>
+                            <TableCell align={"center"}>Status</TableCell>
+                            <TableCell align={"center"}>Note</TableCell>
+                            <TableCell align={"center"}>Action</TableCell>
+                        </TableRow>
+                    </TableHead>
 
-                        <TableBody>
-                            {Array.isArray(forms) && forms.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} align="center">
-                                        No forms found
+                    <TableBody>
+                        {Array.isArray(forms) && forms.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} align="center">
+                                    No forms found
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
+                                <TableRow key={form.id}>
+                                    <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
+                                    <TableCell align="center">{form.studentName}</TableCell>
+                                    <TableCell align="center">{form.submittedDate}</TableCell>
+                                    <TableCell align="center">{form.cancelReason || "N/A"}</TableCell>
+                                    <TableCell
+                                        align="center"
+                                        sx={{
+                                            color: getStatusColor(form.status),
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        {formatStatus(form.status)}
+                                    </TableCell>
+                                    <TableCell align="center">{form.note || "N/A"}</TableCell>
+                                    <TableCell align="center">
+                                        <Stack direction="row" spacing={1} justifyContent="center">
+                                            <IconButton color="primary" onClick={() => handleDetailClick(form)}>
+                                                <Info sx={{color: '#2c3e50'}}/>
+                                            </IconButton>
+                                            {(form.status === 'CANCELLED' || form.status === 'REJECTED') && (
+                                                <IconButton
+                                                        onClick={() => handleRefillClick(form)}
+                                                    sx={{
+                                                        color: '#e67e22',
+                                                        '&:hover': {
+                                                            color: '#d35400'
+                                                        }
+                                                    }}
+                                                >
+                                                    <Refresh/>
+                                                </IconButton>
+                                            )}
+                                        </Stack>
                                     </TableCell>
                                 </TableRow>
-                            ) : (
-                                forms?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((form, index) => (
-                                    <TableRow key={form.id}>
-                                        <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                                        <TableCell align="center">{form.studentName}</TableCell>
-                                        <TableCell align="center">{form.submittedDate}</TableCell>
-                                        <TableCell align="center">{form.cancelReason || "N/A"}</TableCell>
-                                        <TableCell
-                                            align="center"
-                                            sx={{
-                                                color: getStatusColor(form.status),
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            {formatStatus(form.status)}
-                                        </TableCell>
-                                        <TableCell align="center">{form.note || "N/A"}</TableCell>
-                                        <TableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                <IconButton color="primary" onClick={() => handleDetailClick(form)}>
-                                                    <Info sx={{color: '#2c3e50'}}/>
-                                                </IconButton>
-                                                {(form.status === 'CANCELLED' || form.status === 'REJECTED') && (
-                                                    <IconButton
-                                                        onClick={() => handleRefillClick(form)}
-                                                        sx={{
-                                                            color: '#e67e22',
-                                                            '&:hover': {
-                                                                color: '#d35400'
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Refresh/>
-                                                    </IconButton>
-                                                )}
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                <TablePagination
-                    component="div"
-                    rowsPerPageOptions={[5, 10, 15]}
-                    count={Array.isArray(forms) ? forms.length : 0}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-            </Paper>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TablePagination
+                component="div"
+                rowsPerPageOptions={[5, 10, 15]}
+                count={Array.isArray(forms) ? forms.length : 0}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+        </Paper>
             
             {/* Refill Confirmation Dialog */}
             <Dialog 

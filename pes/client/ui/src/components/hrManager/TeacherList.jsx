@@ -170,44 +170,54 @@ export default function TeacherList() {
                             <TableCell align="center" sx={{ fontWeight: 700 }}>Gender</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 700 }}>Identity Number</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
-                            {/* <TableCell align="center" sx={{ fontWeight: 700 }}>Is Teaching</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700 }}>Class</TableCell> */}
                             <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {teacherList.map((teacher, index) => (
-                            <TableRow
-                                key={teacher.id}
-                                sx={{
-                                    '&:hover': { backgroundColor: 'rgba(44, 62, 80, 0.04)' },
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                <TableCell align="center">{index + 1}</TableCell>
-                                <TableCell align="center">{teacher.name}</TableCell>
-                                <TableCell align="center">{teacher.email}</TableCell>
-                                <TableCell align="center">{teacher.phone}</TableCell>
-                                <TableCell align="center">{teacher.gender}</TableCell>
-                                <TableCell align="center">{teacher.identityNumber}</TableCell>
-                                <TableCell align="center">{getStatusChip(teacher.status)}</TableCell>
-                                {/* <TableCell align="center">
-                                    {teacher.isOccupied ? (
-                                        <Chip label="Teaching" color="success" size="small" />
-                                    ) : (
-                                        <Chip label="Available" color="info" size="small" />
-                                    )}
-                                </TableCell>
-                                <TableCell align="center">
-                                    {teacher.classes ? teacher.classes.name : <Chip label="No Class" size="small" />}
-                                </TableCell> */}
-                                <TableCell align="center">
-                                    <Button variant="outlined" size="small" startIcon={<Edit />} onClick={() => handleOpenEdit(teacher)}>
-                                        Edit
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {[...teacherList]
+                            .sort((a, b) => {
+                                if (a.createdAt && b.createdAt) {
+                                    const dateA = new Date(a.createdAt);
+                                    const dateB = new Date(b.createdAt);
+                                    if (dateA.getTime() !== dateB.getTime()) {
+                                        return dateB - dateA; // ngày mới hơn lên đầu
+                                    }
+                                }
+                                // Nếu cùng ngày hoặc thiếu createdAt, sort tiếp theo id giảm dần
+                                return (b.id || 0) - (a.id || 0);
+                            })
+                            .map((teacher, index) => (
+                                <TableRow
+                                    key={teacher.id}
+                                    sx={{
+                                        '&:hover': { backgroundColor: 'rgba(44, 62, 80, 0.04)' },
+                                        transition: 'background 0.2s',
+                                    }}
+                                >
+                                    <TableCell align="center">{index + 1}</TableCell>
+                                    <TableCell align="center">{teacher.name}</TableCell>
+                                    <TableCell align="center">{teacher.email}</TableCell>
+                                    <TableCell align="center">{teacher.phone}</TableCell>
+                                    <TableCell align="center">{teacher.gender}</TableCell>
+                                    <TableCell align="center">{teacher.identityNumber}</TableCell>
+                                    <TableCell align="center">{getStatusChip(teacher.status)}</TableCell>
+                                    {/* <TableCell align="center">
+                                        {teacher.isOccupied ? (
+                                            <Chip label="Teaching" color="success" size="small" />
+                                        ) : (
+                                            <Chip label="Available" color="info" size="small" />
+                                        )}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        {teacher.classes ? teacher.classes.name : <Chip label="No Class" size="small" />}
+                                    </TableCell> */}
+                                    <TableCell align="center">
+                                        <Button variant="outlined" size="small" startIcon={<Edit />} onClick={() => handleOpenEdit(teacher)}>
+                                            Edit
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                     </TableBody>
                 </Table>
             </TableContainer>
