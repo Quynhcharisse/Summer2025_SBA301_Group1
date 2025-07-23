@@ -478,12 +478,12 @@ const ChildrenList = () => {
                 const currentChild = children.find(child => child.id === editId);
                 if (currentChild?.hadForm) {
                     const confirmed = window.confirm(
-                        "⚠️ CẢNH BÁO: Bé này đã nộp đơn đăng ký tuyển sinh!\n\n" +
-                        "Việc thay đổi thông tin có thể:\n" +
-                        "• Ảnh hưởng đến quá trình xét duyệt\n" +
-                        "• Yêu cầu nộp lại giấy tờ\n" +
-                        "• Làm chậm tiến độ xét tuyển\n\n" +
-                        "Bạn có chắc chắn muốn lưu thay đổi không?"
+                        "⚠️ WARNING: This child has already submitted an admission application!\n\n" +
+                        "Changing the information may:\n" +
+                        "• Affect the application review process\n" +
+                        "• Require resubmission of supporting documents\n" +
+                        "• Delay the admission process\n\n" +
+                        "Are you sure you want to save these changes?"
                     );
                     
                     if (!confirmed) {
