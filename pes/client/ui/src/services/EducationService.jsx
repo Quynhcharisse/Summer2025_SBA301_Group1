@@ -55,8 +55,17 @@ export const updateClass = async (id, data) => {
 }
 
 export const removeClass = async (id) => {
-    const response = await axiosClient.delete(`/education/classes/${id}`);
-    return response.status === 204 ? { success: true, message: 'Class deleted successfully' } : response.data;
+    try {
+        const response = await axiosClient.delete(`/education/classes/${id}`);
+        return response.status === 204 ? { success: true, message: 'Class deleted successfully' } : response.data;
+    } catch (error) {
+        throw {
+            error: true,
+            message: error.response?.data?.message || 'Failed to delete class',
+            status: error.response?.status,
+            details: error.response?.data || error.message
+        }
+    }
 }
 
 // Syllabus APIs
