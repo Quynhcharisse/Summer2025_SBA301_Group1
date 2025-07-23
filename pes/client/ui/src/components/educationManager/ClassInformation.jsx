@@ -47,7 +47,7 @@ const ClassInformation = ({
             name: classData?.name || '',
             teacherId: classData?.teacher?.id || null,
             syllabusId: classData?.syllabus?.id || null,
-            numberStudent: classData?.numberStudent || 1,
+            numberStudent: classData?.numberStudent || 20,
             roomNumber: classData?.roomNumber || null,
             startYear: classData?.startDate ? new Date(classData.startDate).getFullYear() : '',
             status: classData?.status?.toUpperCase() || '',
@@ -205,8 +205,7 @@ const ClassInformation = ({
 
     const statusOptions = [
         { value: 'ACTIVE', label: 'Active' },
-        { value: 'INACTIVE', label: 'Inactive' },
-        { value: 'DRAFT', label: 'Draft' }
+        { value: 'INACTIVE', label: 'Inactive' }
     ];
 
     const getStatusColor = (status) => {
@@ -510,7 +509,7 @@ const ClassInformation = ({
                             )}
                         </Box>
                         <Box>
-                            <Typography variant="body2" color="text.secondary">Number of Students</Typography>
+                            <Typography variant="body2" color="text.secondary">Student capacity</Typography>
                             {isEditing ? (
                                 <TextField
                                     type="number"
