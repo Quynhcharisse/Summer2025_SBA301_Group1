@@ -130,16 +130,50 @@ SET IDENTITY_INSERT student_class OFF;
 SET IDENTITY_INSERT schedule ON;
 INSERT INTO schedule (schedule_id, week_number, note, classes_id) VALUES
 (1, 1, 'First week of school', 1),
-(2, 1, 'First week of school', 2);
+(2, 1, 'First week of school', 2),
+(3, 2, 'Second week of school', 1),
+(4, 2, 'Second week of school', 2);
 SET IDENTITY_INSERT schedule OFF;
 
 -- Insert data into the activity table
 SET IDENTITY_INSERT activity ON;
 INSERT INTO activity (activity_id, topic, description, day_of_week, start_time, end_time, schedule_id, lesson_id) VALUES
-(1, 'Alphabet Fun', 'Learning letters A-E', 'MONDAY', '09:00', '10:00', 1, 1),
-(2, 'Number Play', 'Counting 1-5', 'TUESDAY', '09:00', '10:00', 1, 2),
-(3, 'Colorful World', 'Learning about red and blue', 'MONDAY', '09:00', '10:00', 2, 3),
-(4, 'Fairy Tales', 'Reading Cinderella', 'TUESDAY', '09:00', '10:00', 2, 4);
+(1, 'Alphabet Fun', 'Learning letters A-E', 'MONDAY', '08:00', '09:30', 1, 1),
+(2, 'Number Play', 'Counting 1-5', 'TUESDAY', '08:00', '09:30', 1, 2),
+(3, 'Colorful World', 'Learning about red and blue', 'MONDAY', '08:00', '09:30', 2, 3),
+(4, 'Fairy Tales', 'Reading Cinderella', 'TUESDAY', '08:00', '09:30', 2, 4),
+(5, 'Story Time', 'Reading and listening to stories', 'WEDNESDAY', '08:00', '09:30', 1, 4),
+(6, 'Alphabet Fun', 'Learning letters F-J', 'WEDNESDAY', '09:30', '11:00', 1, 1),
+(7, 'Number Play', 'Counting 6-10', 'THURSDAY', '08:00', '09:30', 1, 2),
+(8, 'Colors and Shapes', 'Identifying green and yellow', 'THURSDAY', '09:30', '11:00', 1, 3),
+(9, 'Story Time', 'Reading The Little Mermaid', 'FRIDAY', '08:00', '09:30', 1, 4),
+(10, 'Alphabet Fun', 'Reviewing A-J', 'FRIDAY', '09:30', '11:00', 1, 1),
+(11, 'Fairy Tales', 'Reading Snow White', 'WEDNESDAY', '08:00', '09:30', 2, 4),
+(12, 'Colorful World', 'Learning about orange and purple', 'WEDNESDAY', '09:30', '11:00', 2, 3),
+(13, 'Number Play', 'Advanced counting', 'THURSDAY', '08:00', '09:30', 2, 2),
+(14, 'Alphabet Fun', 'Advanced alphabets', 'THURSDAY', '09:30', '11:00', 2, 1),
+(15, 'Fairy Tales', 'Reading Rapunzel', 'FRIDAY', '08:00', '09:30', 2, 4),
+(16, 'Colorful World', 'Mixing colors', 'FRIDAY', '09:30', '11:00', 2, 3),
+(17, 'Alphabet Fun', 'Learning letters K-O', 'MONDAY', '13:00', '14:30', 3, 1),
+(18, 'Number Play', 'Counting 11-15', 'MONDAY', '14:30', '16:00', 3, 2),
+(19, 'Colors and Shapes', 'Identifying triangles and squares', 'TUESDAY', '13:00', '14:30', 3, 3),
+(20, 'Story Time', 'Reading The Ugly Duckling', 'TUESDAY', '14:30', '16:00', 3, 4),
+(21, 'Alphabet Fun', 'Learning letters P-T', 'WEDNESDAY', '13:00', '14:30', 3, 1),
+(22, 'Number Play', 'Counting 16-20', 'WEDNESDAY', '14:30', '16:00', 3, 2),
+(23, 'Colors and Shapes', 'Identifying circles and rectangles', 'THURSDAY', '13:00', '14:30', 3, 3),
+(24, 'Story Time', 'Reading Jack and the Beanstalk', 'THURSDAY', '14:30', '16:00', 3, 4),
+(25, 'Alphabet Fun', 'Reviewing K-T', 'FRIDAY', '13:00', '14:30', 3, 1),
+(26, 'Number Play', 'Reviewing 11-20', 'FRIDAY', '14:30', '16:00', 3, 2),
+(27, 'Colorful World', 'Learning about pink and brown', 'MONDAY', '13:00', '14:30', 4, 3),
+(28, 'Fairy Tales', 'Reading Hansel and Gretel', 'MONDAY', '14:30', '16:00', 4, 4),
+(29, 'Alphabet Fun', 'Writing letters', 'TUESDAY', '13:00', '14:30', 4, 1),
+(30, 'Number Play', 'Simple addition', 'TUESDAY', '14:30', '16:00', 4, 2),
+(31, 'Colorful World', 'Crafting with colors', 'WEDNESDAY', '13:00', '14:30', 4, 3),
+(32, 'Fairy Tales', 'Reading The Three Little Pigs', 'WEDNESDAY', '14:30', '16:00', 4, 4),
+(33, 'Alphabet Fun', 'Phonics practice', 'THURSDAY', '13:00', '14:30', 4, 1),
+(34, 'Number Play', 'Simple subtraction', 'THURSDAY', '14:30', '16:00', 4, 2),
+(35, 'Colorful World', 'Painting', 'FRIDAY', '13:00', '14:30', 4, 3),
+(36, 'Fairy Tales', 'Puppet show', 'FRIDAY', '14:30', '16:00', 4, 4);
 SET IDENTITY_INSERT activity OFF;
 
 -- Insert data into the admission_term table
