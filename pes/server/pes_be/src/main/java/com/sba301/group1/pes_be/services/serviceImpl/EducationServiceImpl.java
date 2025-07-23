@@ -32,6 +32,7 @@ import com.sba301.group1.pes_be.models.Syllabus;
 import com.sba301.group1.pes_be.models.SyllabusLesson;
 import com.sba301.group1.pes_be.repositories.AccountRepo;
 import com.sba301.group1.pes_be.repositories.ActivityRepo;
+import com.sba301.group1.pes_be.repositories.AdmissionFormRepo;
 import com.sba301.group1.pes_be.repositories.ClassesRepo;
 import com.sba301.group1.pes_be.repositories.LessonRepo;
 import com.sba301.group1.pes_be.repositories.ScheduleRepo;
@@ -52,7 +53,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,6 +75,7 @@ public class EducationServiceImpl implements EducationService {
     private final SyllabusLessonRepo syllabusLessonRepo;
     private final AccountRepo accountRepo;
     private final StudentRepo studentRepo;
+    private final AdmissionFormRepo admissionFormRepo;
     private final StudentClassRepo studentClassRepo;
 
     // Private helper method to convert Activity entity to Response
@@ -1113,8 +1114,6 @@ public class EducationServiceImpl implements EducationService {
                         .classes(classEntity)
                         .build();
                 studentClassRepo.save(studentClass);
-
-                student.setStudent(true);
                 studentRepo.save(student);
                 classEntity.getStudentClassList().add(studentClass);
             }
@@ -2076,7 +2075,8 @@ public class EducationServiceImpl implements EducationService {
     @Override
     public ResponseEntity<ResponseObject> getAllStudents() {
         try {
-            List<Student> students = studentRepo.findAll();
+            List<Student> students = admissionFormRepo.findAllByStatusAndStudentIsStudent(Status.APPROVED, true)
+                    .stream().map(a -> a.getStudent()).toList();
             List<SimpleStudentResponse> studentResponses = students.stream()
                     .map(student -> SimpleStudentResponse.builder()
                             .id(student.getId())
