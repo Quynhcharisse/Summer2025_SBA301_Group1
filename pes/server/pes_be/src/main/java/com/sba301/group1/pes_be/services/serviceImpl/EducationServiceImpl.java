@@ -1012,44 +1012,57 @@ public class EducationServiceImpl implements EducationService {
     }
 
     @Override
+    @Transactional
     public ResponseEntity<ResponseObject> deleteClass(Integer classId) {
         try {
-            return classesRepo.findById(classId)
-                    .map(classes -> {
-                        try {
-                            if (classes.getStatus() != Status.DRAFT && classes.getStatus() != Status.INACTIVE) {
-                                return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                                        ResponseObject.builder()
-                                                .message("Cannot delete class. Only classes with status DRAFT or INACTIVE can be deleted.")
-                                                .success(false)
-                                                .data(null)
-                                                .build()
-                                );
-                            }
+            Optional<Classes> classOpt = classesRepo.findById(classId);
+            if (classOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        ResponseObject.builder()
+                                .message("Class not found")
+                                .success(false)
+                                .build()
+                );
+            }
 
-                            classesRepo.delete(classes);
-                            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-                                    ResponseObject.builder()
-                                            .message("Class deleted successfully")
-                                            .success(true)
-                                            .build()
-                            );
-                        } catch (Exception e) {
-                            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-                                    ResponseObject.builder()
-                                            .message("Cannot delete class. It may have dependencies (students, activities, schedules, etc.)")
-                                            .success(false)
-                                            .build()
-                            );
-                        }
-                    })
-                    .orElse(ResponseEntity.notFound().build());
+            Classes classes = classOpt.get();
+
+            // Check for dependencies before attempting deletion
+            if (classes.getStatus() != Status.DRAFT && classes.getStatus() != Status.INACTIVE) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        ResponseObject.builder()
+                                .message("Cannot delete class. Only classes with status DRAFT or INACTIVE can be deleted.")
+                                .success(false)
+                                .build()
+                );
+            }
+
+            // Check for assigned students
+            if (!studentClassRepo.findByClassesId(classId).isEmpty()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                        ResponseObject.builder()
+                                .message("Cannot delete class. There are still students assigned to this class.")
+                                .success(false)
+                                .build()
+                );
+            }
+
+            // If no dependencies, proceed with deletion
+            classesRepo.delete(classes);
+
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
+                    ResponseObject.builder()
+                            .message("Class deleted successfully")
+                            .success(true)
+                            .build()
+            );
+
         } catch (Exception e) {
+            // Generic fallback for other unexpected errors
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     ResponseObject.builder()
-                            .message("Error deleting class: " + e.getMessage())
+                            .message("An unexpected error occurred while deleting the class: " + e.getMessage())
                             .success(false)
-                            .data(null)
                             .build()
             );
         }

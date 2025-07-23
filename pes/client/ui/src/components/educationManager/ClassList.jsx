@@ -100,19 +100,14 @@ function ClassList() {
         try {
             const response = await removeClass(classToDelete.id);
             if (response && response.success) {
-                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, {variant: 'success'});
-                // Refresh the class list
+                enqueueSnackbar(`Class "${classToDelete.name}" deleted successfully`, { variant: 'success' });
                 fetchInitialData();
             } else {
-                enqueueSnackbar('Failed to delete class', {variant: 'error'});
+                enqueueSnackbar(response?.message || 'Failed to delete class', { variant: 'error' });
             }
         } catch (error) {
             console.error('Error deleting class:', error);
-            if (error.response?.status === 409) {
-                enqueueSnackbar('Cannot delete class. It may have dependencies (students, activities, etc.)', {variant: 'error'});
-            } else {
-                enqueueSnackbar('Error deleting class', {variant: 'error'});
-            }
+            enqueueSnackbar(error.message || 'An unexpected error occurred while deleting the class.', { variant: 'error' });
         } finally {
             setDeleteDialogOpen(false);
             setClassToDelete(null);
