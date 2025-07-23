@@ -495,11 +495,9 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Tìm parent từ account
         Parent parent = parentRepo.findByAccount_Id(acc.getId()).orElse(null);
         assert parent != null;
 
-        // KHÔNG cho update nếu đã là học sinh chính thức
         Student student = studentRepo.findById(request.getId()).orElse(null);
         assert student != null;
 
@@ -521,7 +519,6 @@ public class ParentServiceImpl implements ParentService {
                             .build());
         }
 
-        // Cập nhật thông tin nếu chưa là học sinh
         student.setName(request.getName());
         student.setGender(request.getGender());
         student.setDateOfBirth(request.getDateOfBirth());
@@ -530,7 +527,6 @@ public class ParentServiceImpl implements ParentService {
         student.setBirthCertificateImg(request.getBirthCertificateImg());
         student.setHouseholdRegistrationImg(request.getHouseholdRegistrationImg());
         student.setModifiedDate(LocalDate.now());
-        // Remove updateCount increment
         studentRepo.save(student);
 
         return ResponseEntity.status(HttpStatus.OK).body(
