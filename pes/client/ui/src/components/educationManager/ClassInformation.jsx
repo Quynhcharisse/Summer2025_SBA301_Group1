@@ -283,30 +283,32 @@ const ClassInformation = ({
                                 <Chip label={classData?.grade || 'Not specified'} color="primary" size="small"/>
                             )}
                         </Box>
-                        <Box>
-                            <Typography variant="body2" color="text.secondary">Status</Typography>
-                            {isEditing ? (
-                                <FormControl size="small" fullWidth>
-                                    {!isEditing && <InputLabel shrink={false}>Status</InputLabel>}
-                                    <Select
-                                        value={editData.status}
-                                        onChange={(e) => handleFieldChange('status', e.target.value)}
-                                    >
-                                        {statusOptions.map((status) => (
-                                            <MenuItem key={status.value} value={status.value}>
-                                                {status.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            ) : (
-                                <Chip
-                                    label={classData?.status || 'Unknown'}
-                                    color={getStatusColor(classData?.status)}
-                                    size="small"
-                                />
-                            )}
-                        </Box>
+                        {!isCreateMode && (
+                            <Box>
+                                <Typography variant="body2" color="text.secondary">Status</Typography>
+                                {isEditing ? (
+                                    <FormControl size="small" fullWidth>
+                                        {!isEditing && <InputLabel shrink={false}>Status</InputLabel>}
+                                        <Select
+                                            value={editData.status}
+                                            onChange={(e) => handleFieldChange('status', e.target.value)}
+                                        >
+                                            {statusOptions.map((status) => (
+                                                <MenuItem key={status.value} value={status.value}>
+                                                    {status.label}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                ) : (
+                                    <Chip
+                                        label={classData?.status || 'Unknown'}
+                                        color={getStatusColor(classData?.status)}
+                                        size="small"
+                                    />
+                                )}
+                            </Box>
+                        )}
                     </Stack>
                 </Box>
                 <Box sx={{flex: 1}}>

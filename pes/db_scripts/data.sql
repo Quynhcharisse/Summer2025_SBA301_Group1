@@ -67,24 +67,24 @@ SET IDENTITY_INSERT student ON;
 INSERT INTO student (student_id, name, gender, date_of_birth, place_of_birth, modified_date, profile_image, birth_certificate_img, household_registration_img, is_student, parent_id) VALUES
 (1, 'Nguyen Hoai An', 'Male', '2020-01-01', 'City A', '2025-07-13', 'https://picsum.photos/seed/profile1/200/300', 'https://picsum.photos/seed/bc1/200/300', 'https://picsum.photos/seed/hr1/200/300', 1, 1),
 (2, 'Tran My Binh', 'Female', '2020-02-01', 'City B', '2025-07-13', 'https://picsum.photos/seed/profile2/200/300', 'https://picsum.photos/seed/bc2/200/300', 'https://picsum.photos/seed/hr2/200/300', 1, 2),
-(3, 'Le Hoang C', 'Male', '2020-03-01', 'City C', '2025-07-13', 'https://picsum.photos/seed/profile3/200/300', 'https://picsum.photos/seed/bc3/200/300', 'https://picsum.photos/seed/hr3/200/300', 1, 3),
-(4, 'Pham Gia D', 'Female', '2020-04-01', 'City D', '2025-07-13', 'https://picsum.photos/seed/profile4/200/300', 'https://picsum.photos/seed/bc4/200/300', 'https://picsum.photos/seed/hr4/200/300', 1, 4),
-(5, 'Vo Thanh E', 'Male', '2020-05-01', 'City E', '2025-07-13', 'https://picsum.photos/seed/profile5/200/300', 'https://picsum.photos/seed/bc5/200/300', 'https://picsum.photos/seed/hr5/200/300', 1, 5),
-(6, 'Hoang Ngoc F', 'Female', '2020-06-01', 'City F', '2025-07-13', 'https://picsum.photos/seed/profile6/200/300', 'https://picsum.photos/seed/bc6/200/300', 'https://picsum.photos/seed/hr6/200/300', 1, 6),
-(7, 'Doan Huu G', 'Male', '2020-07-01', 'City G', '2025-07-13', 'https://picsum.photos/seed/profile7/200/300', 'https://picsum.photos/seed/bc7/200/300', 'https://picsum.photos/seed/hr7/200/300', 1, 7),
-(8, 'Bui Thuy H', 'Female', '2020-08-01', 'City H', '2025-07-13', 'https://picsum.photos/seed/profile8/200/300', 'https://picsum.photos/seed/bc8/200/300', 'https://picsum.photos/seed/hr8/200/300', 1, 8),
-(9, 'Dang Minh I', 'Male', '2020-09-01', 'City I', '2025-07-13', 'https://picsum.photos/seed/profile9/200/300', 'https://picsum.photos/seed/bc9/200/300', 'https://picsum.photos/seed/hr9/200/300', 1, 9),
-(10, 'Ngo Bao K', 'Female', '2020-10-01', 'City J', '2025-07-13', 'https://picsum.photos/seed/profile10/200/300', 'https://picsum.photos/seed/bc10/200/300', 'https://picsum.photos/seed/hr10/200/300', 1, 10),
-(11, 'Duong Van L', 'Male', '2020-11-01', 'City K', '2025-07-13', 'https://picsum.photos/seed/profile11/200/300', 'https://picsum.photos/seed/bc11/200/300', 'https://picsum.photos/seed/hr11/200/300', 1, 11),
-(12, 'Ly My M', 'Female', '2020-12-01', 'City L', '2025-07-13', 'https://picsum.photos/seed/profile12/200/300', 'https://picsum.photos/seed/bc12/200/300', 'https://picsum.photos/seed/hr12/200/300', 1, 12),
-(13, 'Trinh Hoai N', 'Male', '2021-01-01', 'City M', '2025-07-13', 'https://picsum.photos/seed/profile13/200/300', 'https://picsum.photos/seed/bc13/200/300', 'https://picsum.photos/seed/hr13/200/300', 1, 13),
-(14, 'Mai Ngoc O', 'Female', '2021-02-01', 'City N', '2025-07-13', 'https://picsum.photos/seed/profile14/200/300', 'https://picsum.photos/seed/bc14/200/300', 'https://picsum.photos/seed/hr14/200/300', 1, 14),
-(15, 'Phan Thanh P', 'Male', '2021-03-01', 'City O', '2025-07-13', 'https://picsum.photos/seed/profile15/200/300', 'https://picsum.photos/seed/bc15/200/300', 'https://picsum.photos/seed/hr15/200/300', 1, 15),
-(16, 'Truong Gia Q', 'Female', '2021-04-01', 'City P', '2025-07-13', 'https://picsum.photos/seed/profile16/200/300', 'https://picsum.photos/seed/bc16/200/300', 'https://picsum.photos/seed/hr16/200/300', 1, 16),
-(17, 'Lam Thuy R', 'Male', '2021-05-01', 'City Q', '2025-07-13', 'https://picsum.photos/seed/profile17/200/300', 'https://picsum.photos/seed/bc17/200/300', 'https://picsum.photos/seed/hr17/200/300', 1, 17),
-(18, 'Giang My S', 'Female', '2021-06-01', 'City R', '2025-07-13', 'https://picsum.photos/seed/profile18/200/300', 'https://picsum.photos/seed/bc18/200/300', 'https://picsum.photos/seed/hr18/200/300', 1, 18),
-(19, 'Duong Hoang T', 'Male', '2021-07-01', 'City S', '2025-07-13', 'https://picsum.photos/seed/profile19/200/300', 'https://picsum.photos/seed/bc19/200/300', 'https://picsum.photos/seed/hr19/200/300', 1, 19),
-(20, 'Cao Bao U', 'Female', '2021-08-01', 'City T', '2025-07-13', 'https://picsum.photos/seed/profile20/200/300', 'https://picsum.photos/seed/bc20/200/300', 'https://picsum.photos/seed/hr20/200/300', 1, 20);
+(3, 'Le Hoang C', 'Male', '2020-03-01', 'City C', '2025-07-13', 'https://picsum.photos/seed/profile3/200/300', 'https://picsum.photos/seed/bc3/200/300', 'https://picsum.photos/seed/hr3/200/300', 0, 3),
+(4, 'Pham Gia D', 'Female', '2020-04-01', 'City D', '2025-07-13', 'https://picsum.photos/seed/profile4/200/300', 'https://picsum.photos/seed/bc4/200/300', 'https://picsum.photos/seed/hr4/200/300', 0, 4),
+(5, 'Vo Thanh E', 'Male', '2020-05-01', 'City E', '2025-07-13', 'https://picsum.photos/seed/profile5/200/300', 'https://picsum.photos/seed/bc5/200/300', 'https://picsum.photos/seed/hr5/200/300', 0, 5),
+(6, 'Hoang Ngoc F', 'Female', '2020-06-01', 'City F', '2025-07-13', 'https://picsum.photos/seed/profile6/200/300', 'https://picsum.photos/seed/bc6/200/300', 'https://picsum.photos/seed/hr6/200/300', 0, 6),
+(7, 'Doan Huu G', 'Male', '2020-07-01', 'City G', '2025-07-13', 'https://picsum.photos/seed/profile7/200/300', 'https://picsum.photos/seed/bc7/200/300', 'https://picsum.photos/seed/hr7/200/300', 0, 7),
+(8, 'Bui Thuy H', 'Female', '2020-08-01', 'City H', '2025-07-13', 'https://picsum.photos/seed/profile8/200/300', 'https://picsum.photos/seed/bc8/200/300', 'https://picsum.photos/seed/hr8/200/300', 0, 8),
+(9, 'Dang Minh I', 'Male', '2020-09-01', 'City I', '2025-07-13', 'https://picsum.photos/seed/profile9/200/300', 'https://picsum.photos/seed/bc9/200/300', 'https://picsum.photos/seed/hr9/200/300', 0, 9),
+(10, 'Ngo Bao K', 'Female', '2020-10-01', 'City J', '2025-07-13', 'https://picsum.photos/seed/profile10/200/300', 'https://picsum.photos/seed/bc10/200/300', 'https://picsum.photos/seed/hr10/200/300', 0, 10),
+(11, 'Duong Van L', 'Male', '2020-11-01', 'City K', '2025-07-13', 'https://picsum.photos/seed/profile11/200/300', 'https://picsum.photos/seed/bc11/200/300', 'https://picsum.photos/seed/hr11/200/300', 0, 11),
+(12, 'Ly My M', 'Female', '2020-12-01', 'City L', '2025-07-13', 'https://picsum.photos/seed/profile12/200/300', 'https://picsum.photos/seed/bc12/200/300', 'https://picsum.photos/seed/hr12/200/300', 0, 12),
+(13, 'Trinh Hoai N', 'Male', '2021-01-01', 'City M', '2025-07-13', 'https://picsum.photos/seed/profile13/200/300', 'https://picsum.photos/seed/bc13/200/300', 'https://picsum.photos/seed/hr13/200/300', 0, 13),
+(14, 'Mai Ngoc O', 'Female', '2021-02-01', 'City N', '2025-07-13', 'https://picsum.photos/seed/profile14/200/300', 'https://picsum.photos/seed/bc14/200/300', 'https://picsum.photos/seed/hr14/200/300', 0, 14),
+(15, 'Phan Thanh P', 'Male', '2021-03-01', 'City O', '2025-07-13', 'https://picsum.photos/seed/profile15/200/300', 'https://picsum.photos/seed/bc15/200/300', 'https://picsum.photos/seed/hr15/200/300', 0, 15),
+(16, 'Truong Gia Q', 'Female', '2021-04-01', 'City P', '2025-07-13', 'https://picsum.photos/seed/profile16/200/300', 'https://picsum.photos/seed/bc16/200/300', 'https://picsum.photos/seed/hr16/200/300', 0, 16),
+(17, 'Lam Thuy R', 'Male', '2021-05-01', 'City Q', '2025-07-13', 'https://picsum.photos/seed/profile17/200/300', 'https://picsum.photos/seed/bc17/200/300', 'https://picsum.photos/seed/hr17/200/300', 0, 17),
+(18, 'Giang My S', 'Female', '2021-06-01', 'City R', '2025-07-13', 'https://picsum.photos/seed/profile18/200/300', 'https://picsum.photos/seed/bc18/200/300', 'https://picsum.photos/seed/hr18/200/300', 0, 18),
+(19, 'Duong Hoang T', 'Male', '2021-07-01', 'City S', '2025-07-13', 'https://picsum.photos/seed/profile19/200/300', 'https://picsum.photos/seed/bc19/200/300', 'https://picsum.photos/seed/hr19/200/300', 0, 19),
+(20, 'Cao Bao U', 'Female', '2021-08-01', 'City T', '2025-07-13', 'https://picsum.photos/seed/profile20/200/300', 'https://picsum.photos/seed/bc20/200/300', 'https://picsum.photos/seed/hr20/200/300', 0, 20);
 SET IDENTITY_INSERT student OFF;
 
 -- Insert data into the syllabus table
@@ -186,6 +186,22 @@ SET IDENTITY_INSERT admission_term OFF;
 -- Insert data into the admission_form table
 SET IDENTITY_INSERT admission_form ON;
 INSERT INTO admission_form (admission_form_id, household_registration_address, child_characteristics_form_img, commitment_img, cancel_reason, submitted_date, note, status, parent_id, student_id, admission_term_id) VALUES
-(1, '123 Main St', 'https://picsum.photos/seed/ccf1/200/300', 'https://picsum.photos/seed/c1/200/300', NULL, '2025-02-15', 'First time applicant', 'PENDING_APPROVAL', 1, 1, 1),
-(2, '456 Oak Ave', 'https://picsum.photos/seed/ccf2/200/300', 'https://picsum.photos/seed/c2/200/300', NULL, '2025-02-20', 'Sibling already in school', 'PENDING_APPROVAL', 2, 2, 2);
+(3, '789 Pine St', 'https://picsum.photos/seed/ccf3/200/300', 'https://picsum.photos/seed/c3/200/300', NULL, '2025-02-21', 'Re-applicant', 'PENDING_APPROVAL', 3, 3, 1),
+(4, '101 Maple Dr', 'https://picsum.photos/seed/ccf4/200/300', 'https://picsum.photos/seed/c4/200/300', NULL, '2025-02-22', '', 'PENDING_APPROVAL', 4, 4, 2),
+(5, '212 Birch Ln', 'https://picsum.photos/seed/ccf5/200/300', 'https://picsum.photos/seed/c5/200/300', NULL, '2025-02-23', 'Urgent', 'PENDING_APPROVAL', 5, 5, 1),
+(6, '333 Cedar Rd', 'https://picsum.photos/seed/ccf6/200/300', 'https://picsum.photos/seed/c6/200/300', NULL, '2025-02-24', '', 'PENDING_APPROVAL', 6, 6, 2),
+(7, '444 Elm Ct', 'https://picsum.photos/seed/ccf7/200/300', 'https://picsum.photos/seed/c7/200/300', NULL, '2025-02-25', 'Scholarship applicant', 'PENDING_APPROVAL', 7, 7, 1),
+(8, '555 Spruce Way', 'https://picsum.photos/seed/ccf8/200/300', 'https://picsum.photos/seed/c8/200/300', NULL, '2025-02-26', '', 'PENDING_APPROVAL', 8, 8, 2),
+(9, '666 Willow Ave', 'https://picsum.photos/seed/ccf9/200/300', 'https://picsum.photos/seed/c9/200/300', NULL, '2025-02-27', '', 'PENDING_APPROVAL', 9, 9, 1),
+(10, '777 Aspen St', 'https://picsum.photos/seed/ccf10/200/300', 'https://picsum.photos/seed/c10/200/300', NULL, '2025-02-28', 'Staff child', 'PENDING_APPROVAL', 10, 10, 2),
+(11, '888 Redwood Pkwy', 'https://picsum.photos/seed/ccf11/200/300', 'https://picsum.photos/seed/c11/200/300', NULL, '2025-03-01', '', 'PENDING_APPROVAL', 11, 11, 1),
+(12, '999 Sequoia Blvd', 'https://picsum.photos/seed/ccf12/200/300', 'https://picsum.photos/seed/c12/200/300', NULL, '2025-03-02', '', 'PENDING_APPROVAL', 12, 12, 2),
+(13, '111 Pine St', 'https://picsum.photos/seed/ccf13/200/300', 'https://picsum.photos/seed/c13/200/300', NULL, '2025-03-03', '', 'PENDING_APPROVAL', 13, 13, 1),
+(14, '222 Oak Ave', 'https://picsum.photos/seed/ccf14/200/300', 'https://picsum.photos/seed/c14/200/300', NULL, '2025-03-04', '', 'PENDING_APPROVAL', 14, 14, 2),
+(15, '333 Maple Dr', 'https://picsum.photos/seed/ccf15/200/300', 'https://picsum.photos/seed/c15/200/300', NULL, '2025-03-05', '', 'PENDING_APPROVAL', 15, 15, 1),
+(16, '444 Birch Ln', 'https://picsum.photos/seed/ccf16/200/300', 'https://picsum.photos/seed/c16/200/300', NULL, '2025-03-06', '', 'PENDING_APPROVAL', 16, 16, 2),
+(17, '555 Cedar Rd', 'https://picsum.photos/seed/ccf17/200/300', 'https://picsum.photos/seed/c17/200/300', NULL, '2025-03-07', '', 'PENDING_APPROVAL', 17, 17, 1),
+(18, '666 Elm Ct', 'https://picsum.photos/seed/ccf18/200/300', 'https://picsum.photos/seed/c18/200/300', NULL, '2025-03-08', '', 'PENDING_APPROVAL', 18, 18, 2),
+(19, '777 Spruce Way', 'https://picsum.photos/seed/ccf19/200/300', 'https://picsum.photos/seed/c19/200/300', NULL, '2025-03-09', '', 'PENDING_APPROVAL', 19, 19, 1),
+(20, '888 Willow Ave', 'https://picsum.photos/seed/ccf20/200/300', 'https://picsum.photos/seed/c20/200/300', NULL, '2025-03-10', '', 'PENDING_APPROVAL', 20, 20, 2);
 SET IDENTITY_INSERT admission_form OFF;
