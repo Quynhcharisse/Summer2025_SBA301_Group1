@@ -91,7 +91,8 @@ SET IDENTITY_INSERT student OFF;
 SET IDENTITY_INSERT syllabus ON;
 INSERT INTO syllabus (syllabus_id, title, description) VALUES
 (1, 'Preschool Syllabus 2025', 'Syllabus for preschool students for the year 2025.'),
-(2, 'Kindergarten Syllabus 2025', 'Syllabus for kindergarten students for the year 2025.');
+(2, 'Kindergarten Syllabus 2025', 'Syllabus for kindergarten students for the year 2025.'),
+(3, 'Leaf Syllabus 2025', 'Syllabus for leaf students for the year 2025.');
 SET IDENTITY_INSERT syllabus OFF;
 
 -- Insert data into the lesson table
@@ -109,14 +110,17 @@ INSERT INTO syllabus_lesson (syllabus_lesson_id, note, syllabus_id, lesson_id) V
 (1, 'First week', 1, 1),
 (2, 'Second week', 1, 2),
 (3, 'First week', 2, 3),
-(4, 'Second week', 2, 4);
+(4, 'Second week', 2, 4),
+(5, 'First week', 3, 1),
+(6, 'Second week', 3, 2);
 SET IDENTITY_INSERT syllabus_lesson OFF;
 
 -- Insert data into the classes table
 SET IDENTITY_INSERT classes ON;
 INSERT INTO classes (classes_id, name, number_student, room_number, start_date, end_date, status, grade, syllabus_id, teacher_id)VALUES
 (1, 'Preschool Class A', 20, '11', '2025-09-01', '2026-06-30', 'ACTIVE', 'SEED', 1, 5),
-(2, 'Kindergarten Class B', 25, '12', '2025-09-01', '2026-06-30', 'ACTIVE', 'BUD', 2, 6);
+(2, 'Kindergarten Class B', 25, '12', '2025-09-01', '2026-06-30', 'ACTIVE', 'BUD', 2, 6),
+(3, 'Leaf Class C', 20, '13', '2025-09-01', '2026-06-30', 'ACTIVE', 'LEAF', 3, 9);
 SET IDENTITY_INSERT classes OFF;
 
 -- Insert data into the student_class table
